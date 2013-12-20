@@ -26,7 +26,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 #                dlg = wx.MessageDialog(None, 'Cannot open non ascii files\n' + str(error))
 #                dlg.ShowModal()
 
-class DropFile(wx.Frame):
+class ParseFiles(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title, size = (450, 400))
 
@@ -38,5 +38,5 @@ class DropFile(wx.Frame):
 
 
 app = wx.App()
-DropFile(None, -1, 'AddData.py')
+ParseFiles(None, -1, 'AddData.py')
 app.MainLoop()
