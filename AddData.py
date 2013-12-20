@@ -45,9 +45,13 @@ class ParseFiles(wx.Frame):
         dt = DropTargetForFilesToParse(textProgress)
         textProgress.SetDropTarget(dt)
         
-        GBSizer.Add(textProgress, pos=(1, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, 
-            border=15)
-        
+        GBSizer.Add(textProgress, pos=(1, 0), span=(4, 5),
+            flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
+            border=5)
+
+        GBSizer.AddGrowableCol(1)
+        GBSizer.AddGrowableRow(2)
+
         framePanel.SetSizerAndFit(GBSizer)
 
 app = wx.App()
