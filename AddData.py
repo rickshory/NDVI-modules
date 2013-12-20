@@ -18,11 +18,13 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 self.progressArea.WriteText(text)
                 file.close()
             except IOError, error:
-                dlg = wx.MessageDialog(None, 'Error opening file\n' + str(error))
-                dlg.ShowModal()
+                self.progressArea.WriteText('Error opening file\n' + str(error) + '\n')
+#                dlg = wx.MessageDialog(None, 'Error opening file\n' + str(error))
+#                dlg.ShowModal()
             except UnicodeDecodeError, error:
-                dlg = wx.MessageDialog(None, 'Cannot open non ascii files\n' + str(error))
-                dlg.ShowModal()
+                self.progressArea.WriteText('Cannot open non ascii files\n' + str(error) + '\n')                
+#                dlg = wx.MessageDialog(None, 'Cannot open non ascii files\n' + str(error))
+#                dlg.ShowModal()
 
 class DropFile(wx.Frame):
     def __init__(self, parent, id, title):
