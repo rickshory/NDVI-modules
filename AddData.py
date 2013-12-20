@@ -1,4 +1,5 @@
 import wx
+import scidb
 
 class DropTargetForFilesToParse(wx.FileDropTarget):
     def __init__(self, progressArea):
