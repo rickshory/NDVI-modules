@@ -1,21 +1,21 @@
 import wx
 
 class DropTargetForFilesToParse(wx.FileDropTarget):
-    def __init__(self, window):
+    def __init__(self, progressArea):
         wx.FileDropTarget.__init__(self)
-        self.window = window
+        self.progressArea = progressArea
 
     def OnDropFiles(self, x, y, filenames):
-        self.window.SetInsertionPointEnd()
-        self.window.WriteText("\n%d file(s) dropped at %d,%d:\n" %
+        self.progressArea.SetInsertionPointEnd()
+        self.progressArea.WriteText("\n%d file(s) dropped at %d,%d:\n" %
                               (len(filenames), x, y))
 
         for name in filenames:
-            self.window.WriteText(name + '\n')
+            self.progressArea.WriteText(name + '\n')
             try:
                 file = open(name, 'r')
                 text = file.read()
-                self.window.WriteText(text)
+                self.progressArea.WriteText(text)
                 file.close()
             except IOError, error:
                 dlg = wx.MessageDialog(None, 'Error opening file\n' + str(error))
