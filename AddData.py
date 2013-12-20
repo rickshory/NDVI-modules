@@ -29,13 +29,14 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 class ParseFiles(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title, size = (450, 400))
-
-        self.textProgress = wx.TextCtrl(self, -1, style = wx.TE_MULTILINE)
-        dt = DropTargetForFilesToParse(self.textProgress)
-        self.textProgress.SetDropTarget(dt)
+        self.InitUI()
 #        self.Centre()
         self.Show(True)
 
+    def InitUI(self):
+        self.textProgress = wx.TextCtrl(self, -1, style = wx.TE_MULTILINE)
+        dt = DropTargetForFilesToParse(self.textProgress)
+        self.textProgress.SetDropTarget(dt)
 
 app = wx.App()
 ParseFiles(None, -1, 'Add Data to Database')
