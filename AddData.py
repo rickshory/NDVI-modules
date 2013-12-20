@@ -41,14 +41,23 @@ class ParseFiles(wx.Frame):
         hdr = wx.StaticText(framePanel, label="Drag files below to add their data to the database")
         GBSizer.Add(hdr, pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
+        btnShowLog = wx.Button(framePanel, label="Show Log", size=(90, 28))
+        GBSizer.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
+
         textProgress = wx.TextCtrl(framePanel, style = wx.TE_MULTILINE)
         dt = DropTargetForFilesToParse(textProgress)
         textProgress.SetDropTarget(dt)
-        
-        GBSizer.Add(textProgress, pos=(1, 0), span=(4, 5),
+        GBSizer.Add(textProgress, pos=(1, 0), span=(4, 6),
             flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
             border=5)
 
+        txtSelManual = wx.StaticText(framePanel, label="Or select file manually")
+        GBSizer.Add(txtSelManual, pos=(5, 0), span=(1, 5),
+            flag=wx.ALIGN_RIGHT|wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
+
+        btnBrowse = wx.Button(framePanel, label="Browse", size=(90, 28))
+        GBSizer.Add(btnBrowse, pos=(5, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
+       
         GBSizer.AddGrowableCol(1)
         GBSizer.AddGrowableRow(2)
 
