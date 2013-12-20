@@ -38,5 +38,5 @@ class ParseFiles(wx.Frame):
 
 
 app = wx.App()
-ParseFiles(None, -1, 'AddData.py')
+ParseFiles(None, -1, 'Add Data to Database')
 app.MainLoop()
