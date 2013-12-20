@@ -34,9 +34,19 @@ class ParseFiles(wx.Frame):
         self.Show(True)
 
     def InitUI(self):
-        self.textProgress = wx.TextCtrl(self, -1, style = wx.TE_MULTILINE)
-        dt = DropTargetForFilesToParse(self.textProgress)
-        self.textProgress.SetDropTarget(dt)
+
+        framePanel = wx.Panel(self)
+        
+        GBSizer = wx.GridBagSizer(5, 5)
+
+        textProgress = wx.TextCtrl(framePanel, style = wx.TE_MULTILINE)
+        dt = DropTargetForFilesToParse(textProgress)
+        textProgress.SetDropTarget(dt)
+        
+        GBSizer.Add(textProgress, pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, 
+            border=15)
+        
+        framePanel.SetSizerAndFit(GBSizer)
 
 app = wx.App()
 ParseFiles(None, -1, 'Add Data to Database')
