@@ -13,19 +13,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 
         for name in filenames:
             self.progressArea.WriteText(name + '\n')
-            try:
-                file = open(name, 'r')
-                text = file.read()
-                self.progressArea.WriteText(text)
-                file.close()
-            except IOError, error:
-                self.progressArea.WriteText('Error opening file\n' + str(error) + '\n')
-#                dlg = wx.MessageDialog(None, 'Error opening file\n' + str(error))
-#                dlg.ShowModal()
-            except UnicodeDecodeError, error:
-                self.progressArea.WriteText('Cannot open non ascii files\n' + str(error) + '\n')                
-#                dlg = wx.MessageDialog(None, 'Cannot open non ascii files\n' + str(error))
-#                dlg.ShowModal()
+            fileresult = scidb.parseFileIntoDB(name)
+            self.progressArea.WriteText(fileresult + '\n')
 
 class ParseFiles(wx.Frame):
     def __init__(self, parent, id, title):

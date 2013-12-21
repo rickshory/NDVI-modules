@@ -44,5 +44,43 @@ curT.executescript("""
     "Line" VARCHAR(50) NOT NULL UNIQUE);
     """)
 
+def parseFileIntoDB(filename):
+    """
+    given a string which is the full path to a file
+    determines the file structure and parses the
+    data into the proper tables
+
+    for initial testing, simply parses any text file into
+    the temp DB, the table "Text"
+    """
+
+    try:
+        file = open(filename, 'r')
+        ct = 0
+        stSQL = 'INSERT INTO Text(Line) VALUES (?);'
+        for line in file:
+#            print line
+            items = line.split()
+            for i in items:
+#                print(i)
+                ct += 1
+                stSQL = "INSERT INTO Text(Line) VALUES ('" + i + "');"
+                try:
+                    curT.execute(stSQL)
+                except sqlite3.IntegrityError:
+                    pass # message is: "column Line is not unique"
+                    # catch these and count as duplicate lines ignored
+                except sqlite3.OperationalError:
+                    pass # message is: "unrecognized token: "'HOBO..."
+                    # deal with these in binary file types
+                tmpConn.commit()
+#            file.close()
+        return str(ct) + ' items parsed into database'
+    except IOError, error:
+        return 'Error opening file\n' + str(error)
+    except UnicodeDecodeError, error:
+         return 'Cannot open non ascii files\n' + str(error)
+
+
 if __name__ == "__main__":
     pass # nothing yet
