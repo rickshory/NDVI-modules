@@ -61,18 +61,20 @@ def parseFileIntoDB(filename):
         ct = 0
         stSQL = 'INSERT INTO Text(Line) VALUES (?);'
         for line in file:
-#            print line
-             ct += 1
-             try:
-                 curT.execute(stSQL, (line,))
-             except sqlite3.IntegrityError:
-                 pass # message is: "column Line is not unique"
-                 # catch these and count as duplicate lines ignored
-             except sqlite3.OperationalError:
-                 pass # message is: "unrecognized token: "'HOBO..."
-                 # deal with these in binary file types
-             tmpConn.commit()
-#            file.close()
+#           print line
+            items = line.split('\t')
+            for item in items:
+                ct += 1
+                try:
+                    curT.execute(stSQL, (item,))
+                except sqlite3.IntegrityError:
+                    pass # message is: "column Line is not unique"
+                    # catch these and count as duplicate lines ignored
+                except sqlite3.OperationalError:
+                    pass # message is: "unrecognized token: "'HOBO..."
+                    # deal with these in binary file types
+            tmpConn.commit()
+#           file.close()
         return str(ct) + ' items parsed into database'
     except IOError, error:
         return 'Error opening file\n' + str(error)
