@@ -20,6 +20,7 @@ try:
 #    print rl
     
     datConn.execute('pragma auto_vacuum=ON')
+    datConn.text_factory = str
 
 
 except sqlite3.Error, e:
@@ -31,6 +32,7 @@ try:
     tmpConn = sqlite3.connect('tmp.db')
     tmpConn.execute('pragma foreign_keys=ON')
     tmpConn.execute('pragma auto_vacuum=ON')
+    tmpConn.text_factory = str
 except sqlite3.Error, e:
     print "Error %s:" % e.args[0]
     sys.exit(1)
@@ -60,20 +62,16 @@ def parseFileIntoDB(filename):
         stSQL = 'INSERT INTO Text(Line) VALUES (?);'
         for line in file:
 #            print line
-            items = line.split()
-            for i in items:
-#                print(i)
-                ct += 1
-                stSQL = "INSERT INTO Text(Line) VALUES ('" + i + "');"
-                try:
-                    curT.execute(stSQL)
-                except sqlite3.IntegrityError:
-                    pass # message is: "column Line is not unique"
-                    # catch these and count as duplicate lines ignored
-                except sqlite3.OperationalError:
-                    pass # message is: "unrecognized token: "'HOBO..."
-                    # deal with these in binary file types
-                tmpConn.commit()
+             ct += 1
+             try:
+                 curT.execute(stSQL, (line,))
+             except sqlite3.IntegrityError:
+                 pass # message is: "column Line is not unique"
+                 # catch these and count as duplicate lines ignored
+             except sqlite3.OperationalError:
+                 pass # message is: "unrecognized token: "'HOBO..."
+                 # deal with these in binary file types
+             tmpConn.commit()
 #            file.close()
         return str(ct) + ' items parsed into database'
     except IOError, error:
