@@ -2,9 +2,10 @@ import wx, sqlite3
 import scidb
 
 class DropTargetForFilesToParse(wx.FileDropTarget):
-    def __init__(self, progressArea):
+    def __init__(self, progressArea, msgArea):
         wx.FileDropTarget.__init__(self)
         self.progressArea = progressArea
+        self.msgArea = msgArea
 
     def OnDropFiles(self, x, y, filenames):
         self.progressArea.SetInsertionPointEnd()
@@ -26,7 +27,6 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         for initial testing, simply parses any text file into
         the temp DB, the table "Text"
         """
-        existingText = self.progressArea.GetValue() #remember contents
         try:
             file = open(filename, 'r')
             ct = 0
@@ -36,10 +36,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 items = line.split('\t')
                 for item in items:
                     if (ct % 10) == 0: # give some progress diagnostics
-                        self.progressArea.ChangeValue(existingText)
-                        self.progressArea.SetInsertionPointEnd()
-                        self.progressArea.WriteText('\n' + "processed " +
-                                str(ct) + " items" + '\n')
+                        self.msgArea.ChangeValue("processed " +
+                                str(ct) + " items")
 #                        wx.Update()
                         wx.Yield()
                     
@@ -54,8 +52,6 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                         # deal with these in binary file types
                 scidb.tmpConn.commit()
     #           file.close()
-        # put the progress box back the way it was
-            self.progressArea.ChangeValue(existingText)    
             return str(ct) + ' items parsed into database'
         except IOError, error:
             return 'Error opening file\n' + str(error)
@@ -84,8 +80,6 @@ class ParseFiles(wx.Frame):
         GBSizer.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
 
         textProgress = wx.TextCtrl(framePanel, style = wx.TE_MULTILINE)
-        dt = DropTargetForFilesToParse(textProgress)
-        textProgress.SetDropTarget(dt)
         GBSizer.Add(textProgress, pos=(1, 0), span=(4, 6),
             flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
             border=5)
@@ -99,6 +93,9 @@ class ParseFiles(wx.Frame):
         GBSizer.Add(textProgMsgs, pos=(5, 1), span=(1, 5),
             flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
             border=5)
+        
+        dt = DropTargetForFilesToParse(textProgress, textProgMsgs)
+        textProgress.SetDropTarget(dt)
 
         txtSelManual = wx.StaticText(framePanel, label="Or select file manually")
         GBSizer.Add(txtSelManual, pos=(6, 0), span=(1, 5),
