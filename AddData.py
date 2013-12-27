@@ -40,6 +40,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                         self.progressArea.SetInsertionPointEnd()
                         self.progressArea.WriteText('\n' + "processed " +
                                 str(ct) + " items" + '\n')
+#                        wx.Update()
+                        wx.Yield()
                     
                     ct += 1
                     try:
