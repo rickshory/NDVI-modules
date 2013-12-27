@@ -78,7 +78,7 @@ class ParseFiles(wx.Frame):
         GBSizer = wx.GridBagSizer(5, 5)
 
         hdr = wx.StaticText(framePanel, label="Drag files below to add their data to the database")
-        GBSizer.Add(hdr, pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        GBSizer.Add(hdr, pos=(0, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         btnShowLog = wx.Button(framePanel, label="Show Log", size=(90, 28))
         GBSizer.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
@@ -90,12 +90,22 @@ class ParseFiles(wx.Frame):
             flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
             border=5)
 
+        lblProgTitle = wx.StaticText(framePanel, -1, "Progress:")
+        GBSizer.Add(lblProgTitle, pos=(5, 0), span=(1, 1),
+            flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
+            border=5)
+
+        textProgMsgs = wx.TextCtrl(framePanel, style = wx.TE_MULTILINE)
+        GBSizer.Add(textProgMsgs, pos=(5, 1), span=(1, 5),
+            flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
+            border=5)
+
         txtSelManual = wx.StaticText(framePanel, label="Or select file manually")
-        GBSizer.Add(txtSelManual, pos=(5, 0), span=(1, 5),
+        GBSizer.Add(txtSelManual, pos=(6, 0), span=(1, 5),
             flag=wx.ALIGN_RIGHT|wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
         btnBrowse = wx.Button(framePanel, label="Browse", size=(90, 28))
-        GBSizer.Add(btnBrowse, pos=(5, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
+        GBSizer.Add(btnBrowse, pos=(6, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
        
         GBSizer.AddGrowableCol(1)
         GBSizer.AddGrowableRow(2)
