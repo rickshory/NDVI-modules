@@ -1,4 +1,4 @@
-import wx
+import wx, sqlite3
 import scidb
 
 class DropTargetForFilesToParse(wx.FileDropTarget):
@@ -13,8 +13,55 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 
         for name in filenames:
             self.progressArea.WriteText(name + '\n')
-            fileresult = scidb.parseFileIntoDB(name)
+            fileresult = self.parseFileIntoDB(name)
+            self.progressArea.SetInsertionPointEnd()
             self.progressArea.WriteText(fileresult + '\n')
+
+    def parseFileIntoDB(self, filename):
+        """
+        given a string which is the full path to a file
+        determines the file structure and parses the
+        data into the proper tables
+
+        for initial testing, simply parses any text file into
+        the temp DB, the table "Text"
+        """
+        existingText = self.progressArea.GetValue() #remember contents
+        try:
+            file = open(filename, 'r')
+            ct = 0
+            stSQL = 'INSERT INTO Text(Line) VALUES (?);'
+            for line in file:
+    #           print line
+                items = line.split('\t')
+                for item in items:
+                    if (ct % 10) == 0: # give some progress diagnostics
+                        self.progressArea.ChangeValue(existingText)
+                        self.progressArea.SetInsertionPointEnd()
+                        self.progressArea.WriteText('\n' + "processed " +
+                                str(ct) + " items" + '\n')
+                    
+                    ct += 1
+                    try:
+                        scidb.curT.execute(stSQL, (item,))
+                    except sqlite3.IntegrityError:
+                        pass # message is: "column Line is not unique"
+                        # catch these and count as duplicate lines ignored
+                    except sqlite3.OperationalError:
+                        pass # message is: "unrecognized token: "'HOBO..."
+                        # deal with these in binary file types
+                scidb.tmpConn.commit()
+    #           file.close()
+        # put the progress box back the way it was
+            self.progressArea.ChangeValue(existingText)    
+            return str(ct) + ' items parsed into database'
+        except IOError, error:
+            return 'Error opening file\n' + str(error)
+        except UnicodeDecodeError, error:
+             return 'Cannot open non ascii files\n' + str(error)
+        
+
+#
 
 class ParseFiles(wx.Frame):
     def __init__(self, parent, id, title):
