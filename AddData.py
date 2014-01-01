@@ -1,4 +1,5 @@
 import wx, sqlite3
+import os, sys
 import scidb
 
 class DropTargetForFilesToParse(wx.FileDropTarget):
@@ -77,6 +78,8 @@ class ParseFiles(wx.Frame):
         GBSizer.Add(hdr, pos=(0, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         btnShowLog = wx.Button(framePanel, label="Show Log", size=(90, 28))
+        btnShowLog.Bind(wx.EVT_BUTTON, lambda evt, str=btnShowLog.GetLabel(): self.onButton(evt, str))
+#        btnShowLog.Bind(wx.EVT_BUTTON, OnBtnShowLogClick)
         GBSizer.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
 
         textProgress = wx.TextCtrl(framePanel, style = wx.TE_MULTILINE)
@@ -102,12 +105,28 @@ class ParseFiles(wx.Frame):
             flag=wx.ALIGN_RIGHT|wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
         btnBrowse = wx.Button(framePanel, label="Browse", size=(90, 28))
+        btnBrowse.Bind(wx.EVT_BUTTON, lambda evt, str=btnBrowse.GetLabel(): self.onButton(evt, str))
+
         GBSizer.Add(btnBrowse, pos=(6, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
        
         GBSizer.AddGrowableCol(1)
         GBSizer.AddGrowableRow(2)
 
         framePanel.SetSizerAndFit(GBSizer)
+
+    def openfile(self, event):
+        dlg = wx.FileDialog(self, "Choose a file", os.getcwd(), "", "*.*", wx.OPEN)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            mypath = os.path.basename(path)
+            self.SetStatusText("Not implemented yet")
+            #self.SetStatusText("You selected: %s" % mypath)
+            dlg.Destroy()
+    
+    def onButton(self, event, strLabel):
+        """"""
+        print ' You clicked the button labeled "%s"' % strLabel
+
 
 app = wx.App()
 ParseFiles(None, -1, 'Add Data to Database')
