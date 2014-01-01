@@ -129,11 +129,13 @@ class ParseFiles(wx.Frame):
 
     def onClick_BtnShowLog(self, event, strLabel):
         """"""
-        print ' You clicked the button labeled "%s"' % strLabel
+        wx.MessageBox('"Show Log" is not implemented yet', 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
 
     def onClick_BtnBrowse(self, event, strLabel):
         """"""
-        print ' You clicked the button labeled "%s"' % strLabel
+        wx.MessageBox('"Browse" is not implemented yet', 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
 
 
 app = wx.App()
