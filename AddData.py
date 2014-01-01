@@ -78,7 +78,7 @@ class ParseFiles(wx.Frame):
         GBSizer.Add(hdr, pos=(0, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         btnShowLog = wx.Button(framePanel, label="Show Log", size=(90, 28))
-        btnShowLog.Bind(wx.EVT_BUTTON, lambda evt, str=btnShowLog.GetLabel(): self.onButton(evt, str))
+        btnShowLog.Bind(wx.EVT_BUTTON, lambda evt, str=btnShowLog.GetLabel(): self.onClick_BtnShowLog(evt, str))
 #        btnShowLog.Bind(wx.EVT_BUTTON, OnBtnShowLogClick)
         GBSizer.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
 
@@ -105,7 +105,7 @@ class ParseFiles(wx.Frame):
             flag=wx.ALIGN_RIGHT|wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
         btnBrowse = wx.Button(framePanel, label="Browse", size=(90, 28))
-        btnBrowse.Bind(wx.EVT_BUTTON, lambda evt, str=btnBrowse.GetLabel(): self.onButton(evt, str))
+        btnBrowse.Bind(wx.EVT_BUTTON, lambda evt, str=btnBrowse.GetLabel(): self.onClick_BtnBrowse(evt, str))
 
         GBSizer.Add(btnBrowse, pos=(6, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
        
@@ -124,6 +124,14 @@ class ParseFiles(wx.Frame):
             dlg.Destroy()
     
     def onButton(self, event, strLabel):
+        """"""
+        print ' You clicked the button labeled "%s"' % strLabel
+
+    def onClick_BtnShowLog(self, event, strLabel):
+        """"""
+        print ' You clicked the button labeled "%s"' % strLabel
+
+    def onClick_BtnBrowse(self, event, strLabel):
         """"""
         print ' You clicked the button labeled "%s"' % strLabel
 
