@@ -32,7 +32,14 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         
         self.getFileInfo(dctInfo)
         print dctInfo
+        if not ('dataFormat' in dctInfo):
+            self.progressArea.SetInsertionPointEnd()
+            self.progressArea.WriteText('Could not determine data format' + '\n')
+            return "Could not determine data format"
 
+        self.progressArea.SetInsertionPointEnd()
+        self.progressArea.WriteText('Data format detected as: "' +
+                                    dctInfo['dataFormat'] + '"\n')
         try:
             file = open(filename, 'r')
             ct = 0
