@@ -28,7 +28,11 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         for initial testing, simply parses any text file into
         the temp DB, the table "Text"
         """
+        dctInfo = {'fullPath': filename}
         
+        self.getFileInfo(dctInfo)
+        print dctInfo
+
         try:
             file = open(filename, 'r')
             ct = 0
@@ -59,7 +63,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             return 'Error opening file\n' + str(error)
         except UnicodeDecodeError, error:
              return 'Cannot open non ascii files\n' + str(error)
-        
+
+    def getFileInfo(self, infoDict):
+        infoDict['fileErr'] = None
 
 #
 
