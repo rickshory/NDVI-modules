@@ -40,8 +40,16 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         self.progressArea.SetInsertionPointEnd()
         self.progressArea.WriteText('Data format detected as: "' +
                                     dctInfo['dataFormat'] + '"\n')
+        if dctInfo['dataFormat'] == r"Hoboware text export":
+            self.parseHoboWareTextFile(dctInfo)
+        else:
+            self.progressArea.SetInsertionPointEnd()
+            self.progressArea.WriteText('Parsing of this data format is not implemented yet\n')
+            return "Done"                       
+
+    def parseHoboWareTextFile(self, infoDict):
         try:
-            file = open(filename, 'r')
+            file = open(infoDict['fullPath'], 'r')
             ct = 0
             stSQL = 'INSERT INTO Text(Line) VALUES (?);'
             for line in file:
@@ -70,6 +78,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             return 'Error opening file\n' + str(error)
         except UnicodeDecodeError, error:
              return 'Cannot open non ascii files\n' + str(error)
+        
 
     def getFileInfo(self, infoDict):
         """
@@ -90,6 +99,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         infoDict['fileSize'] = os.path.getsize(infoDict['fullPath'])
         # splitext gives a 2-tuple of what's before and after the ext delim
         infoDict['fileExtension'] = os.path.splitext(infoDict['fullPath'])[1]
+        if infoDict['fileExtension'] == r'dtf':
+            infoDict['dataFormat'] = "binary Onset DTF"
+            return
         # find first non-blank line, and keep track of which line it is
         iLineCt = 0
         iBytesSoFar = 0
