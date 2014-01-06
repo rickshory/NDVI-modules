@@ -65,7 +65,135 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
              return 'Cannot open non ascii files\n' + str(error)
 
     def getFileInfo(self, infoDict):
-        infoDict['fileErr'] = None
+        """
+        Data files have so many possible parameters, use a dictionary to track them
+        Only requirement on entering this function is the dictionary has a
+        member 'fullPath', which is a string that is a full file path
+        """
+        if (os.path.isdir(infoDict['fullPath'])):
+            infoDict['fileErr'] = "Path is a directory"
+            infoDict['isDir'] = True
+            return
+        if not os.path.exists(infoDict['fullPath']):
+            infoDict['fileErr'] = "File does not exist"
+            return
+        if not os.path.isfile(infoDict['fullPath']):
+            infoDict['fileErr'] = "Not a file"
+            return
+        infoDict['fileSize'] = os.path.getsize(infoDict['fullPath'])
+        # splitext gives a 2-tuple of what's before and after the ext delim
+        infoDict['fileExtension'] = os.path.splitext(infoDict['fullPath'])[1]
+        # find first non-blank line, and keep track of which line it is
+        iLineCt = 0
+        iBytesSoFar = 0
+        try:
+            f = open(infoDict['fullPath'], 'rb')
+            while True:
+                iBytesSoFar = f.tell()
+                sLine = f.readline()
+                    
+                if (sLine == ""): # empty when no more lines can be read
+                    break
+                iLineCt += 1
+                # diagnostics
+                if iLineCt == 1:
+                    infoDict['firstLine'] = sLine
+                # format can be determined in first few lines or not at all
+                if iLineCt >= 6:
+                    break
+                if len(sLine.strip()) > 0: # not a blank line
+                    # test if it is text file exported by Hoboware
+                    # following kludges are because Onset changed output file format
+                    # i.e. different bugs through various versions of Hoboware
+                    # details are important to avoid glitches during actual import
+                    # in 2010, header line had only "Time..."
+#                    lDiagnostics.append("sLine[:14]= " + sLine[:14])
+                    if iLineCt == 1 and sLine[:14] == '"#"\t"Time, GMT':
+                        infoDict['dataFormat'] = "Hoboware text export"
+                        infoDict['yearVersion'] = 2010
+                        break
+                    
+                    # in 2011, header line had "Date Time...:
+                    # 1st part of 1st line should be (including quotes): "#" "Date Time, GMT
+#                    lDiagnostics.append("sLine[:19]= " + sLine[:19])
+                    if iLineCt == 1 and sLine[:19] == '"#"\t"Date Time, GMT':
+                        infoDict['dataFormat'] = "Hoboware text export"
+                        infoDict['yearVersion'] = 2011
+                        break
+                    
+                    # in version 3.5.0 (released 2013), header starts with additional characters:
+                    # 1st part of 1st line after 3 junk characters
+                    # should be (including quotes): "#" "Date Time, GMT
+#                    lDiagnostics.append("sLine[3:22]= " + sLine[3:22])
+                    if iLineCt == 1 and  (sLine[3:22] == '"#"\t"Date Time, GMT'):
+                        infoDict['dataFormat'] = "Hoboware text export"
+                        infoDict['yearVersion'] = 2013
+                        break
+                    
+                    # Test for other data formats
+                    
+                    if iLineCt == 1 and ('PuTTY log' in sLine):
+                        infoDict['dataFormat'] = "PuTTY log"
+                        break
+
+                    if ('Timestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)' in sLine):
+                        infoDict['dataFormat'] = "Greenlogger text file"
+                        infoDict['versionNumber'] = 13
+                        # in versions <=13, header is 1st non-blank line
+                        break
+
+                    # test for iButton file
+                    # look at 2nd line
+                    f.seek(0)
+                    sLine = f.readline()
+                    iLineCt = 1 # prev verified 1st line existed
+                    sLine = f.readline()
+                    if (sLine == ""):
+                        break
+                    iLineCt += 1
+                    #  1st part of 2nd line should be (including quotes): "Timezone",
+#                    lDiagnostics.append("line " + str(iLineCt) + ", [:11]= " + sLine[:11])
+                    if not (iLineCt == 2 and sLine[:11] == '"Timezone",'):
+                        break
+                    # look at 4th line, 3rd line should be blank
+                    sLine = f.readline()
+                    if (sLine == ""):
+                        break
+                    iLineCt += 1
+                    sLine = f.readline()
+                    if (sLine == ""):
+                        break
+                    iLineCt += 1
+                    # 1st part of 4th line should be (including quotes): "Serial No.","
+#                    lDiagnostics.append("line " + str(iLineCt) + ", [:14]= " + sLine[:14])
+                    if not (iLineCt == 4 and sLine[:14] == '"Serial No.","'):
+                        break
+                    # look at 5th line 
+                    sLine = f.readline()
+                    if (sLine == ""):
+                        break
+                    iLineCt += 1
+                    # 1st part of 5th line should be (including quotes): "Location:","
+#                    lDiagnostics.append("line " + str(iLineCt) + ", [:13]= " + sLine[:13])
+                    if iLineCt == 5 and sLine[:13] == '"Location:","':
+                        infoDict['dataFormat'] = "iButton"
+                        break
+
+
+            f.close()
+        except IOError, error:
+            infoDict['fileErr'] = 'Error opening file\n' + str(error)
+            try:
+                f.close()
+            except:
+                pass
+        except UnicodeDecodeError, error:
+            infoDict['fileErr'] = 'Cannot open non ascii files\n' + str(error)
+            try:
+                f.close()
+            except:
+                pass
+
 
 #
 
