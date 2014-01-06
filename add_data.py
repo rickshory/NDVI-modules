@@ -28,6 +28,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         for initial testing, simply parses any text file into
         the temp DB, the table "Text"
         """
+        
         try:
             file = open(filename, 'r')
             ct = 0
