@@ -50,7 +50,20 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             return "Done"                       
 
     def parseHoboWareTextFile(self, infoDict):
-        # try reading in all lines to a temporary table, to get accurate count for progress
+        self.putTextLinesIntoTmpTable(infoDict)
+        #parse file, start with header line; 1st line in this file format
+        scidb.curT.execute("SELECT * FROM tmpLines ORDER BY ID;")
+        for rec in scidb.curT:
+            if rec['ID'] == 1:
+                print rec['Line']
+       
+    def putTextLinesIntoTmpTable(self, infoDict):
+        """
+        Usable for data files that are in text format:
+        This function puts the lines as separate records into the temporary
+        table "tmpLines", which it creates new each time.
+        Adds the member infoDict['lineCt']
+        """
         scidb.curT.executescript("""
             DROP TABLE IF EXISTS "tmpLines";
         """)
@@ -87,12 +100,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         t = scidb.curT.fetchone() # a tuple with one value
         infoDict['lineCt'] = t[0]
         self.msgArea.ChangeValue(str(infoDict['lineCt']) + " lines in file")
-        #parse file, start with header line; 1st line in this file format
-        scidb.curT.execute("SELECT * FROM tmpLines ORDER BY ID;")
-        for rec in scidb.curT:
-            if rec['ID'] == 1:
-                print rec['Line']
-       
+
 
     def getFileInfo(self, infoDict):
         """
