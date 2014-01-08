@@ -18,8 +18,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         for name in filenames:
             self.progressArea.WriteText(name + '\n')
             fileresult = self.parseFileIntoDB(name)
-            self.progressArea.SetInsertionPointEnd()
-            self.progressArea.WriteText(fileresult + '\n')
+#            self.progressArea.SetInsertionPointEnd()
+#            self.progressArea.WriteText(fileresult + '\n')
 
     def parseFileIntoDB(self, filename):
         """
@@ -66,7 +66,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                     
                     ct += 1
                     try:
-                        scidb.curT.execute(stSQL, (item,))
+#                        scidb.curT.execute(stSQL, (item,))
+                        scidb.tmpConn.execute(stSQL, (item,))
                     except sqlite3.IntegrityError:
                         pass # message is: "column Line is not unique"
                         # catch these and count as duplicate lines ignored

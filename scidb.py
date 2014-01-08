@@ -11,7 +11,7 @@ try:
     # if foreign_keys is supported, should have one item that is either (1,) or (0,)
     rl = [r for r in rslt] # comprehend it as a list
     if len(rl) == 0:
-        print 'Foreign keys not supported in this version of sqlite. Not used in "sci_data.db".'
+        print 'Foreign keys not supported in this version (' + sqlite3.sqlite_version + ') of sqlite. Not used in "sci_data.db".'
     if rl[0] != (1,):
         print 'Foreign keys supported, but not set in this connection to "sci_data.db"'
     datConn.execute('pragma auto_vacuum=ON')
@@ -151,7 +151,7 @@ try:
     # if foreign_keys is supported, should have one item that is either (1,) or (0,)
     rl = [r for r in rslt] # comprehend it as a list
     if len(rl) == 0:
-        print 'Foreign keys not supported in this version of sqlite. Not used in "tmp.db".'
+        print 'Foreign keys not supported in this version (' + sqlite3.sqlite_version + ') of sqlite. Not used in "tmp.db".'
     if rl[0] != (1,):
         print 'Foreign keys supported, but not set in this connection to "tmp.db"'
         
@@ -168,6 +168,77 @@ try:
 except sqlite3.Error, e:
     print 'Error in "tmp.db": %s' % e.args[0]
     sys.exit(1)
+
+def assureItemIsInTableField(stItem, stTable, stField):
+    """
+    This is intended for use on tables that contain only two fields, a
+     text field of unique values, and an autonumber ID field which is the primary key
+    If the given text value is not in the table, this function inserts it and returns the ID.
+    If the value is already in the table, the function returns the existing ID.
+    Input is three strings:
+    stItem is the string value to test or insert
+    stTable is the table
+    stField is the field in that table
+    """
+    
+    try:
+        stSQL = 'INSERT INTO ' + stTable + '(' + stField + ') VALUES (?);'
+        curD.execute(stSQL, (stItem,))
+        datConn.commit()
+        return curD.lastrowid
+    except sqlite3.IntegrityError: # item is already in the table, get its ID
+        stSQL = 'SELECT ID FROM ' + stTable + ' WHERE (' + stField + ') = (?);'
+        curD.execute(stSQL, (stItem,))
+        t = curD.fetchone() # a tuple with one value
+        return t[0]
+#    except: # some other error
+#        return None
+    
+
+def assureChannelIsInDB(lChanList):
+    """
+    Given a 7-membered list
+    The first item in each list will be the primary key in the Channels table.
+    The list is first created with this = 0.
+    The rest of the list is built up, then the list is sent to this function
+     that looks in the database.
+    If the function finds an existing channel, it fills in the primary key.
+    If it does not find an existing channel, it creates a new one and fills in the pk.
+    List item 7 will be "new" if the record is new, otherwise "existing"
+    The list contains the text values of (2)logger serial number, (3)sensor serial number,
+     (4)data type, and (5)data units, and the integer values of(1) column number, and (6)hour offset.
+    The function takes care of filling in all these in their respective tables.
+    When returned, the calling procedure can quickly insert data values
+     into the data table by using list item [0] for the channel pk.
+    """   
+    # set up dependent fields
+    lgrID = assureItemIsInTableField(lChanList[2], 'Loggers', 'LoggerSerialNumber')
+    senID = assureItemIsInTableField(lChanList[3], 'Sensors', 'SensorSerialNumber')
+    dtyID = assureItemIsInTableField(lChanList[4], 'DataTypes', 'TypeText')
+    dunID = assureItemIsInTableField(lChanList[5], 'DataUnits', 'UnitsText')
+    # set up channel
+    try:
+        stSQL = """
+            INSERT INTO DataChannels
+            (Column, LoggerID, SensorID, DataTypeID, DataUnitsID, UTC_Offset)
+            VALUES (?,?,?,?,?,?);
+            """
+        curD.execute(stSQL, (lChanList[1], lgrID, senID, dtyID, dunID, lChanList[6]))
+        datConn.commit()
+        lChanList[0] = curD.lastrowid
+        lChanList[7] = 'new'
+    except sqlite3.IntegrityError: # this configuration is already in the table, get its ID
+        stSQL = """
+            SELECT ID FROM DataChannels
+            WHERE Column = ? AND LoggerID = ? AND SensorID = ? AND
+            DataTypeID = ? AND DataUnitsID = ? AND UTC_Offset = ?;
+        """
+        curD.execute(stSQL, (lChanList[1], lgrID, senID, dtyID, dunID, lChanList[6]))
+        t = curD.fetchone() # a tuple with one value
+        lChanList[0] = t[0]
+        lChanList[7] = 'existing'
+    return lChanList
+
 
 if __name__ == "__main__":
     pass # nothing yet
