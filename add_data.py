@@ -10,8 +10,10 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 
     def OnDropFiles(self, x, y, filenames):
         self.progressArea.SetInsertionPointEnd()
-        self.progressArea.WriteText("\n%d file(s) dropped at %d,%d:\n" %
-                              (len(filenames), x, y))
+#        self.progressArea.WriteText("\n%d file(s) dropped at %d,%d:\n" %
+#                              (len(filenames), x, y))
+        self.progressArea.WriteText("\n%d file(s) dropped\n" % (len(filenames),))
+
 
         for name in filenames:
             self.progressArea.WriteText(name + '\n')
