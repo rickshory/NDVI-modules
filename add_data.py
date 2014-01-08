@@ -54,6 +54,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         scidb.curT.executescript("""
             DROP TABLE IF EXISTS "tmpLines";
         """)
+        scidb.tmpConn.execute("VACUUM")
         scidb.curT.executescript("""
             CREATE TABLE "tmpLines"
             ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
@@ -77,17 +78,21 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 scidb.tmpConn.commit()
                 wx.Yield()
         # file should be closed by here, avoid possible corruption if left open
-        # put last batch into DB
+        # put last batch of lines into DB
         if  len(lstLines) > 0:
             scidb.tmpConn.executemany(stSQL, lstLines)
             lstLines = []
         # get count
         scidb.curT.execute("SELECT count(*) AS 'lineCt' FROM tmpLines;")
         t = scidb.curT.fetchone() # a tuple with one value
-        print t[0], "lines in file"
-        self.msgArea.ChangeValue(str(t[0]) + " lines in file")
         infoDict['lineCt'] = t[0]
-        
+        self.msgArea.ChangeValue(str(infoDict['lineCt']) + " lines in file")
+        #parse file, start with header line; 1st line in this file format
+        scidb.curT.execute("SELECT * FROM tmpLines ORDER BY ID;")
+        for rec in scidb.curT:
+            if rec['ID'] == 1:
+                print rec['Line']
+       
 
     def getFileInfo(self, infoDict):
         """

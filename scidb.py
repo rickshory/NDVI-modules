@@ -16,6 +16,7 @@ try:
         print 'Foreign keys supported, but not set in this connection to "sci_data.db"'
     datConn.execute('pragma auto_vacuum=ON')
     datConn.text_factory = str
+    datConn.row_factory = sqlite3.Row
 
     curD = datConn.cursor()
 
@@ -157,6 +158,7 @@ try:
         
     tmpConn.execute('pragma auto_vacuum=ON')
     tmpConn.text_factory = str
+    tmpConn.row_factory = sqlite3.Row
 
     curT = tmpConn.cursor()
 
