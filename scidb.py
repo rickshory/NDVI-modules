@@ -227,7 +227,7 @@ def assureChannelIsInDB(lChanList):
         datConn.commit()
         lChanList[0] = curD.lastrowid
         lChanList[7] = 'new'
-    except sqlite3.IntegrityError: # this configuration is already in the table, get its ID
+    except sqlite3.IntegrityError: # this Channel is already there, get its ID
         stSQL = """
             SELECT ID FROM DataChannels
             WHERE Column = ? AND LoggerID = ? AND SensorID = ? AND

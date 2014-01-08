@@ -50,37 +50,43 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             return "Done"                       
 
     def parseHoboWareTextFile(self, infoDict):
-        try:
-            file = open(infoDict['fullPath'], 'r')
-            ct = 0
-            stSQL = 'INSERT INTO Text(Line) VALUES (?);'
-            for line in file:
-    #           print line
-                items = line.split('\t')
-                for item in items:
-                    if (ct % 10) == 0: # give some progress diagnostics
-                        self.msgArea.ChangeValue("processed " +
-                                str(ct) + " items")
-#                        wx.Update()
-                        wx.Yield()
-                    
-                    ct += 1
-                    try:
-#                        scidb.curT.execute(stSQL, (item,))
-                        scidb.tmpConn.execute(stSQL, (item,))
-                    except sqlite3.IntegrityError:
-                        pass # message is: "column Line is not unique"
-                        # catch these and count as duplicate lines ignored
-                    except sqlite3.OperationalError:
-                        pass # message is: "unrecognized token: "'HOBO..."
-                        # deal with these in binary file types
+        # try reading in all lines to a temporary table, to get accurate count for progress
+        scidb.curT.executescript("""
+            DROP TABLE IF EXISTS "tmpLines";
+        """)
+        scidb.curT.executescript("""
+            CREATE TABLE "tmpLines"
+            ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+            "Line" VARCHAR(200));
+        """)
+        stSQL = 'INSERT INTO tmpLines(Line) VALUES (?);'
+        ct = 0
+        numToInsertAtOnce = 3557 # arbitrary number, guessing to optimize
+        lstLines = []
+        with open(infoDict['fullPath'], 'r') as f:
+            for sLine in f:
+                ct += 1
+                # much faster to insert a batch at once
+                lstLines.append((sLine,))
+                if  len(lstLines) >= numToInsertAtOnce:
+                    self.msgArea.ChangeValue("counting lines in file: " +
+                            str(ct))
+                    # could also use curT instead of tmpConn; below uses implicit cursor
+                    scidb.tmpConn.executemany(stSQL, lstLines)
+                    lstLines = []
                 scidb.tmpConn.commit()
-    #           file.close()
-            return str(ct) + ' items parsed into database'
-        except IOError, error:
-            return 'Error opening file\n' + str(error)
-        except UnicodeDecodeError, error:
-             return 'Cannot open non ascii files\n' + str(error)
+                wx.Yield()
+        # file should be closed by here, avoid possible corruption if left open
+        # put last batch into DB
+        if  len(lstLines) > 0:
+            scidb.tmpConn.executemany(stSQL, lstLines)
+            lstLines = []
+        # get count
+        scidb.curT.execute("SELECT count(*) AS 'lineCt' FROM tmpLines;")
+        t = scidb.curT.fetchone() # a tuple with one value
+        print t[0], "lines in file"
+        self.msgArea.ChangeValue(str(t[0]) + " lines in file")
+        infoDict['lineCt'] = t[0]
         
 
     def getFileInfo(self, infoDict):
