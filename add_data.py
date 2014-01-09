@@ -1,5 +1,5 @@
 import wx, sqlite3
-import os, sys
+import os, sys, re
 import scidb
 
 class DropTargetForFilesToParse(wx.FileDropTarget):
@@ -50,12 +50,131 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             return "Done"                       
 
     def parseHoboWareTextFile(self, infoDict):
+
+        """
+        parse a data file exported as text by HoboWare
+        """
+
+        sStrip = '" \x0a\x0d' # characters to strip from parsed items
+        # regular expression pattern to find logger number
+        pLogger = re.compile(r'LGR S/N: (?P<nLogger>\d+)')
+        # regular expression pattern to find sensor number
+        pSensor = re.compile(r'SEN S/N: (?P<nSensor>\d+)')
+        # regular expression pattern to find hour offset
+        pHrOffset = re.compile(r'Time, GMT(?P<sHrOffset>.+)')
+
         self.putTextLinesIntoTmpTable(infoDict)
         #parse file, start with header line; 1st line in this file format
         scidb.curT.execute("SELECT * FROM tmpLines ORDER BY ID;")
         for rec in scidb.curT:
             if rec['ID'] == 1:
-                print rec['Line']
+#                print rec['Line']
+                """
+                Build a dictionary of the channels.
+                The indexes will be the column numbers because all data files have at least that.
+                The value will be a 7-membered list
+                The first item in each list will be the primary key in the Channels table.
+                The list is first created with this = 0.
+                The rest of the list is built up, then the list is sent to a function
+                 that looks in the database.
+                The function fills in the primary key, either existing or newly created.
+                List item 7 will be "new" if the record is new, otherwise "existing"
+                The list contains the text values of logger serial number, sensor serial number,
+                 data type, and data units.
+                The function takes care of filling in all these in their respective tables.
+                When the dictionary is complete, the calling procedure can quickly insert data values
+                 into the data table by just pulling list item [0] for the dictionary key, which key
+                 is the column number in the source file.
+                This loose structure allows some kludgy workarounds for bugs that were in some versions
+                 of the data files.
+                """
+                lHdrs = rec['Line'].split('\t')
+                iCol = 0
+                dictChannels = {}
+                # list items are: ChannelID, originalCol, Logger, Sensor, dataType, dataUnits, hrOffset
+                lChannel = [0, 0, '', '', '', '', 0, '']
+
+                for sHdr in lHdrs:
+                    iCol += 1
+                    if (iCol == 1): # just the pound sign, header for row num
+                        # possibly preceeded by 3 junk characters
+                        # do nothing
+                        pass
+                    elif (iCol == 2): # the hour offset, and clue to export bugs we need to workaround
+                        sHd = sHdr.strip(sStrip)
+    #                    lDiagnostics.append("Col " + str(iCol) + ": " + sHd)
+                        m = pHrOffset.search(sHd)
+                        if m:
+                            sTimeOffset = m.group('sHrOffset')
+    #                        lDiagnostics.append("UTC offset found: " + sTimeOffset)
+                            lTimeOffsetComponents = sTimeOffset.split(':')
+                            sTimeOffsetHrs = lTimeOffsetComponents[0]
+    #                        lDiagnostics.append("Time offset hours: " + sTimeOffsetHrs)
+    #                        sTimeOffsetMins = lTimeOffsetComponents[1]
+    #                        lDiagnostics.append("Time offset minutes: " + sTimeOffsetMins)
+                            iHrOffset = int(sTimeOffsetHrs)
+    #                        lDiagnostics.append("Hour offset as integer: " + str(iHrOffset))
+                            lChannel[6] = iHrOffset # this will be the same for the whole file
+    #                        lDiagnostics.append(lChannel)
+                        else:
+    #                        sUTOffset = '(na)'
+    #                        lDiagnostics.append("UTC offset not found")
+                            iHrOffset = 0
+                        pass
+                    else: # a header for a data column
+                        lChannel[1] = iCol
+                        sHd = sHdr.strip(sStrip)
+    #                    lDiagnostics.append("Col " + str(iCol) + ": " + sHd)
+                        # get the type and units
+                        lTypeUnits = sHd.split('(',2)
+                        sTypeUnits = lTypeUnits[0].strip(' ')
+                        lTypeUnits = sTypeUnits.split(',')
+                        if lTypeUnits[0]:
+                            sType = lTypeUnits[0].strip(' ')
+                        else:
+                            sType = '(na)'
+    #                    lDiagnostics.append("Data type: " + sType)
+                        lChannel[4] = sType
+                        if lTypeUnits[1]:
+                            sUnits = lTypeUnits[1].strip(' ')
+                        else:
+                            sUnits = '(na)'
+    #                    lDiagnostics.append("Units: " + sUnits)
+                        lChannel[5] = sUnits
+                        # get the logger ID and sensor ID
+                        m = pLogger.search(sHd)
+                        if m:
+                            sLoggerID = m.group('nLogger')
+                        else:
+                            sLoggerID = '(na)'
+    #                    lDiagnostics.append("Logger ID: " + sLoggerID)
+                        lChannel[2] = sLoggerID
+                        m = pSensor.search(sHd)
+                        if m:
+                            sSensorID = m.group('nSensor')
+                        else:
+                            sSensorID = "(na)"
+    #                    lDiagnostics.append("Sensor ID: " + sSensorID)
+                        lChannel[3] = sSensorID
+    #                    lDiagnostics.append(lChannel)
+                        dictChannels[iCol] = (lChannel[:])
+                # gone through all the headers, apply bug workarounds here
+                
+#                lDiagnostics.append('Before Channel function')
+                print 'Before Channel function'
+                for ky in dictChannels.keys():
+                    print dictChannels[ky][:]
+#                    lDiagnostics.append(dictChannels[ky][:])
+                for ky in dictChannels.keys():
+                    scidb.assureChannelIsInDB(dictChannels[ky])
+                print 'After Channel function'
+#                lDiagnostics.append('After Channel function')
+                for ky in dictChannels.keys():
+                    print dictChannels[ky][:]
+#                    lDiagnostics.append(dictChannels[ky][:])
+                
+            else: # not the 1st (header) line, but a line of data
+                pass
        
     def putTextLinesIntoTmpTable(self, infoDict):
         """

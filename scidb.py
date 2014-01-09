@@ -61,6 +61,13 @@ try:
         """)
 
     curD.executescript("""
+        CREATE UNIQUE INDEX IF NOT EXISTS "DataChannels_NoDup_ColLogSenTypUntTZ"
+        ON "DataChannels"
+        ("Column" ASC, "LoggerID" ASC, "SensorID" ASC,
+        "DataTypeID" ASC, "DataUnitsID" ASC, "UTC_Offset" ASC);
+        """)
+
+    curD.executescript("""
         CREATE TABLE IF NOT EXISTS "Data" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "UTTimestamp" DATETIME NOT NULL ,
