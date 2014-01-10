@@ -1,10 +1,10 @@
-import sqlite3
+import sqlite3, datetime
 import sys
 datConn = None
 tmpConn = None
 
 try:
-    datConn = sqlite3.connect('sci_data.db')
+    datConn = sqlite3.connect('sci_data.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
     datConn.execute('pragma foreign_keys=ON') # enforce foreign keys
     # check that foreign keys constraint was correctly set
     rslt = datConn.execute('pragma foreign_keys')
@@ -152,7 +152,7 @@ except sqlite3.Error, e:
     sys.exit(1)
 
 try:
-    tmpConn = sqlite3.connect('tmp.db')
+    tmpConn = sqlite3.connect('tmp.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
     tmpConn.execute('pragma foreign_keys=ON')
     # check that foreign keys constraint was correctly set
     rslt = tmpConn.execute('pragma foreign_keys')
@@ -174,6 +174,24 @@ try:
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "Line" VARCHAR(50) NOT NULL UNIQUE);
         """)
+
+    curT.execute("drop table if exists testDates")
+    curT.execute("create table if not exists testDates(d date, ts timestamp)")
+
+    today = datetime.date.today()
+    now = datetime.datetime.now()
+
+    curT.execute("insert into testDates(d, ts) values (?, ?)", (today, now))
+    curT.execute("select d, ts from testDates")
+    rec = curT.fetchone()
+    print today, "=>", rec['d'], type(rec['d'])
+    print now, "=>", rec['ts'], type(rec['ts'])
+
+    curT.execute('select current_date as "d [date]", current_timestamp as "ts [timestamp]"')
+    rec = curT.fetchone()
+    print "current_date", rec['d'], type(rec['d'])
+    print "current_timestamp", rec['ts'], type(rec['ts'])
+
 except sqlite3.Error, e:
     print 'Error in "tmp.db": %s' % e.args[0]
     sys.exit(1)

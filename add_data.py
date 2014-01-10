@@ -1,4 +1,4 @@
-import wx, sqlite3
+import wx, sqlite3, datetime
 import os, sys, re
 import scidb
 
