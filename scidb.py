@@ -26,27 +26,19 @@ try:
         CREATE TABLE IF NOT EXISTS "Loggers"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "LoggerSerialNumber" VARCHAR(32) NOT NULL UNIQUE);
-        """)
 
-    curD.executescript("""
         CREATE TABLE IF NOT EXISTS "Sensors"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "SensorSerialNumber" VARCHAR(32) NOT NULL UNIQUE);
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "DataTypes"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "TypeText" VARCHAR(50) NOT NULL UNIQUE);
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "DataUnits"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "UnitsText" VARCHAR(50) NOT NULL  UNIQUE );
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "DataChannels" 
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "Column" INTEGER NOT NULL ,
@@ -60,16 +52,12 @@ try:
         FOREIGN KEY("DataTypeID") REFERENCES DataTypes("ID"),
         FOREIGN KEY("DataUnitsID") REFERENCES DataUnits("ID")
         );
-        """)
-
-    curD.executescript("""
+        
         CREATE UNIQUE INDEX IF NOT EXISTS "DataChannels_NoDup_ColLogSenTypUntTZ"
         ON "DataChannels"
         ("Column" ASC, "LoggerID" ASC, "SensorID" ASC,
         "DataTypeID" ASC, "DataUnitsID" ASC, "UTC_Offset" ASC);
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "Data" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "UTTimestamp" timestamp NOT NULL ,
@@ -78,20 +66,14 @@ try:
         "Use" BOOL NOT NULL  DEFAULT 1,
         FOREIGN KEY("ChannelID") REFERENCES DataChannels("ID")
         );
-        """)
-
-    curD.executescript("""
+        
         CREATE UNIQUE INDEX IF NOT EXISTS "Data_NoDup_TimeChan"
         ON "Data"
         ("UTTimestamp" ASC, "ChannelID" ASC);
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "DataDates" 
         ("Date" date PRIMARY KEY  NOT NULL  UNIQUE );
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "FieldSites" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "SiteName" VARCHAR(50) NOT NULL UNIQUE,
@@ -99,15 +81,11 @@ try:
         "LongitudeDecDegrees" FLOAT,
         "UTC_Offset" INTEGER
         );
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "StationSpecs"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "InstrumentSpec" VARCHAR(255) NOT NULL UNIQUE);
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "Stations" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "StationName" VARCHAR(25) NOT NULL UNIQUE,
@@ -118,24 +96,18 @@ try:
         FOREIGN KEY("SiteID") REFERENCES FieldSites("ID"),
         FOREIGN KEY("InstrumentSpecID") REFERENCES StationSpecs("ID")
         );
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "DataSeriesSpecs"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "DeviceSpec" VARCHAR(255) NOT NULL UNIQUE);
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "DataSeries" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "DataSeriesDescription" VARCHAR(30) NOT NULL UNIQUE,
         "DeviceSpecID" INTEGER,
         FOREIGN KEY("DeviceSpecID") REFERENCES DataSeriesSpecs("ID")
         );
-        """)
-
-    curD.executescript("""
+        
         CREATE TABLE IF NOT EXISTS "ChannelSegments" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "ChannelID" INTEGER NOT NULL ,
@@ -147,6 +119,7 @@ try:
         FOREIGN KEY("StationID") REFERENCES Stations("ID")
         FOREIGN KEY("SeriesID") REFERENCES DataSeries("ID")
         );
+        
         """)
 
 except sqlite3.Error, e:
