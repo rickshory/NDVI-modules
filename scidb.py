@@ -5,6 +5,8 @@ tmpConn = None
 
 try:
     datConn = sqlite3.connect('sci_data.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+    # importing the 'datetime' module declares some new SQLite field types: 'date' and 'timestamp'
+    # 'PARSE_DECLTYPES' acivates them
     datConn.execute('pragma foreign_keys=ON') # enforce foreign keys
     # check that foreign keys constraint was correctly set
     rslt = datConn.execute('pragma foreign_keys')
@@ -70,7 +72,7 @@ try:
     curD.executescript("""
         CREATE TABLE IF NOT EXISTS "Data" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
-        "UTTimestamp" DATETIME NOT NULL ,
+        "UTTimestamp" timestamp NOT NULL ,
         "ChannelID" INTEGER NOT NULL ,
         "Value" FLOAT NOT NULL ,
         "Use" BOOL NOT NULL  DEFAULT 1,
@@ -86,7 +88,7 @@ try:
 
     curD.executescript("""
         CREATE TABLE IF NOT EXISTS "DataDates" 
-        ("Date" DATETIME PRIMARY KEY  NOT NULL  UNIQUE );
+        ("Date" date PRIMARY KEY  NOT NULL  UNIQUE );
         """)
 
     curD.executescript("""
@@ -137,8 +139,8 @@ try:
         CREATE TABLE IF NOT EXISTS "ChannelSegments" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "ChannelID" INTEGER NOT NULL ,
-        "SegmentBegin" DATETIME NOT NULL ,
-        "SegmentEnd" DATETIME,
+        "SegmentBegin" timestamp NOT NULL ,
+        "SegmentEnd" timestamp,
         "StationID" INTEGER,
         "SeriesID" INTEGER,
         FOREIGN KEY("ChannelID") REFERENCES DataChannels("ID")
@@ -176,13 +178,13 @@ try:
         """)
 
     curT.execute("drop table if exists testDates")
-    curT.execute("create table if not exists testDates(d date, ts timestamp)")
+    curT.execute("create table if not exists testDates(note varchar[50], d date, ts timestamp)")
 
     today = datetime.date.today()
     now = datetime.datetime.now()
 
-    curT.execute("insert into testDates(d, ts) values (?, ?)", (today, now))
-    curT.execute("select d, ts from testDates")
+    curT.execute("insert into testDates(note, d, ts) values (?, ?, ?)", ('ck', today, now))
+    curT.execute("select note, d, ts from testDates")
     rec = curT.fetchone()
     print today, "=>", rec['d'], type(rec['d'])
     print now, "=>", rec['ts'], type(rec['ts'])

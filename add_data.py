@@ -157,6 +157,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 sTimeStamp = lData[1]
                 for iCol in range(len(lData)):
                     if iCol > 1: # an item of data
+                        scidb.curT.execute("insert into testDates(note, d, ts) values (?, ?, ?)", ("test insert", sTimeStamp, sTimeStamp))
                         print sTimeStamp, lData[iCol]
                         
                     
