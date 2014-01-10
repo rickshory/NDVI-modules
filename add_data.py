@@ -30,7 +30,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         for initial testing, simply parses any text file into
         the temp DB, the table "Text"
         """
-        dctInfo = {'fullPath': filename}
+        dctInfo = {}
+        dctInfo['fullPath'] = filename
         
         self.getFileInfo(dctInfo)
         print dctInfo
@@ -44,6 +45,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                                     dctInfo['dataFormat'] + '"\n')
         if dctInfo['dataFormat'] == r"Hoboware text export":
             self.parseHoboWareTextFile(dctInfo)
+        # add others as else if here
         else:
             self.progressArea.SetInsertionPointEnd()
             self.progressArea.WriteText('Parsing of this data format is not implemented yet\n')
@@ -89,42 +91,27 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                  of the data files.
                 """
                 lHdrs = rec['Line'].split('\t')
-                iCol = 0
+                # ignore item zero, just a pound sign and possibly three junk characters
+                # item 1 is the hour offset, and clue to export bugs we need to workaround
+                sHd = lHdrs[1].strip(sStrip)
+                m = pHrOffset.search(sHd)
+                if m:
+                    sTimeOffset = m.group('sHrOffset')
+                    lTimeOffsetComponents = sTimeOffset.split(':')
+                    sTimeOffsetHrs = lTimeOffsetComponents[0]
+                    iHrOffset = int(sTimeOffsetHrs)
+                else:
+                    iHrOffset = 0
+               
                 dictChannels = {}
-                # list items are: ChannelID, originalCol, Logger, Sensor, dataType, dataUnits, hrOffset
-                lChannel = [0, 0, '', '', '', '', 0, '']
+                # list items are: ChannelID, originalCol, Logger, Sensor, dataType, dataUnits, hrOffset, new
+                lChannel = [0, 0, '', '', '', '', iHrOffset, '']
 
-                for sHdr in lHdrs:
-                    iCol += 1
-                    if (iCol == 1): # just the pound sign, header for row num
-                        # possibly preceeded by 3 junk characters
-                        # do nothing
-                        pass
-                    elif (iCol == 2): # the hour offset, and clue to export bugs we need to workaround
-                        sHd = sHdr.strip(sStrip)
-    #                    lDiagnostics.append("Col " + str(iCol) + ": " + sHd)
-                        m = pHrOffset.search(sHd)
-                        if m:
-                            sTimeOffset = m.group('sHrOffset')
-    #                        lDiagnostics.append("UTC offset found: " + sTimeOffset)
-                            lTimeOffsetComponents = sTimeOffset.split(':')
-                            sTimeOffsetHrs = lTimeOffsetComponents[0]
-    #                        lDiagnostics.append("Time offset hours: " + sTimeOffsetHrs)
-    #                        sTimeOffsetMins = lTimeOffsetComponents[1]
-    #                        lDiagnostics.append("Time offset minutes: " + sTimeOffsetMins)
-                            iHrOffset = int(sTimeOffsetHrs)
-    #                        lDiagnostics.append("Hour offset as integer: " + str(iHrOffset))
-                            lChannel[6] = iHrOffset # this will be the same for the whole file
-    #                        lDiagnostics.append(lChannel)
-                        else:
-    #                        sUTOffset = '(na)'
-    #                        lDiagnostics.append("UTC offset not found")
-                            iHrOffset = 0
-                        pass
-                    else: # a header for a data column
-                        lChannel[1] = iCol
-                        sHd = sHdr.strip(sStrip)
-    #                    lDiagnostics.append("Col " + str(iCol) + ": " + sHd)
+                for iCol in range(len(lHdrs)):
+                    # skip items 0 & 1
+                    if iCol > 1: # a header for a data column
+                        lChannel[1] = iCol + 1 # stored columns are 1-based
+                        sHd = lHdrs[iCol].strip(sStrip)
                         # get the type and units
                         lTypeUnits = sHd.split('(',2)
                         sTypeUnits = lTypeUnits[0].strip(' ')
@@ -133,13 +120,11 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                             sType = lTypeUnits[0].strip(' ')
                         else:
                             sType = '(na)'
-    #                    lDiagnostics.append("Data type: " + sType)
                         lChannel[4] = sType
                         if lTypeUnits[1]:
                             sUnits = lTypeUnits[1].strip(' ')
                         else:
                             sUnits = '(na)'
-    #                    lDiagnostics.append("Units: " + sUnits)
                         lChannel[5] = sUnits
                         # get the logger ID and sensor ID
                         m = pLogger.search(sHd)
@@ -147,34 +132,35 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                             sLoggerID = m.group('nLogger')
                         else:
                             sLoggerID = '(na)'
-    #                    lDiagnostics.append("Logger ID: " + sLoggerID)
                         lChannel[2] = sLoggerID
                         m = pSensor.search(sHd)
                         if m:
                             sSensorID = m.group('nSensor')
                         else:
                             sSensorID = "(na)"
-    #                    lDiagnostics.append("Sensor ID: " + sSensorID)
                         lChannel[3] = sSensorID
-    #                    lDiagnostics.append(lChannel)
-                        dictChannels[iCol] = (lChannel[:])
+                        dictChannels[iCol + 1] = (lChannel[:])
                 # gone through all the headers, apply bug workarounds here
                 
-#                lDiagnostics.append('Before Channel function')
                 print 'Before Channel function'
                 for ky in dictChannels.keys():
                     print dictChannels[ky][:]
-#                    lDiagnostics.append(dictChannels[ky][:])
                 for ky in dictChannels.keys():
                     scidb.assureChannelIsInDB(dictChannels[ky])
                 print 'After Channel function'
-#                lDiagnostics.append('After Channel function')
                 for ky in dictChannels.keys():
                     print dictChannels[ky][:]
-#                    lDiagnostics.append(dictChannels[ky][:])
                 
             else: # not the 1st (header) line, but a line of data
-                pass
+                lData = rec['Line'].split('\t')
+                # ignore item zero, a line number, not used
+                sTimeStamp = lData[1]
+                for iCol in range(len(lData)):
+                    if iCol > 1: # an item of data
+                        print sTimeStamp, lData[iCol]
+                        
+                    
+                
        
     def putTextLinesIntoTmpTable(self, infoDict):
         """
