@@ -34,7 +34,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         dctInfo['fullPath'] = filename
         
         self.getFileInfo(dctInfo)
-        print dctInfo
+#        print dctInfo
+        for k in dctInfo:
+            print k, dctInfo[k]
         if not ('dataFormat' in dctInfo):
             self.progressArea.SetInsertionPointEnd()
             self.progressArea.WriteText('Could not determine data format' + '\n')
@@ -69,6 +71,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         #parse file, start with header line; 1st line in this file format
         scidb.curT.execute("SELECT * FROM tmpLines ORDER BY ID;")
         for rec in scidb.curT:
+            print rec['ID'], rec['Line']
             if rec['ID'] == 1:
 #                print rec['Line']
                 """
@@ -144,12 +147,12 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 
                 print 'Before Channel function'
                 for ky in dictChannels.keys():
-                    print dictChannels[ky][:]
+                    print ky, dictChannels[ky][:]
                 for ky in dictChannels.keys():
                     scidb.assureChannelIsInDB(dictChannels[ky])
                 print 'After Channel function'
                 for ky in dictChannels.keys():
-                    print dictChannels[ky][:]
+                    print ky, dictChannels[ky][:]
                 
             else: # not the 1st (header) line, but a line of data
                 lData = rec['Line'].split('\t')
@@ -159,7 +162,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                     if iCol > 1: # an item of data
                         tsAsTime = datetime.datetime.strptime(sTimeStamp, "%Y-%m-%d %H:%M:%S")
                         tsAsDate = tsAsTime.date()
-                        scidb.curT.execute("insert into testDates(note, d, ts) values (?, ?, ?)", ("test insert", tsAsDate, tsAsTime))
+                        stInsert = str(lData[iCol]) + " test insert"
+                        scidb.curT.execute("insert into testDates(note, d, ts) values (?, ?, ?)", (stInsert, tsAsDate, tsAsTime))
                         print sTimeStamp, lData[iCol]
                         
                     
