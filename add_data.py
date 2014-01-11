@@ -233,8 +233,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 if  len(lstLines) >= numToInsertAtOnce:
                     self.msgArea.ChangeValue("counting lines in file: " +
                             str(ct))
-                    # could also use curT instead of tmpConn; below uses implicit cursor
-                    scidb.tmpConn.executemany(stSQL, lstLines)
+                    scidb.tmpConn.execute("BEGIN DEFERRED TRANSACTION")
+                    scidb.curT.executemany(stSQL, lstLines)
+                    scidb.tmpConn.execute("COMMIT TRANSACTION")
                     lstLines = []
                     wx.Yield()
                 scidb.tmpConn.commit()
@@ -243,7 +244,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         # put last batch of lines into DB
         if  len(lstLines) > 0:
             wx.Yield()
-            scidb.tmpConn.executemany(stSQL, lstLines)
+            scidb.tmpConn.execute("BEGIN DEFERRED TRANSACTION")
+            scidb.curT.executemany(stSQL, lstLines)
+            scidb.tmpConn.execute("COMMIT TRANSACTION")
             lstLines = []
             wx.Yield()
         # get count
