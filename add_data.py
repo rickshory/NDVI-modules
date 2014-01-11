@@ -66,8 +66,13 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         pSensor = re.compile(r'SEN S/N: (?P<nSensor>\d+)')
         # regular expression pattern to find hour offset
         pHrOffset = re.compile(r'Time, GMT(?P<sHrOffset>.+)')
+        dataRecItemCt = 0
+        dataRecsAdded = 0
+        dataRecsDupSkipped = 0
 
+        print "About to put lines into temp table"
         self.putTextLinesIntoTmpTable(infoDict)
+        print "Finished putting lines into temp table"
         #parse file, start with header line; 1st line in this file format
         scidb.curT.execute("SELECT * FROM tmpLines ORDER BY ID;")
         for rec in scidb.curT:
@@ -151,24 +156,52 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 print 'After Channel function'
                 for ky in dictChannels.keys():
                     print ky, dictChannels[ky][:]
+                # make a list of channel IDs for the rest of this file, for quick lookup
+                # it is indexed by the columns list, and is zero-based
+                lCh = []
+                for iCol in range(len(lHdrs)):
+                    iNomCol = iCol + 1
+                    if iNomCol in dictChannels:
+                        lChanSet = dictChannels[iNomCol][:]
+                        lCh.append(lChanSet[0])
+                    else: # does not correspond to a data colum
+                        lCh.append(0) # placeholder, to make list indexes work right
                 
             else: # not the 1st (header) line, but a line of data
                 lData = rec['Line'].split('\t')
                 # ignore item zero, a line number, not used
                 sTimeStamp = lData[1]
+                tsAsTime = datetime.datetime.strptime(sTimeStamp, "%Y-%m-%d %H:%M:%S")
+                tsAsTime.replace(tzinfo=None) # make sure it does not get local timezone info
+                tsAsTime = tsAsTime + datetime.timedelta(hours = -iHrOffset)
+                tsAsDate = tsAsTime.date()
+                stSQL = "INSERT INTO Data (UTTimestamp, ChannelID, Value) VALUES (?, ?, ?)"
                 for iCol in range(len(lData)):
                     if iCol > 1: # an item of data
-                        tsAsTime = datetime.datetime.strptime(sTimeStamp, "%Y-%m-%d %H:%M:%S")
-                        tsAsDate = tsAsTime.date()
-                        stInsert = str(lData[iCol]) + " test insert"
-    # note: this 2nd call using curT messes up the previous one, and 1st call will not iterate out any more lines
-                        scidb.curT.execute("insert into testDates(note, d, ts) values (?, ?, ?)", (stInsert, tsAsDate, tsAsTime))
-                        print sTimeStamp, lData[iCol]
-                # test if SQLite time function will correctly update a Python timestamp
-                # needed if batch-correcting clock errors in logging instruments
-                stSQL = "UPDATE testDates SET ts = datetime(ts, '+8 hour') WHERE ts < '2014-01-01'"
-                scidb.curT.execute(stSQL)
-                
+                        # give some progress diagnostics
+                        dataRecItemCt += 1
+                        if dataRecItemCt % 100 == 0:
+                            self.msgArea.ChangeValue("Line " + str(rec['ID']) +
+                                " of " + str(infoDict['lineCt']) + ", " +
+                                str(dataRecsAdded) + " records added, " +
+                                str(dataRecsDupSkipped) + " duplicates skipped.")
+                            wx.Yield()
+                        try:
+                            scidb.curD.execute(stSQL, (tsAsTime, lCh[iCol], lData[iCol]))
+                            dataRecsAdded += 1 # count it
+                        except sqlite3.IntegrityError: # item is already in Data table
+                            dataRecsDupSkipped += 1 # count but otherwise ignore
+                        finally:
+                            wx.Yield()
+
+        # finished parsing lines
+        infoDict['numNewDataRecsAdded'] = dataRecsAdded
+        infoDict['numDupDataRecsSkipped'] = dataRecsDupSkipped
+        self.msgArea.ChangeValue(str(infoDict['lineCt']) +
+            " lines processed, " + str(dataRecsAdded) +
+            " data records added to database, " + str(dataRecsDupSkipped) +
+            " duplicates skipped.")
+        
        
     def putTextLinesIntoTmpTable(self, infoDict):
         """
@@ -188,31 +221,38 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         """)
         stSQL = 'INSERT INTO tmpLines(Line) VALUES (?);'
         ct = 0
-        numToInsertAtOnce = 3557 # arbitrary number, guessing to optimize
+        numToInsertAtOnce = 1357 # arbitrary number, guessing to optimize
         lstLines = []
-        with open(infoDict['fullPath'], 'r') as f:
+        with open(infoDict['fullPath'], 'rb') as f:
             for sLine in f:
                 ct += 1
                 # much faster to insert a batch at once
+                wx.Yield()
                 lstLines.append((sLine,))
+                wx.Yield()
                 if  len(lstLines) >= numToInsertAtOnce:
                     self.msgArea.ChangeValue("counting lines in file: " +
                             str(ct))
                     # could also use curT instead of tmpConn; below uses implicit cursor
                     scidb.tmpConn.executemany(stSQL, lstLines)
                     lstLines = []
+                    wx.Yield()
                 scidb.tmpConn.commit()
                 wx.Yield()
         # file should be closed by here, avoid possible corruption if left open
         # put last batch of lines into DB
         if  len(lstLines) > 0:
+            wx.Yield()
             scidb.tmpConn.executemany(stSQL, lstLines)
             lstLines = []
+            wx.Yield()
         # get count
         scidb.curT.execute("SELECT count(*) AS 'lineCt' FROM tmpLines;")
         t = scidb.curT.fetchone() # a tuple with one value
         infoDict['lineCt'] = t[0]
         self.msgArea.ChangeValue(str(infoDict['lineCt']) + " lines in file")
+        wx.Yield()
+        return
 
 
     def getFileInfo(self, infoDict):
