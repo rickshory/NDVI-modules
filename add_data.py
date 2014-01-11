@@ -71,9 +71,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         #parse file, start with header line; 1st line in this file format
         scidb.curT.execute("SELECT * FROM tmpLines ORDER BY ID;")
         for rec in scidb.curT:
-            print rec['ID'], rec['Line']
             if rec['ID'] == 1:
-#                print rec['Line']
                 """
                 Build a dictionary of the channels.
                 The indexes will be the column numbers because all data files have at least that.
@@ -163,10 +161,13 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                         tsAsTime = datetime.datetime.strptime(sTimeStamp, "%Y-%m-%d %H:%M:%S")
                         tsAsDate = tsAsTime.date()
                         stInsert = str(lData[iCol]) + " test insert"
+    # note: this 2nd call using curT messes up the previous one, and 1st call will not iterate out any more lines
                         scidb.curT.execute("insert into testDates(note, d, ts) values (?, ?, ?)", (stInsert, tsAsDate, tsAsTime))
                         print sTimeStamp, lData[iCol]
-                        
-                    
+                # test if SQLite time function will correctly update a Python timestamp
+                # needed if batch-correcting clock errors in logging instruments
+                stSQL = "UPDATE testDates SET ts = datetime(ts, '+8 hour') WHERE ts < '2014-01-01'"
+                scidb.curT.execute(stSQL)
                 
        
     def putTextLinesIntoTmpTable(self, infoDict):
