@@ -397,8 +397,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 
 class ParseFiles(wx.Frame):
     def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title, size = (450, 400))
+        wx.Frame.__init__(self, parent, id, title)
         self.InitUI()
+        self.SetSize((450, 400))
 #        self.Centre()
         self.Show(True)
 
