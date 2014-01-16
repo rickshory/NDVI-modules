@@ -182,11 +182,11 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                         dataRecItemCt += 1
                         if dataRecItemCt % 100 == 0:
                             self.msgArea.ChangeValue("Line " + str(rec['ID']) +
-                                " of " + str(infoDict['lineCt']) + ", " +
+                                " of " + str(infoDict['lineCt']) + "; " +
                                 str(dataRecsAdded) + " records added, " +
                                 str(dataRecsDupSkipped) + " duplicates skipped.")
                             wx.Yield()
-                        try:
+                        try: # much faster to try and fail than to test first
                             scidb.curD.execute(stSQL, (tsAsTime, lCh[iCol], lData[iCol]))
                             dataRecsAdded += 1 # count it
                         except sqlite3.IntegrityError: # item is already in Data table
@@ -198,7 +198,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         infoDict['numNewDataRecsAdded'] = dataRecsAdded
         infoDict['numDupDataRecsSkipped'] = dataRecsDupSkipped
         self.msgArea.ChangeValue(str(infoDict['lineCt']) +
-            " lines processed, " + str(dataRecsAdded) +
+            " lines processed; " + str(dataRecsAdded) +
             " data records added to database, " + str(dataRecsDupSkipped) +
             " duplicates skipped.")
         
@@ -221,9 +221,10 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         """)
         stSQL = 'INSERT INTO tmpLines(Line) VALUES (?);'
         ct = 0
-        numToInsertAtOnce = 1357 # arbitrary number, guessing to optimize
+        numToInsertAtOnce = 1000 # arbitrary number, guessing to optimize
         lstLines = []
         with open(infoDict['fullPath'], 'rb') as f:
+            
             for sLine in f:
                 ct += 1
                 # much faster to insert a batch at once
