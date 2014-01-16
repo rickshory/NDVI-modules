@@ -476,7 +476,6 @@ class ParseFilesFrame(wx.Frame):
         self.Show(True)
 
     def InitUI(self):
-
         framePanel = ParseFilesPanel(self, wx.ID_ANY)
 
 app = wx.App()
