@@ -478,6 +478,10 @@ class ParseFilesFrame(wx.Frame):
     def InitUI(self):
         framePanel = ParseFilesPanel(self, wx.ID_ANY)
 
-app = wx.App()
-ParseFilesFrame(None, wx.ID_ANY, 'Add Data to Database')
-app.MainLoop()
+def main():
+    app = wx.App()
+    ParseFilesFrame(None, wx.ID_ANY, 'Add Data to Database')
+    app.MainLoop() 
+
+if __name__ == '__main__':
+    main()
