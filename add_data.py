@@ -393,40 +393,34 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 pass
 
 
-#
-
-class ParseFilesFrame(wx.Frame):
-    def __init__(self, parent, id, title):
-        wx.Frame.__init__(self, parent, id, title)
+class ParseFilesPanel(wx.Panel):
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id)
         self.InitUI()
-        self.SetSize((450, 400))
-#        self.Centre()
-        self.Show(True)
 
     def InitUI(self):
 
-        framePanel = wx.Panel(self)
         GBSizer = wx.GridBagSizer(5, 5)
 
-        hdr = wx.StaticText(framePanel, label="Drag files below to add their data to the database")
+        hdr = wx.StaticText(self, label="Drag files below to add their data to the database")
         GBSizer.Add(hdr, pos=(0, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-        btnShowLog = wx.Button(framePanel, label="Show Log", size=(90, 28))
+        btnShowLog = wx.Button(self, label="Show Log", size=(90, 28))
         btnShowLog.Bind(wx.EVT_BUTTON, lambda evt, str=btnShowLog.GetLabel(): self.onClick_BtnShowLog(evt, str))
 #        btnShowLog.Bind(wx.EVT_BUTTON, OnBtnShowLogClick)
         GBSizer.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
 
-        textProgress = wx.TextCtrl(framePanel, style = wx.TE_MULTILINE)
+        textProgress = wx.TextCtrl(self, style = wx.TE_MULTILINE)
         GBSizer.Add(textProgress, pos=(1, 0), span=(4, 6),
             flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
             border=5)
 
-        lblProgTitle = wx.StaticText(framePanel, wx.ID_ANY, "Progress:")
+        lblProgTitle = wx.StaticText(self, wx.ID_ANY, "Progress:")
         GBSizer.Add(lblProgTitle, pos=(5, 0), span=(1, 1),
             flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
             border=5)
 
-        textProgMsgs = wx.TextCtrl(framePanel, style = wx.TE_MULTILINE)
+        textProgMsgs = wx.TextCtrl(self, style = wx.TE_MULTILINE)
         GBSizer.Add(textProgMsgs, pos=(5, 1), span=(1, 5),
             flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
             border=5)
@@ -434,11 +428,11 @@ class ParseFilesFrame(wx.Frame):
         dt = DropTargetForFilesToParse(textProgress, textProgMsgs)
         textProgress.SetDropTarget(dt)
 
-        txtSelManual = wx.StaticText(framePanel, label="Or select file manually")
+        txtSelManual = wx.StaticText(self, label="Or select file manually")
         GBSizer.Add(txtSelManual, pos=(6, 0), span=(1, 5),
             flag=wx.ALIGN_RIGHT|wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
-        btnBrowse = wx.Button(framePanel, label="Browse", size=(90, 28))
+        btnBrowse = wx.Button(self, label="Browse", size=(90, 28))
         btnBrowse.Bind(wx.EVT_BUTTON, lambda evt, str=btnBrowse.GetLabel(): self.onClick_BtnBrowse(evt, str))
 
         GBSizer.Add(btnBrowse, pos=(6, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
@@ -446,7 +440,7 @@ class ParseFilesFrame(wx.Frame):
         GBSizer.AddGrowableCol(1)
         GBSizer.AddGrowableRow(2)
 
-        framePanel.SetSizerAndFit(GBSizer)
+        self.SetSizerAndFit(GBSizer)
 
     def openfile(self, event):
         dlg = wx.FileDialog(self, "Choose a file", os.getcwd(), "", "*.*", wx.OPEN)
@@ -471,6 +465,19 @@ class ParseFilesFrame(wx.Frame):
         wx.MessageBox('"Browse" is not implemented yet', 'Info', 
             wx.OK | wx.ICON_INFORMATION)
 
+
+
+class ParseFilesFrame(wx.Frame):
+    def __init__(self, parent, id, title):
+        wx.Frame.__init__(self, parent, id, title)
+        self.InitUI()
+        self.SetSize((450, 400))
+#        self.Centre()
+        self.Show(True)
+
+    def InitUI(self):
+
+        framePanel = ParseFilesPanel(self, wx.ID_ANY)
 
 app = wx.App()
 ParseFilesFrame(None, wx.ID_ANY, 'Add Data to Database')
