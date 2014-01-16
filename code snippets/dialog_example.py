@@ -9,7 +9,7 @@ class MyDialog(wx.Dialog):
         self.SetTitle("Changed Title") # overrides title passed above
 
     def InitUI(self):
-        pnl = ck_extern_pnl.ExternalPanel(self, -1)
+        pnl = ck_extern_pnl.ExternalPanel(self, wx.ID_ANY)
    
     def OnClose(self, event):
         self.Destroy()

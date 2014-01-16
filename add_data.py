@@ -420,7 +420,7 @@ class ParseFiles(wx.Frame):
             flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
             border=5)
 
-        lblProgTitle = wx.StaticText(framePanel, -1, "Progress:")
+        lblProgTitle = wx.StaticText(framePanel, wx.ID_ANY, "Progress:")
         GBSizer.Add(lblProgTitle, pos=(5, 0), span=(1, 1),
             flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
             border=5)
@@ -472,5 +472,5 @@ class ParseFiles(wx.Frame):
 
 
 app = wx.App()
-ParseFiles(None, -1, 'Add Data to Database')
+ParseFiles(None, wx.ID_ANY, 'Add Data to Database')
 app.MainLoop()
