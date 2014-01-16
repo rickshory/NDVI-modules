@@ -395,7 +395,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 
 #
 
-class ParseFiles(wx.Frame):
+class ParseFilesFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title)
         self.InitUI()
@@ -473,5 +473,5 @@ class ParseFiles(wx.Frame):
 
 
 app = wx.App()
-ParseFiles(None, wx.ID_ANY, 'Add Data to Database')
+ParseFilesFrame(None, wx.ID_ANY, 'Add Data to Database')
 app.MainLoop()
