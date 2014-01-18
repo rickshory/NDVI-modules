@@ -167,11 +167,38 @@ try:
         "SegmentEnd" timestamp,
         "StationID" INTEGER,
         "SeriesID" INTEGER,
+        CHECK ("SegmentEnd" IS NULL or ("SegmentEnd" > "SegmentBegin"))
         FOREIGN KEY("ChannelID") REFERENCES DataChannels("ID")
         FOREIGN KEY("StationID") REFERENCES Stations("ID")
         FOREIGN KEY("SeriesID") REFERENCES DataSeries("ID")
         );
         
+        CREATE VIEW IF NOT EXISTS "ChannelsWithMultipleSegments"
+        AS SELECT ChannelSegments.ChannelID
+        FROM ChannelSegments
+        GROUP BY ChannelSegments.ChannelID
+        HAVING (((Count(ChannelSegments.ID))>1));
+
+        CREATE VIEW IF NOT EXISTS "ChannelsWithOneSegment"
+        AS SELECT ChannelSegments.ChannelID
+        FROM ChannelSegments
+        GROUP BY ChannelSegments.ChannelID
+        HAVING (((Count(ChannelSegments.ID))=1));
+
+        CREATE VIEW IF NOT EXISTS "ChannelsWithZeroSegments"
+        AS SELECT DataChannels.ID AS ChannelID
+        FROM DataChannels LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID
+        WHERE (((ChannelSegments.ChannelID) Is Null));
+
+        CREATE VIEW IF NOT EXISTS "OpenEndedSegments"
+        AS SELECT ChannelSegments.ID, ChannelSegments.SegmentBegin,
+        Min(FollowingSegments.SegmentBegin) AS NextSegBegin
+        FROM ChannelSegments LEFT JOIN ChannelSegments AS FollowingSegments
+        ON ChannelSegments.ChannelID = FollowingSegments.ChannelID
+        WHERE (((ChannelSegments.SegmentEnd) Is Null)
+        AND (ChannelSegments.SegmentBegin < FollowingSegments.SegmentBegin))
+        GROUP BY ChannelSegments.ID, ChannelSegments.SegmentBegin;
+
         """)
 
 except sqlite3.Error, e:
@@ -293,6 +320,54 @@ def assureChannelIsInDB(lChanList):
         lChanList[7] = 'existing'
     return lChanList
 
+def autofixChannelSegments():
+    """
+    A channel segment must have a start time, but end time can be null
+    End time null means "all the data since the start time"
+    Queries are written to replace null end time with Now
+    A channel segment can have a start time that is the same as the stop time of the previous segment
+    Query logic is always >= startTime and < stopTime
+    Similar to days' data, which are >= midnight and < next day's midnight
+    Actions for channels in these states:
+    Multiple segments
+        If a segment does not have an explicit stop time and there is(are) a later segment(s)
+        (which of course have start times, becaue that field is required):
+            Assign explicit stop time to earlier segment, at the start time of first later.
+        If start time is earlier than explicit stop time of previous (overlap):
+            Adjust start time of later segment to be stop time of earlier
+        If data exist for a channel after the latest explicit stop time, create a new segment
+    One segment:
+        If the segment has an explicit end: # assume user entered, do not adjust the segment
+            If there is data after the end:
+                Create a new segment with start time the previous segment's end time
+        Else the segment has no explicit end: # assume auto generated, and possibly still
+        being built, possibly with records being parsed out of chronological order
+            If there are data points earlier than start time, adjust start time to earliest
+    Zero segments:
+        Create one segment with Start as the earliest time in the channel
+    """
+    stSQL = "SELECT COUNT(*) AS 'recCt' FROM OpenEndedSegments;"
+    curD.execute(stSQL)
+    t = curD.fetchone() # a tuple with one value
+    if t[0] > 0: # there is at least one open ended segment
+        # use a temporary table to avoid any problems with aggregates in query
+        curD.execute("DROP TABLE IF EXISTS tmpOpenEndedSegments;")
+        curD.execute("CREATE TABLE tmpOpenEndedSegments AS SELECT * FROM OpenEndedSegments;")
+        stSQL = """
+        UPDATE ChannelSegments 
+        SET 
+         SegmentEnd = (SELECT NextSegBegin 
+          FROM tmpOpenEndedSegments 
+          WHERE ChannelSegments.ID = tmpOpenEndedSegments.ID)
+        WHERE
+         EXISTS (
+          SELECT *
+          FROM tmpOpenEndedSegments
+          WHERE ChannelSegments.ID = tmpOpenEndedSegments.ID
+         );
+         """
+        curD.execute(stSQL)
+    
 
 if __name__ == "__main__":
     pass # nothing yet
