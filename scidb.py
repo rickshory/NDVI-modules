@@ -210,6 +210,22 @@ try:
         WHERE (((PreviousSegments.SegmentEnd) NOT NULL)
         AND ([PreviousSegments].[SegmentBegin]<[ChannelSegments].[SegmentBegin])
         AND ([PreviousSegments].[SegmentEnd]>[ChannelSegments].[SegmentBegin]));
+        
+        CREATE VIEW IF NOT EXISTS "MaxSegmentEnds"
+        AS SELECT ChannelSegments.ChannelID,
+        Max(ChannelSegments.SegmentEnd) AS MaxSegmEnd
+        FROM ChannelSegments
+        WHERE (((ChannelSegments.SegmentEnd) NOT NULL))
+        GROUP BY ChannelSegments.ChannelID;
+        
+        CREATE VIEW IF NOT EXISTS "FirstDataTimeAfterSegmentEnds"
+        AS SELECT MaxSegmentEnds.ChannelID,
+        MaxSegmentEnds.MaxSegmEnd,
+        Min(Data.UTTimestamp) AS FirstAfterMaxEnd
+        FROM MaxSegmentEnds LEFT JOIN Data
+        ON MaxSegmentEnds.ChannelID = Data.ChannelID
+        WHERE (((Data.UTTimestamp)>(MaxSegmentEnds.MaxSegmEnd)))
+        GROUP BY MaxSegmentEnds.ChannelID, MaxSegmentEnds.MaxSegmEnd;
 
         """)
 
@@ -391,8 +407,26 @@ def autofixChannelSegments():
         curD.execute(stSQL)
     # more validity checking here
     # create a channel segment for any channel data after the latest explicit end time
-    
-    # finally, create a channel segment for any data that has none
+    # Make table, which may be empty; just as quick to make the table as to test the source query
+    #curD.execute("DROP TABLE IF EXISTS tmpFirstDataTimeAfterSegmentEnds;")
+    #curD.execute("CREATE TABLE tmpFirstDataTimeAfterSegmentEnds AS SELECT * FROM FirstDataTimeAfterSegmentEnds;")
+    # above, using Data table with 19,560,908 records, took 142.679 seconds
+    # too slow
+    # instead, create a Start after the max End if it doesn't already have a Start later than the max End
+    # regardless if there are data points in that time segment yet
+    stSQL = """
+        INSERT INTO ChannelSegments ( ChannelID, SegmentBegin )
+        SELECT MaxSegmentEnds.ChannelID, MaxSegmentEnds.MaxSegmEnd
+        FROM MaxSegmentEnds
+        WHERE (((MaxSegmentEnds.ChannelID) NOT IN (
+         SELECT MaxSegmentEnds.ChannelID
+         FROM MaxSegmentEnds LEFT JOIN ChannelSegments
+         ON MaxSegmentEnds.ChannelID = ChannelSegments.ChannelID
+         WHERE (([ChannelSegments].[SegmentBegin]>=[MaxSegmentEnds].[MaxSegmEnd]))))
+        );
+    """
+
+    # finally, create a channel segment for any data channel that has none yet
     stSQL = """
     INSERT INTO ChannelSegments ( ChannelID, SegmentBegin )
     SELECT Data.ChannelID, MIN(Data.UTTimestamp) AS MinOfUTTimestamp
