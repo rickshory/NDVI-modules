@@ -199,6 +199,18 @@ try:
         AND (ChannelSegments.SegmentBegin < FollowingSegments.SegmentBegin))
         GROUP BY ChannelSegments.ID, ChannelSegments.SegmentBegin;
 
+        CREATE VIEW IF NOT EXISTS "OverlappingSegments"
+        AS SELECT ChannelSegments.ID,
+        ChannelSegments.SegmentBegin AS CurSegBegin,
+        ChannelSegments.SegmentEnd AS CurSegEnd,
+        PreviousSegments.SegmentBegin AS PrevSegBegin,
+        PreviousSegments.SegmentEnd AS PrevSegEnd
+        FROM ChannelSegments LEFT JOIN ChannelSegments AS PreviousSegments
+        ON ChannelSegments.ChannelID = PreviousSegments.ChannelID
+        WHERE (((PreviousSegments.SegmentEnd) NOT NULL)
+        AND ([PreviousSegments].[SegmentBegin]<[ChannelSegments].[SegmentBegin])
+        AND ([PreviousSegments].[SegmentEnd]>[ChannelSegments].[SegmentBegin]));
+
         """)
 
 except sqlite3.Error, e:
@@ -323,17 +335,24 @@ def assureChannelIsInDB(lChanList):
 def autofixChannelSegments():
     """
     A channel segment must have a start time, but end time can be null
-    End time null means "all the data since the start time"
+    End time null means "from start time on"
     Queries are written to replace null end time with Now
     A channel segment can have a start time that is the same as the stop time of the previous segment
-    Query logic is always >= startTime and < stopTime
+    Query logic should be written >= startTime and < stopTime
     Similar to days' data, which are >= midnight and < next day's midnight
+    Still, automatic fixes try to set a one second gap between segments.
     Actions for channels in these states:
     Multiple segments
         If a segment does not have an explicit stop time and there is(are) a later segment(s)
         (which of course have start times, becaue that field is required):
             Assign explicit stop time to earlier segment, at the start time of first later.
+        [Maybe allow overlaps, as long as user understands they occur]
+        [Maybe reserve checking for inconsistencies to segments the user has tagged with
+        Station and Series]
         If start time is earlier than explicit stop time of previous (overlap):
+            If one segment (A) completely encompasses another (B), such that A.Start < B.Start and
+            A.End > B.End:
+                Delete the larger segment (A) [maybe change this rule]
             Adjust start time of later segment to be stop time of earlier
         If data exist for a channel after the latest explicit stop time, create a new segment
     One segment:
@@ -346,17 +365,20 @@ def autofixChannelSegments():
     Zero segments:
         Create one segment with Start as the earliest time in the channel
     """
-    stSQL = "SELECT COUNT(*) AS 'recCt' FROM OpenEndedSegments;"
-    curD.execute(stSQL)
+    # Check for open-ended segments; use a temporary table to avoid any problems with aggregates in query
+    # Each record (if there are any) will have the ID of a current open ended segment, with the
+    # the start time of the next following segment, which will be used to generate the end
+    # Make table, which may be empty; just as quick to make the table as to test the source query
+    curD.execute("DROP TABLE IF EXISTS tmpOpenEndedSegments;")
+    curD.execute("CREATE TABLE tmpOpenEndedSegments AS SELECT * FROM OpenEndedSegments;")
+    # then, this test for presence will be quick because the temp table is never large
+    curD.execute("SELECT COUNT(*) AS 'recCt' FROM tmpOpenEndedSegments;")
     t = curD.fetchone() # a tuple with one value
     if t[0] > 0: # there is at least one open ended segment
-        # use a temporary table to avoid any problems with aggregates in query
-        curD.execute("DROP TABLE IF EXISTS tmpOpenEndedSegments;")
-        curD.execute("CREATE TABLE tmpOpenEndedSegments AS SELECT * FROM OpenEndedSegments;")
         stSQL = """
         UPDATE ChannelSegments 
         SET 
-         SegmentEnd = (SELECT NextSegBegin 
+         SegmentEnd = (SELECT datetime(NextSegBegin, '-1 second')
           FROM tmpOpenEndedSegments 
           WHERE ChannelSegments.ID = tmpOpenEndedSegments.ID)
         WHERE
@@ -367,6 +389,18 @@ def autofixChannelSegments():
          );
          """
         curD.execute(stSQL)
+    # more validity checking here
+    # create a channel segment for any channel data after the latest explicit end time
+    
+    # finally, create a channel segment for any data that has none
+    stSQL = """
+    INSERT INTO ChannelSegments ( ChannelID, SegmentBegin )
+    SELECT Data.ChannelID, MIN(Data.UTTimestamp) AS MinOfUTTimestamp
+    FROM Data LEFT JOIN ChannelSegments ON Data.ChannelID = ChannelSegments.ChannelID
+    WHERE (((ChannelSegments.ChannelID) Is Null))
+    GROUP BY Data.ChannelID;    
+    """
+    curD.execute(stSQL) # can be rather slow, but necessary
     
 
 if __name__ == "__main__":
