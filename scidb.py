@@ -173,22 +173,11 @@ try:
         FOREIGN KEY("SeriesID") REFERENCES DataSeries("ID")
         );
         
-        CREATE VIEW IF NOT EXISTS "ChannelsWithMultipleSegments"
-        AS SELECT ChannelSegments.ChannelID
-        FROM ChannelSegments
-        GROUP BY ChannelSegments.ChannelID
-        HAVING (((Count(ChannelSegments.ID))>1));
-
         CREATE VIEW IF NOT EXISTS "ChannelsWithOneSegment"
         AS SELECT ChannelSegments.ChannelID
         FROM ChannelSegments
         GROUP BY ChannelSegments.ChannelID
         HAVING (((Count(ChannelSegments.ID))=1));
-
-        CREATE VIEW IF NOT EXISTS "ChannelsWithZeroSegments"
-        AS SELECT DataChannels.ID AS ChannelID
-        FROM DataChannels LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID
-        WHERE (((ChannelSegments.ChannelID) Is Null));
 
         CREATE VIEW IF NOT EXISTS "OpenEndedSegments"
         AS SELECT ChannelSegments.ID, ChannelSegments.SegmentBegin,
@@ -406,6 +395,25 @@ def autofixChannelSegments():
          """
         curD.execute(stSQL)
     # more validity checking here
+    # if a channel has only one segment, assure Start is earliest data for that channel
+
+    curD.execute("SELECT COUNT(*) AS 'recCt' FROM ChannelsWithOneSegment;")
+    t = curD.fetchone() # a tuple with one value
+    if t[0] > 0: # there is at least one channel that has a single segment
+        stSQL = """
+        UPDATE ChannelSegments 
+        SET 
+         SegmentBegin = (SELECT MIN(UTTimestamp)
+          FROM Data 
+          WHERE Data.ChannelID = ChannelSegments.ChannelID)
+        WHERE
+         ChannelSegments.ChannelID IN (
+          SELECT ChannelID
+          FROM ChannelsWithOneSegment
+         );
+         """
+    curD.execute(stSQL)
+
     # create a channel segment for any channel data after the latest explicit end time
     # Make table, which may be empty; just as quick to make the table as to test the source query
     #curD.execute("DROP TABLE IF EXISTS tmpFirstDataTimeAfterSegmentEnds;")
