@@ -412,7 +412,10 @@ def autofixChannelSegments():
           FROM ChannelsWithOneSegment
          );
          """
-    curD.execute(stSQL)
+    #curD.execute(stSQL)
+    # too slow; using Data table with 19,560,908 records, took 4,725.416 seconds (1.3 hours)
+    # this for an operation that seldom does anything
+    # implement a different way
 
     # create a channel segment for any channel data after the latest explicit end time
     # Make table, which may be empty; just as quick to make the table as to test the source query
