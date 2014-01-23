@@ -527,61 +527,81 @@ class SetupStationsPanel(wx.Panel):
 
     def InitUI(self):
 
-        GBSizer = wx.GridBagSizer(5, 5)
+        sizerWholeFrame = wx.GridBagSizer(5, 5)
 
         hdr = wx.StaticText(self, label="Drag Stations and Series to assign them to Channel Segments")
-        GBSizer.Add(hdr, pos=(0, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        sizerWholeFrame.Add(hdr, pos=(0, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
 #        btnShowLog = wx.Button(self, label="Show Log", size=(90, 28))
 #        btnShowLog.Bind(wx.EVT_BUTTON, lambda evt, str=btnShowLog.GetLabel(): self.onClick_BtnShowLog(evt, str))
-#        GBSizer.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
+#        sizerWholeFrame.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
 
         hLine = wx.StaticLine(self)
-        GBSizer.Add(hLine, pos=(1, 0), span=(1, 6), 
+        sizerWholeFrame.Add(hLine, pos=(1, 0), span=(1, 6), 
             flag=wx.EXPAND|wx.BOTTOM, border=1)
 
+        sizerSta = wx.GridBagSizer(5, 5)
+
         hdrStation = wx.StaticText(self, label="Stations:")
-        GBSizer.Add(hdrStation, pos=(2, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        sizerSta.Add(hdrStation, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         
         btnAddStation = wx.Button(self, label="Add", size=(70, 28))
 #        btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnAddStation(evt, str))
-        GBSizer.Add(btnAddStation, pos=(2, 1), flag=wx.RIGHT|wx.BOTTOM, border=5)
+        sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.RIGHT|wx.BOTTOM, border=5)
         
         lstStations = DragList(self, style=wx.LC_LIST)
-        GBSizer.Add(lstStations, pos=(3, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=5)
+        sizerSta.Add(lstStations, pos=(1, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=5)
+
+        sizerWholeFrame.Add(sizerSta, pos=(2, 0), span=(1, 2), 
+            flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT , border=10)
+
+        sizerSer = wx.GridBagSizer(5, 5)
 
         hdrSeries = wx.StaticText(self, label="Series:")
-        GBSizer.Add(hdrSeries, pos=(4, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        sizerSer.Add(hdrSeries, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         
         btnAddSeries = wx.Button(self, label="Add", size=(70, 28))
 #        btnAddSeries.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSeries.GetLabel(): self.onClick_BtnAddSeries(evt, str))
-        GBSizer.Add(btnAddSeries, pos=(4, 1), flag=wx.RIGHT|wx.BOTTOM, border=5)
+        sizerSer.Add(btnAddSeries, pos=(0, 1), flag=wx.RIGHT|wx.BOTTOM, border=5)
         
         lstSeries = DragList(self, style=wx.LC_LIST)
-        GBSizer.Add(lstSeries, pos=(5, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=5)
+        sizerSer.Add(lstSeries, pos=(1, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=5)
+
+        sizerWholeFrame.Add(sizerSer, pos=(3, 0), span=(1, 2), 
+            flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT , border=10)
+
+        sizerChanSegs = wx.GridBagSizer(5, 5)
 
         hdrChanSegs = wx.StaticText(self, label="Channel Segments:")
-        GBSizer.Add(hdrChanSegs, pos=(2, 2), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        sizerChanSegs.Add(hdrChanSegs, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         lstChanSegs = DragList(self, style=wx.LC_REPORT)
-        GBSizer.Add(lstChanSegs, pos=(3, 2), span=(1, 1), flag=wx.TOP|wx.LEFT, border=5)
+        lstChanSegs.InsertColumn(0, "Station")
+        lstChanSegs.InsertColumn(1, "Series")
+        lstChanSegs.InsertColumn(2, "Channel Segment")
+        lstChanSegs.InsertColumn(3, "Start")
+        lstChanSegs.InsertColumn(4, "End")
+        sizerChanSegs.Add(lstChanSegs, pos=(1, 0), span=(1, 1), flag=wx.EXPAND|wx.TOP|wx.LEFT, border=5)
+        sizerChanSegs.AddGrowableRow(1)
 
+        sizerWholeFrame.Add(sizerChanSegs, pos=(2, 3), span=(1, 2), 
+            flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT , border=10)
        
-#        GBSizer.AddGrowableCol(2)
-#        GBSizer.AddGrowableRow(3)
+#        sizerWholeFrame.AddGrowableCol(2)
+#        sizerWholeFrame.AddGrowableRow(3)
 
 #        textProgress = wx.TextCtrl(self, style = wx.TE_MULTILINE)
-#        GBSizer.Add(textProgress, pos=(1, 0), span=(4, 6),
+#        sizerWholeFrame.Add(textProgress, pos=(1, 0), span=(4, 6),
 #            flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
 #            border=5)
 
 #        lblProgTitle = wx.StaticText(self, wx.ID_ANY, "Progress:")
-#        GBSizer.Add(lblProgTitle, pos=(5, 0), span=(1, 1),
+#        sizerWholeFrame.Add(lblProgTitle, pos=(5, 0), span=(1, 1),
 #            flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
 #            border=5)
 
 #        textProgMsgs = wx.TextCtrl(self, style = wx.TE_MULTILINE)
-#        GBSizer.Add(textProgMsgs, pos=(5, 1), span=(1, 5),
+#        sizerWholeFrame.Add(textProgMsgs, pos=(5, 1), span=(1, 5),
 #            flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
 #            border=5)
         
@@ -589,15 +609,15 @@ class SetupStationsPanel(wx.Panel):
 #        textProgress.SetDropTarget(dt)
 
 #        txtSelManual = wx.StaticText(self, label="Or select file manually")
-#        GBSizer.Add(txtSelManual, pos=(6, 0), span=(1, 5),
+#        sizerWholeFrame.Add(txtSelManual, pos=(6, 0), span=(1, 5),
 #            flag=wx.ALIGN_RIGHT|wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
 #        btnBrowse = wx.Button(self, label="Browse", size=(90, 28))
 #        btnBrowse.Bind(wx.EVT_BUTTON, lambda evt, str=btnBrowse.GetLabel(): self.onClick_BtnBrowse(evt, str))
 
-#        GBSizer.Add(btnBrowse, pos=(6, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
+#        sizerWholeFrame.Add(btnBrowse, pos=(6, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
 
-        self.SetSizerAndFit(GBSizer)
+        self.SetSizerAndFit(sizerWholeFrame)
 
     def openfile(self, event):
         dlg = wx.FileDialog(self, "Choose a file", os.getcwd(), "", "*.*", wx.OPEN)
