@@ -436,6 +436,7 @@ def autofixChannelSegments():
          WHERE (([ChannelSegments].[SegmentBegin]>=[MaxSegmentEnds].[MaxSegmEnd]))))
         );
     """
+    curD.execute(stSQL)
 
     # finally, create a channel segment for any data channel that has none yet
     stSQL = """
@@ -446,6 +447,8 @@ def autofixChannelSegments():
     GROUP BY Data.ChannelID;    
     """
     curD.execute(stSQL) # can be rather slow, but necessary
+    # for Data table with 141,811 records, took 2.455ms
+    # created 15 segments
     
 
 if __name__ == "__main__":
