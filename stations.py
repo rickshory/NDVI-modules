@@ -537,43 +537,49 @@ class SetupStationsPanel(wx.Panel):
 #        sizerWholeFrame.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
 
         hLine = wx.StaticLine(self)
-        sizerWholeFrame.Add(hLine, pos=(1, 0), span=(1, 6), 
+        sizerWholeFrame.Add(hLine, pos=(1, 0), span=(1, 3), 
             flag=wx.EXPAND|wx.BOTTOM, border=1)
 
-        sizerSta = wx.GridBagSizer(5, 5)
+        sizerSta = wx.GridBagSizer(1, 1)
 
         hdrStation = wx.StaticText(self, label="Stations:")
-        sizerSta.Add(hdrStation, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=1)
+        sizerSta.Add(hdrStation, pos=(0, 0), span=(1, 1),
+                     flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT, border=1)
         
         btnAddStation = wx.Button(self, label="New", size=(32, 20))
 #        btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnAddStation(evt, str))
-        sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.RIGHT|wx.BOTTOM, border=1)
+        sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
         lstStations = DragList(self, style=wx.LC_LIST)
-        sizerSta.Add(lstStations, pos=(1, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=1)
+        sizerSta.Add(lstStations, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
+        sizerSta.AddGrowableRow(1)
+        sizerSta.AddGrowableCol(1)
 
-        sizerWholeFrame.Add(sizerSta, pos=(2, 0), span=(1, 2), 
-            flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT , border=10)
+        sizerWholeFrame.Add(sizerSta, pos=(2, 0), span=(1, 1), 
+            flag=wx.EXPAND)
 
-        sizerSer = wx.GridBagSizer(5, 5)
+        sizerSer = wx.GridBagSizer(1, 1)
 
         hdrSeries = wx.StaticText(self, label="Series:")
-        sizerSer.Add(hdrSeries, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=1)
+        sizerSer.Add(hdrSeries, pos=(0, 0), span=(1, 1),
+                     flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT, border=1)
         
         btnAddSeries = wx.Button(self, label="New", size=(32, 20))
 #        btnAddSeries.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSeries.GetLabel(): self.onClick_BtnAddSeries(evt, str))
-        sizerSer.Add(btnAddSeries, pos=(0, 1), flag=wx.RIGHT|wx.BOTTOM, border=1)
+        sizerSer.Add(btnAddSeries, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
         lstSeries = DragList(self, style=wx.LC_LIST)
-        sizerSer.Add(lstSeries, pos=(1, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=1)
+        sizerSer.Add(lstSeries, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
+        sizerSer.AddGrowableRow(1)
+        sizerSer.AddGrowableCol(1)
 
-        sizerWholeFrame.Add(sizerSer, pos=(2, 3), span=(1, 2), 
-            flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT , border=10)
+        sizerWholeFrame.Add(sizerSer, pos=(2, 1), span=(1, 1), 
+            flag=wx.EXPAND)
 
-        sizerChanSegs = wx.GridBagSizer(5, 5)
+        sizerChanSegs = wx.GridBagSizer(1, 1)
 
         hdrChanSegs = wx.StaticText(self, label="Channel Segments:")
-        sizerChanSegs.Add(hdrChanSegs, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        sizerChanSegs.Add(hdrChanSegs, pos=(0, 0), span=(1, 1), flag=wx.ALIGN_LEFT|wx.TOP, border=5)
 
         lstChanSegs = DragList(self, style=wx.LC_REPORT)
         lstChanSegs.InsertColumn(0, "Station")
@@ -581,14 +587,16 @@ class SetupStationsPanel(wx.Panel):
         lstChanSegs.InsertColumn(2, "Channel Segment")
         lstChanSegs.InsertColumn(3, "Start")
         lstChanSegs.InsertColumn(4, "End")
-        sizerChanSegs.Add(lstChanSegs, pos=(1, 0), span=(1, 1), flag=wx.EXPAND|wx.TOP|wx.LEFT, border=5)
+        sizerChanSegs.Add(lstChanSegs, pos=(1, 0), span=(1, 2), flag=wx.EXPAND)
         sizerChanSegs.AddGrowableRow(1)
+        sizerChanSegs.AddGrowableCol(1)
 
-        sizerWholeFrame.Add(sizerChanSegs, pos=(3, 0), span=(1, 4), 
-            flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT , border=10)
+        sizerWholeFrame.Add(sizerChanSegs, pos=(3, 0), span=(1, 3), 
+            flag=wx.EXPAND)
        
-#        sizerWholeFrame.AddGrowableCol(2)
-#        sizerWholeFrame.AddGrowableRow(3)
+        sizerWholeFrame.AddGrowableCol(0)
+        sizerWholeFrame.AddGrowableCol(1)
+        sizerWholeFrame.AddGrowableRow(3)
 
 #        textProgress = wx.TextCtrl(self, style = wx.TE_MULTILINE)
 #        sizerWholeFrame.Add(textProgress, pos=(1, 0), span=(4, 6),
