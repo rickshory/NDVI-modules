@@ -543,14 +543,14 @@ class SetupStationsPanel(wx.Panel):
         sizerSta = wx.GridBagSizer(5, 5)
 
         hdrStation = wx.StaticText(self, label="Stations:")
-        sizerSta.Add(hdrStation, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        sizerSta.Add(hdrStation, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=1)
         
-        btnAddStation = wx.Button(self, label="Add", size=(70, 28))
+        btnAddStation = wx.Button(self, label="New", size=(32, 20))
 #        btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnAddStation(evt, str))
-        sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.RIGHT|wx.BOTTOM, border=5)
+        sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.RIGHT|wx.BOTTOM, border=1)
         
         lstStations = DragList(self, style=wx.LC_LIST)
-        sizerSta.Add(lstStations, pos=(1, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=5)
+        sizerSta.Add(lstStations, pos=(1, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=1)
 
         sizerWholeFrame.Add(sizerSta, pos=(2, 0), span=(1, 2), 
             flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT , border=10)
@@ -558,16 +558,16 @@ class SetupStationsPanel(wx.Panel):
         sizerSer = wx.GridBagSizer(5, 5)
 
         hdrSeries = wx.StaticText(self, label="Series:")
-        sizerSer.Add(hdrSeries, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        sizerSer.Add(hdrSeries, pos=(0, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=1)
         
-        btnAddSeries = wx.Button(self, label="Add", size=(70, 28))
+        btnAddSeries = wx.Button(self, label="New", size=(32, 20))
 #        btnAddSeries.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSeries.GetLabel(): self.onClick_BtnAddSeries(evt, str))
-        sizerSer.Add(btnAddSeries, pos=(0, 1), flag=wx.RIGHT|wx.BOTTOM, border=5)
+        sizerSer.Add(btnAddSeries, pos=(0, 1), flag=wx.RIGHT|wx.BOTTOM, border=1)
         
         lstSeries = DragList(self, style=wx.LC_LIST)
-        sizerSer.Add(lstSeries, pos=(1, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=5)
+        sizerSer.Add(lstSeries, pos=(1, 0), span=(1, 2), flag=wx.TOP|wx.LEFT, border=1)
 
-        sizerWholeFrame.Add(sizerSer, pos=(3, 0), span=(1, 2), 
+        sizerWholeFrame.Add(sizerSer, pos=(2, 3), span=(1, 2), 
             flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT , border=10)
 
         sizerChanSegs = wx.GridBagSizer(5, 5)
@@ -584,7 +584,7 @@ class SetupStationsPanel(wx.Panel):
         sizerChanSegs.Add(lstChanSegs, pos=(1, 0), span=(1, 1), flag=wx.EXPAND|wx.TOP|wx.LEFT, border=5)
         sizerChanSegs.AddGrowableRow(1)
 
-        sizerWholeFrame.Add(sizerChanSegs, pos=(2, 3), span=(1, 2), 
+        sizerWholeFrame.Add(sizerChanSegs, pos=(3, 0), span=(1, 4), 
             flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.RIGHT , border=10)
        
 #        sizerWholeFrame.AddGrowableCol(2)
