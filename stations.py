@@ -532,10 +532,6 @@ class SetupStationsPanel(wx.Panel):
         hdr = wx.StaticText(self, label="Drag Stations and Series to assign them to Channel Segments")
         sizerWholeFrame.Add(hdr, pos=(0, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-#        btnShowLog = wx.Button(self, label="Show Log", size=(90, 28))
-#        btnShowLog.Bind(wx.EVT_BUTTON, lambda evt, str=btnShowLog.GetLabel(): self.onClick_BtnShowLog(evt, str))
-#        sizerWholeFrame.Add(btnShowLog, pos=(0, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
-
         hLine = wx.StaticLine(self)
         sizerWholeFrame.Add(hLine, pos=(1, 0), span=(1, 3), 
             flag=wx.EXPAND|wx.BOTTOM, border=1)
@@ -547,7 +543,7 @@ class SetupStationsPanel(wx.Panel):
                      flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT, border=1)
         
         btnAddStation = wx.Button(self, label="New", size=(32, 20))
-#        btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnAddStation(evt, str))
+        btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnAddStation(evt, str))
         sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
         lstStations = DragList(self, style=wx.LC_LIST)
@@ -565,7 +561,7 @@ class SetupStationsPanel(wx.Panel):
                      flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT, border=1)
         
         btnAddSeries = wx.Button(self, label="New", size=(32, 20))
-#        btnAddSeries.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSeries.GetLabel(): self.onClick_BtnAddSeries(evt, str))
+        btnAddSeries.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSeries.GetLabel(): self.onClick_BtnAddSeries(evt, str))
         sizerSer.Add(btnAddSeries, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
         lstSeries = DragList(self, style=wx.LC_LIST)
@@ -626,29 +622,36 @@ class SetupStationsPanel(wx.Panel):
 #        sizerWholeFrame.Add(btnBrowse, pos=(6, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
 
         self.SetSizerAndFit(sizerWholeFrame)
-
-    def openfile(self, event):
-        dlg = wx.FileDialog(self, "Choose a file", os.getcwd(), "", "*.*", wx.OPEN)
-        if dlg.ShowModal() == wx.ID_OK:
-            path = dlg.GetPath()
-            mypath = os.path.basename(path)
-            self.SetStatusText("Not implemented yet")
-            #self.SetStatusText("You selected: %s" % mypath)
-            dlg.Destroy()
     
     def onButton(self, event, strLabel):
         """"""
         print ' You clicked the button labeled "%s"' % strLabel
 
-    def onClick_BtnShowLog(self, event, strLabel):
-        """"""
-        wx.MessageBox('"Show Log" is not implemented yet', 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
+    def onClick_BtnAddStation(self, event, strLabel):
+        """
+        """
+        dlg = wx.TextEntryDialog(None, "Name of Station you are adding to the database:", "New Station", " ")
+        answer = dlg.ShowModal()
+        if answer == wx.ID_OK:
+            stNewStation = dlg.GetValue()
+        else:
+            stNewStation = ''
+        dlg.Destroy()
 
-    def onClick_BtnBrowse(self, event, strLabel):
-        """"""
-        wx.MessageBox('"Browse" is not implemented yet', 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
+    def onClick_BtnAddSeries(self, event, strLabel):
+        """
+        """
+        dlg = wx.TextEntryDialog(None, "Name of Data Series you are adding to the database:", "New Data Series", " ")
+        answer = dlg.ShowModal()
+        if answer == wx.ID_OK:
+            stNewSeries = dlg.GetValue()
+        else:
+            stNewSeries = ''
+        dlg.Destroy()
+
+#    def onClick_BtnNotWorkingYet(self, event, strLabel):
+#        wx.MessageBox('"Hello" is not implemented yet', 'Info', 
+#            wx.OK | wx.ICON_INFORMATION)
 
 class SetupStationsFrame(wx.Frame):
     def __init__(self, parent, id, title):
