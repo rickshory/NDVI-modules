@@ -526,6 +526,8 @@ class SetupStationsPanel(wx.Panel):
         self.InitUI()
 
     def InitUI(self):
+        
+        # improve this layout using wx.SplitterWindow instead
 
         sizerWholeFrame = wx.GridBagSizer(5, 5)
 
@@ -546,8 +548,8 @@ class SetupStationsPanel(wx.Panel):
         btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnAddStation(evt, str))
         sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
-        lstStations = DragList(self, style=wx.LC_LIST)
-        sizerSta.Add(lstStations, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
+        self.lstStations = DragList(self, style=wx.LC_LIST)
+        sizerSta.Add(self.lstStations, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
         sizerSta.AddGrowableRow(1)
         sizerSta.AddGrowableCol(1)
 
@@ -564,8 +566,8 @@ class SetupStationsPanel(wx.Panel):
         btnAddSeries.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSeries.GetLabel(): self.onClick_BtnAddSeries(evt, str))
         sizerSer.Add(btnAddSeries, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
-        lstSeries = DragList(self, style=wx.LC_LIST)
-        sizerSer.Add(lstSeries, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
+        self.lstSeries = DragList(self, style=wx.LC_LIST)
+        sizerSer.Add(self.lstSeries, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
         sizerSer.AddGrowableRow(1)
         sizerSer.AddGrowableCol(1)
 
@@ -594,33 +596,6 @@ class SetupStationsPanel(wx.Panel):
         sizerWholeFrame.AddGrowableCol(1)
         sizerWholeFrame.AddGrowableRow(3)
 
-#        textProgress = wx.TextCtrl(self, style = wx.TE_MULTILINE)
-#        sizerWholeFrame.Add(textProgress, pos=(1, 0), span=(4, 6),
-#            flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
-#            border=5)
-
-#        lblProgTitle = wx.StaticText(self, wx.ID_ANY, "Progress:")
-#        sizerWholeFrame.Add(lblProgTitle, pos=(5, 0), span=(1, 1),
-#            flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
-#            border=5)
-
-#        textProgMsgs = wx.TextCtrl(self, style = wx.TE_MULTILINE)
-#        sizerWholeFrame.Add(textProgMsgs, pos=(5, 1), span=(1, 5),
-#            flag=wx.EXPAND|wx.TOP|wx.RIGHT|wx.BOTTOM, 
-#            border=5)
-        
-#        dt = DropTargetForFilesToParse(textProgress, textProgMsgs)
-#        textProgress.SetDropTarget(dt)
-
-#        txtSelManual = wx.StaticText(self, label="Or select file manually")
-#        sizerWholeFrame.Add(txtSelManual, pos=(6, 0), span=(1, 5),
-#            flag=wx.ALIGN_RIGHT|wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
-
-#        btnBrowse = wx.Button(self, label="Browse", size=(90, 28))
-#        btnBrowse.Bind(wx.EVT_BUTTON, lambda evt, str=btnBrowse.GetLabel(): self.onClick_BtnBrowse(evt, str))
-
-#        sizerWholeFrame.Add(btnBrowse, pos=(6, 5), flag=wx.RIGHT|wx.BOTTOM, border=5)
-
         self.SetSizerAndFit(sizerWholeFrame)
     
     def onButton(self, event, strLabel):
@@ -637,6 +612,7 @@ class SetupStationsPanel(wx.Panel):
         else:
             stNewStation = ''
         dlg.Destroy()
+        idx = self.lstStations.InsertStringItem(sys.maxint, stNewStation)
 
     def onClick_BtnAddSeries(self, event, strLabel):
         """
@@ -648,6 +624,7 @@ class SetupStationsPanel(wx.Panel):
         else:
             stNewSeries = ''
         dlg.Destroy()
+        idx = self.lstSeries.InsertStringItem(sys.maxint, stNewSeries)
 
 #    def onClick_BtnNotWorkingYet(self, event, strLabel):
 #        wx.MessageBox('"Hello" is not implemented yet', 'Info', 
