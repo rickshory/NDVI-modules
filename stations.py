@@ -17,11 +17,15 @@ class DragStationList(wx.ListCtrl):
     def getItemInfo(self, idx):
         """Collect all relevant data of a listitem, and put it in a list"""
         l = []
+        print "Station, getItemInfo, idx: ", idx
         l.append(idx) # We need the original index, so it is easier to eventualy delete it
+        print "Station, getItemInfo, Itemdata: ", self.GetItemData(idx)
         l.append(self.GetItemData(idx)) # Itemdata
+        print "Station, getItemInfo, 1st column: ", self.GetItemText(idx)
         l.append(self.GetItemText(idx)) # Text first column
         for i in range(1, self.GetColumnCount()): # Possible extra columns
             l.append(self.GetItem(idx, i).GetText())
+#        print "Station, getItemInfo, list: ", l
         return l
 
     def _startDrag(self, e):
