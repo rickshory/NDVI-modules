@@ -55,14 +55,15 @@ class DragStationList(wx.ListCtrl):
 
         # If move, we want to remove the item from this list.
         if res == wx.DragMove:
+            pass # disable removing, we only want to assign its info to the other list
             # It's possible we are dragging/dropping from this list to this list.  In which case, the
             # index we are removing may have changed...
 
             # Find correct position.
-            l.reverse() # Delete all the items, starting with the last item
-            for i in l:
-                pos = self.FindItem(i[0], i[2])
-                self.DeleteItem(pos)
+#            l.reverse() # Delete all the items, starting with the last item
+#            for i in l:
+#                pos = self.FindItem(i[0], i[2])
+#                self.DeleteItem(pos)
 
     def _insert(self, x, y, seq):
         """ Insert text at given x, y coordinates --- used with drag-and-drop. """
@@ -180,14 +181,15 @@ class DragSeriesList(wx.ListCtrl):
 
         # If move, we want to remove the item from this list.
         if res == wx.DragMove:
+            pass # disable removing, we only want to assign its info to the other list
             # It's possible we are dragging/dropping from this list to this list.  In which case, the
             # index we are removing may have changed...
 
             # Find correct position.
-            l.reverse() # Delete all the items, starting with the last item
-            for i in l:
-                pos = self.FindItem(i[0], i[2])
-                self.DeleteItem(pos)
+#            l.reverse() # Delete all the items, starting with the last item
+#            for i in l:
+#                pos = self.FindItem(i[0], i[2])
+#                self.DeleteItem(pos)
 
     def _insert(self, x, y, seq):
         """ Insert text at given x, y coordinates --- used with drag-and-drop. """
