@@ -25,7 +25,7 @@ class DragStationList(wx.ListCtrl):
         l.append(self.GetItemText(idx)) # Text first column
         for i in range(1, self.GetColumnCount()): # Possible extra columns
             l.append(self.GetItem(idx, i).GetText())
-#        print "Station, getItemInfo, list: ", l
+        print "Station, getItemInfo, list: ", l
         return l
 
     def _startDrag(self, e):
@@ -42,7 +42,7 @@ class DragStationList(wx.ListCtrl):
         itemdata = cPickle.dumps(l, 1)
         # create our own data format and use it in a
         # custom data object
-        ldata = wx.CustomDataObject("ListCtrlItems")
+        ldata = wx.CustomDataObject("RecIDandTable")
         ldata.SetData(itemdata)
         # Now make a data object for the  item list.
         data = wx.DataObjectComposite()
@@ -113,7 +113,7 @@ class ListStationDrop(wx.PyDropTarget):
         self.dv = source
 
         # specify the type of data we will accept
-        self.data = wx.CustomDataObject("ListCtrlItems")
+        self.data = wx.CustomDataObject("RecIDandTable")
         self.SetDataObject(self.data)
 
     # Called when OnDrop returns True.  We need to get the data and
@@ -167,7 +167,7 @@ class DragSeriesList(wx.ListCtrl):
         itemdata = cPickle.dumps(l, 1)
         # create our own data format and use it in a
         # custom data object
-        ldata = wx.CustomDataObject("ListCtrlItems")
+        ldata = wx.CustomDataObject("RecIDandTable")
         ldata.SetData(itemdata)
         # Now make a data object for the  item list.
         data = wx.DataObjectComposite()
@@ -238,7 +238,7 @@ class ListSeriesDrop(wx.PyDropTarget):
         self.dv = source
 
         # specify the type of data we will accept
-        self.data = wx.CustomDataObject("ListCtrlItems")
+        self.data = wx.CustomDataObject("RecIDandTable")
         self.SetDataObject(self.data)
 
     # Called when OnDrop returns True.  We need to get the data and
@@ -292,7 +292,7 @@ class DragChannelSegmentList(wx.ListCtrl):
         itemdata = cPickle.dumps(l, 1)
         # create our own data format and use it in a
         # custom data object
-        ldata = wx.CustomDataObject("ListCtrlItems")
+        ldata = wx.CustomDataObject("RecIDandTable")
         ldata.SetData(itemdata)
         # Now make a data object for the  item list.
         data = wx.DataObjectComposite()
@@ -363,7 +363,7 @@ class ListChannelSegmentDrop(wx.PyDropTarget):
         self.dv = source
 
         # specify the type of data we will accept
-        self.data = wx.CustomDataObject("ListCtrlItems")
+        self.data = wx.CustomDataObject("RecIDandTable")
         self.SetDataObject(self.data)
 
     # Called when OnDrop returns True.  We need to get the data and
@@ -419,7 +419,7 @@ class DragList(wx.ListCtrl):
         itemdata = cPickle.dumps(l, 1)
         # create our own data format and use it in a
         # custom data object
-        ldata = wx.CustomDataObject("ListCtrlItems")
+        ldata = wx.CustomDataObject("RecIDandTable")
         ldata.SetData(itemdata)
         # Now make a data object for the  item list.
         data = wx.DataObjectComposite()
@@ -490,7 +490,7 @@ class ListDrop(wx.PyDropTarget):
         self.dv = source
 
         # specify the type of data we will accept
-        self.data = wx.CustomDataObject("ListCtrlItems")
+        self.data = wx.CustomDataObject("RecIDandTable")
         self.SetDataObject(self.data)
 
     # Called when OnDrop returns True.  We need to get the data and
