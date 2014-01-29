@@ -386,7 +386,7 @@ class SetupStationsPanel(wx.Panel):
         btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnAddStation(evt, str))
         sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
-        self.lstStations = DragStationList(self, style=wx.LC_LIST)
+        self.lstStations = DragStationList(self, style=wx.LC_LIST|wx.LC_SINGLE_SEL)
         sizerSta.Add(self.lstStations, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
         sizerSta.AddGrowableRow(1)
         sizerSta.AddGrowableCol(1)
@@ -404,7 +404,7 @@ class SetupStationsPanel(wx.Panel):
         btnAddSeries.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSeries.GetLabel(): self.onClick_BtnAddSeries(evt, str))
         sizerSer.Add(btnAddSeries, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
-        self.lstSeries = DragSeriesList(self, style=wx.LC_LIST)
+        self.lstSeries = DragSeriesList(self, style=wx.LC_LIST|wx.LC_SINGLE_SEL)
         sizerSer.Add(self.lstSeries, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
         sizerSer.AddGrowableRow(1)
         sizerSer.AddGrowableCol(1)
@@ -417,7 +417,7 @@ class SetupStationsPanel(wx.Panel):
         hdrChanSegs = wx.StaticText(self, label="Channel Segments:")
         sizerChanSegs.Add(hdrChanSegs, pos=(0, 0), span=(1, 1), flag=wx.ALIGN_LEFT|wx.TOP, border=5)
 
-        lstChanSegs = DragChannelSegmentList(self, style=wx.LC_REPORT)
+        lstChanSegs = DragChannelSegmentList(self, style=wx.LC_REPORT|wx.LC_SINGLE_SEL)
         lstChanSegs.InsertColumn(0, "Station")
         lstChanSegs.InsertColumn(1, "Series")
         lstChanSegs.InsertColumn(2, "Channel Segment")
