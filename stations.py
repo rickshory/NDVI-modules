@@ -11,8 +11,8 @@ class DragStationList(wx.ListCtrl):
 
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
 
-        dt = ListStationDrop(self)
-        self.SetDropTarget(dt)
+#        dt = ListStationDrop(self)
+#        self.SetDropTarget(dt)
 
     def getItemInfo(self, idx):
         """Collect all relevant data of a listitem, and put it in a list"""
@@ -56,81 +56,7 @@ class DragStationList(wx.ListCtrl):
         # If move, we want to remove the item from this list.
         if res == wx.DragMove:
             pass # disable removing, we only want to assign its info to the other list
-            # It's possible we are dragging/dropping from this list to this list.  In which case, the
-            # index we are removing may have changed...
 
-            # Find correct position.
-#            l.reverse() # Delete all the items, starting with the last item
-#            for i in l:
-#                pos = self.FindItem(i[0], i[2])
-#                self.DeleteItem(pos)
-
-    def _insert(self, x, y, seq):
-        """ Insert text at given x, y coordinates --- used with drag-and-drop. """
-
-        # Find insertion point.
-        index, flags = self.HitTest((x, y))
-
-        if index == wx.NOT_FOUND: # not clicked on an item
-            if flags & (wx.LIST_HITTEST_NOWHERE|wx.LIST_HITTEST_ABOVE|wx.LIST_HITTEST_BELOW): # empty list or below last item
-                index = self.GetItemCount() # append to end of list
-            elif self.GetItemCount() > 0:
-                if y <= self.GetItemRect(0).y: # clicked just above first item
-                    index = 0 # append to top of list
-                else:
-                    index = self.GetItemCount() + 1 # append to end of list
-        else: # clicked on an item
-            # Get bounding rectangle for the item the user is dropping over.
-            rect = self.GetItemRect(index)
-
-            # If the user is dropping into the lower half of the rect, we want to insert _after_ this item.
-            # Correct for the fact that there may be a heading involved
-            if y > rect.y - self.GetItemRect(0).y + rect.height/2:
-                index += 1
-
-        for i in seq: # insert the item data
-            idx = self.InsertStringItem(index, i[2])
-            self.SetItemData(idx, i[1])
-            for j in range(1, self.GetColumnCount()):
-                try: # Target list can have more columns than source
-                    self.SetStringItem(idx, j, i[2+j])
-                except:
-                    pass # ignore the extra columns
-            index += 1
-
-# customized for drop to a list of stations
-# probably will de-implement, as we only drag FROM Stations list
-# ListStationDrop
-
-class ListStationDrop(wx.PyDropTarget):
-    """ Drop target for simple lists. """
-
-    def __init__(self, source):
-        """ Arguments:
-         - source: source listctrl.
-        """
-        wx.PyDropTarget.__init__(self)
-
-        self.dv = source
-
-        # specify the type of data we will accept
-        self.data = wx.CustomDataObject("RecIDandTable")
-        self.SetDataObject(self.data)
-
-    # Called when OnDrop returns True.  We need to get the data and
-    # do something with it.
-    def OnData(self, x, y, d):
-        # copy the data from the drag source to our data object
-        if self.GetData():
-            # convert it back to a list and give it to the viewer
-            ldata = self.data.GetData()
-            l = cPickle.loads(ldata)
-            self.dv._insert(x, y, l)
-
-        # what is returned signals the source what to do
-        # with the original data (move, copy, etc.)  In this
-        # case we just return the suggested value given to us.
-        return d
 
 # ----------------------------------------------------------------------
 # customized for drag/drop from list of Series
@@ -140,9 +66,6 @@ class DragSeriesList(wx.ListCtrl):
         wx.ListCtrl.__init__(self, *arg, **kw)
 
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
-
-        dt = ListSeriesDrop(self)
-        self.SetDropTarget(dt)
 
     def getItemInfo(self, idx):
         """Collect all relevant data of a listitem, and put it in a list"""
@@ -182,81 +105,6 @@ class DragSeriesList(wx.ListCtrl):
         # If move, we want to remove the item from this list.
         if res == wx.DragMove:
             pass # disable removing, we only want to assign its info to the other list
-            # It's possible we are dragging/dropping from this list to this list.  In which case, the
-            # index we are removing may have changed...
-
-            # Find correct position.
-#            l.reverse() # Delete all the items, starting with the last item
-#            for i in l:
-#                pos = self.FindItem(i[0], i[2])
-#                self.DeleteItem(pos)
-
-    def _insert(self, x, y, seq):
-        """ Insert text at given x, y coordinates --- used with drag-and-drop. """
-
-        # Find insertion point.
-        index, flags = self.HitTest((x, y))
-
-        if index == wx.NOT_FOUND: # not clicked on an item
-            if flags & (wx.LIST_HITTEST_NOWHERE|wx.LIST_HITTEST_ABOVE|wx.LIST_HITTEST_BELOW): # empty list or below last item
-                index = self.GetItemCount() # append to end of list
-            elif self.GetItemCount() > 0:
-                if y <= self.GetItemRect(0).y: # clicked just above first item
-                    index = 0 # append to top of list
-                else:
-                    index = self.GetItemCount() + 1 # append to end of list
-        else: # clicked on an item
-            # Get bounding rectangle for the item the user is dropping over.
-            rect = self.GetItemRect(index)
-
-            # If the user is dropping into the lower half of the rect, we want to insert _after_ this item.
-            # Correct for the fact that there may be a heading involved
-            if y > rect.y - self.GetItemRect(0).y + rect.height/2:
-                index += 1
-
-        for i in seq: # insert the item data
-            idx = self.InsertStringItem(index, i[2])
-            self.SetItemData(idx, i[1])
-            for j in range(1, self.GetColumnCount()):
-                try: # Target list can have more columns than source
-                    self.SetStringItem(idx, j, i[2+j])
-                except:
-                    pass # ignore the extra columns
-            index += 1
-
-# customized for drop to a list of Series
-# probably will de-implement, as we only drag FROM Series list
-# ListSeriesDrop
-
-class ListSeriesDrop(wx.PyDropTarget):
-    """ Drop target for simple lists. """
-
-    def __init__(self, source):
-        """ Arguments:
-         - source: source listctrl.
-        """
-        wx.PyDropTarget.__init__(self)
-
-        self.dv = source
-
-        # specify the type of data we will accept
-        self.data = wx.CustomDataObject("RecIDandTable")
-        self.SetDataObject(self.data)
-
-    # Called when OnDrop returns True.  We need to get the data and
-    # do something with it.
-    def OnData(self, x, y, d):
-        # copy the data from the drag source to our data object
-        if self.GetData():
-            # convert it back to a list and give it to the viewer
-            ldata = self.data.GetData()
-            l = cPickle.loads(ldata)
-            self.dv._insert(x, y, l)
-
-        # what is returned signals the source what to do
-        # with the original data (move, copy, etc.)  In this
-        # case we just return the suggested value given to us.
-        return d
 
 # customized for drag/drop from list of ChannelSegments
 # may de-implement parts, as we usually only drag TO ChannelSegments
