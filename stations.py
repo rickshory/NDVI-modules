@@ -387,6 +387,8 @@ class SetupStationsPanel(wx.Panel):
         sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
         self.lstStations = DragStationList(self, style=wx.LC_LIST|wx.LC_SINGLE_SEL)
+        idx = self.lstStations.InsertStringItem(sys.maxint, "Clear Creek inlet")
+        
         sizerSta.Add(self.lstStations, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
         sizerSta.AddGrowableRow(1)
         sizerSta.AddGrowableCol(1)
