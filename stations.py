@@ -1,14 +1,15 @@
 import wx, sqlite3, datetime
 import os, sys, re, cPickle
 import scidb
+from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
 # ----------------------------------------------------------------------
 # customized for drag/drop from list of Stations
 # DragStationList
-class DragStationList(wx.ListCtrl):
+class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
         wx.ListCtrl.__init__(self, *arg, **kw)
-
+        ListCtrlAutoWidthMixin.__init__(self)
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
 
 #        dt = ListStationDrop(self)
@@ -261,7 +262,8 @@ class SetupStationsPanel(wx.Panel):
         btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnAddStation(evt, str))
         sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
-        self.lstStations = DragStationList(self, style=wx.LC_LIST|wx.LC_SINGLE_SEL)
+        self.lstStations = DragStationList(self, style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.LC_SINGLE_SEL)
+        self.lstStations.InsertColumn(0, "Station")
         self.fillStationsList()
         
         sizerSta.Add(self.lstStations, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
@@ -314,8 +316,15 @@ class SetupStationsPanel(wx.Panel):
         self.SetSizerAndFit(sizerWholeFrame)
 
     def fillStationsList(self):
-        idx = self.lstStations.InsertStringItem(sys.maxint, "Clear Creek inlet")
-    
+        
+#        idx = self.lstStations.InsertStringItem(sys.maxint, "Clear Creek inlet")
+        self.lstStations.DeleteAllItems()
+        scidb.curD.execute("SELECT StationName FROM Stations;")
+        recs = scidb.curD.fetchall()
+        for rec in recs:
+            idx = self.lstStations.InsertStringItem(sys.maxint, rec["StationName"])
+#            print "%s " % (rec["StationName"])
+            
     def onButton(self, event, strLabel):
         """"""
         print ' You clicked the button labeled "%s"' % strLabel
@@ -327,10 +336,14 @@ class SetupStationsPanel(wx.Panel):
         answer = dlg.ShowModal()
         if answer == wx.ID_OK:
             stNewStation = dlg.GetValue()
+            stNewStation.strip()
+            recID = scidb.assureItemIsInTableField(stNewStation, "Stations", "StationName")
+            self.fillStationsList()
         else:
             stNewStation = ''
         dlg.Destroy()
-        idx = self.lstStations.InsertStringItem(sys.maxint, stNewStation)
+        
+#        idx = self.lstStations.InsertStringItem(sys.maxint, stNewStation)
 
     def onClick_BtnAddSeries(self, event, strLabel):
         """
