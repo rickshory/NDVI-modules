@@ -12,9 +12,6 @@ class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         ListCtrlAutoWidthMixin.__init__(self)
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
 
-#        dt = ListStationDrop(self)
-#        self.SetDropTarget(dt)
-
     def getItemInfo(self, idx):
         """Collect all relevant data of a listitem, and put it in a list"""
         l = []
@@ -54,7 +51,7 @@ class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         dropSource.SetData(data)
         res = dropSource.DoDragDrop(flags=wx.Drag_DefaultMove)
 
-        # If move, we want to remove the item from this list.
+        # If move, we could remove the item from this list.
         if res == wx.DragMove:
             pass # disable removing, we only want to assign its info to the other list
 
@@ -103,7 +100,7 @@ class DragSeriesList(wx.ListCtrl):
         dropSource.SetData(data)
         res = dropSource.DoDragDrop(flags=wx.Drag_DefaultMove)
 
-        # If move, we want to remove the item from this list.
+        # If move, we could remove the item from this list.
         if res == wx.DragMove:
             pass # disable removing, we only want to assign its info to the other list
 
@@ -317,13 +314,12 @@ class SetupStationsPanel(wx.Panel):
 
     def fillStationsList(self):
         
-#        idx = self.lstStations.InsertStringItem(sys.maxint, "Clear Creek inlet")
         self.lstStations.DeleteAllItems()
-        scidb.curD.execute("SELECT StationName FROM Stations;")
+        scidb.curD.execute("SELECT ID, StationName FROM Stations;")
         recs = scidb.curD.fetchall()
         for rec in recs:
             idx = self.lstStations.InsertStringItem(sys.maxint, rec["StationName"])
-#            print "%s " % (rec["StationName"])
+            self.lstStations.SetItemData(idx, rec["ID"])
             
     def onButton(self, event, strLabel):
         """"""
