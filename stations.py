@@ -59,10 +59,10 @@ class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
 # ----------------------------------------------------------------------
 # customized for drag/drop from list of Series
 # DragSeriesList
-class DragSeriesList(wx.ListCtrl):
+class DragSeriesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
         wx.ListCtrl.__init__(self, *arg, **kw)
-
+        ListCtrlAutoWidthMixin.__init__(self)
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
 
     def getItemInfo(self, idx):
@@ -280,7 +280,10 @@ class SetupStationsPanel(wx.Panel):
         btnAddSeries.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSeries.GetLabel(): self.onClick_BtnAddSeries(evt, str))
         sizerSer.Add(btnAddSeries, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
-        self.lstSeries = DragSeriesList(self, style=wx.LC_LIST|wx.LC_SINGLE_SEL)
+        self.lstSeries = DragSeriesList(self, style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.LC_SINGLE_SEL)
+        self.lstSeries.InsertColumn(0, "Series")
+        self.fillSeriesList()
+
         sizerSer.Add(self.lstSeries, pos=(1, 0), span=(2, 2), flag=wx.EXPAND)
         sizerSer.AddGrowableRow(1)
         sizerSer.AddGrowableCol(1)
@@ -313,13 +316,20 @@ class SetupStationsPanel(wx.Panel):
         self.SetSizerAndFit(sizerWholeFrame)
 
     def fillStationsList(self):
-        
         self.lstStations.DeleteAllItems()
         scidb.curD.execute("SELECT ID, StationName FROM Stations;")
         recs = scidb.curD.fetchall()
         for rec in recs:
             idx = self.lstStations.InsertStringItem(sys.maxint, rec["StationName"])
             self.lstStations.SetItemData(idx, rec["ID"])
+
+    def fillSeriesList(self):
+        self.lstSeries.DeleteAllItems()
+        scidb.curD.execute("SELECT ID, DataSeriesDescription FROM DataSeries;")
+        recs = scidb.curD.fetchall()
+        for rec in recs:
+            idx = self.lstSeries.InsertStringItem(sys.maxint, rec["DataSeriesDescription"])
+            self.lstSeries.SetItemData(idx, rec["ID"])
             
     def onButton(self, event, strLabel):
         """"""
@@ -348,10 +358,12 @@ class SetupStationsPanel(wx.Panel):
         answer = dlg.ShowModal()
         if answer == wx.ID_OK:
             stNewSeries = dlg.GetValue()
+            stNewSeries.strip()
+            recID = scidb.assureItemIsInTableField(stNewSeries, "DataSeries", "DataSeriesDescription")
+            self.fillSeriesList()
         else:
             stNewSeries = ''
         dlg.Destroy()
-        idx = self.lstSeries.InsertStringItem(sys.maxint, stNewSeries)
 
 #    def onClick_BtnNotWorkingYet(self, event, strLabel):
 #        wx.MessageBox('"Hello" is not implemented yet', 'Info', 
