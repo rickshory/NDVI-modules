@@ -342,7 +342,7 @@ class SetupStationsPanel(wx.Panel):
         answer = dlg.ShowModal()
         if answer == wx.ID_OK:
             stNewStation = dlg.GetValue()
-            stNewStation.strip()
+            stNewStation = " ".join(stNewStation.split())
             recID = scidb.assureItemIsInTableField(stNewStation, "Stations", "StationName")
             self.fillStationsList()
         else:
@@ -358,7 +358,7 @@ class SetupStationsPanel(wx.Panel):
         answer = dlg.ShowModal()
         if answer == wx.ID_OK:
             stNewSeries = dlg.GetValue()
-            stNewSeries.strip()
+            stNewSeries = " ".join(stNewSeries.split())
             recID = scidb.assureItemIsInTableField(stNewSeries, "DataSeries", "DataSeriesDescription")
             self.fillSeriesList()
         else:
