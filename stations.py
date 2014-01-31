@@ -9,7 +9,7 @@ from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
         wx.ListCtrl.__init__(self, *arg, **kw)
-        ListCtrlAutoWidthMixin.__init__(self)
+        ListCtrlAutoWidthMixin.__init__(self) # rightmost column will fill the rest of the list
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
 
     def getItemInfo(self, idx):
@@ -21,13 +21,13 @@ class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         l.append(self.GetItemData(idx)) # Itemdata
         print "Station, getItemInfo, 1st column: ", self.GetItemText(idx)
         l.append(self.GetItemText(idx)) # Text first column
-        for i in range(1, self.GetColumnCount()): # Possible extra columns
-            l.append(self.GetItem(idx, i).GetText())
-        print "Station, getItemInfo, list: ", l
         return l
 
     def _startDrag(self, e):
         """ Put together a data object for drag-and-drop _from_ this list. """
+        print "about to do 'GetFirstSelected'"
+        idx = self.GetFirstSelected()
+        print "GetFirstSelected: ", idx
         l = []
         idx = -1
         while True: # find all the selected items and put them in a list
@@ -62,7 +62,7 @@ class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
 class DragSeriesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
         wx.ListCtrl.__init__(self, *arg, **kw)
-        ListCtrlAutoWidthMixin.__init__(self)
+        ListCtrlAutoWidthMixin.__init__(self) # rightmost column will fill the rest of the list
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
 
     def getItemInfo(self, idx):
@@ -71,8 +71,6 @@ class DragSeriesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         l.append(idx) # We need the original index, so it is easier to eventualy delete it
         l.append(self.GetItemData(idx)) # Itemdata
         l.append(self.GetItemText(idx)) # Text first column
-        for i in range(1, self.GetColumnCount()): # Possible extra columns
-            l.append(self.GetItem(idx, i).GetText())
         return l
 
     def _startDrag(self, e):
@@ -200,7 +198,9 @@ class DragChannelSegmentList(wx.ListCtrl):
 # ListChannelSegmentDrop
 
 class ListChannelSegmentDrop(wx.PyDropTarget):
-    """ Drop target for simple lists. """
+    """ Drop target for Channel Segments list.
+        Allows dropping Station/Series onto ChannelSegment to assign those handles
+    """
 
     def __init__(self, source):
         """ Arguments:
@@ -349,8 +349,6 @@ class SetupStationsPanel(wx.Panel):
             stNewStation = ''
         dlg.Destroy()
         
-#        idx = self.lstStations.InsertStringItem(sys.maxint, stNewStation)
-
     def onClick_BtnAddSeries(self, event, strLabel):
         """
         """
