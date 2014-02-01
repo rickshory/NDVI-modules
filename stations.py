@@ -16,9 +16,13 @@ class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def _startDrag(self, e):
         """ Put together a data object for drag-and-drop _from_ this list. """
         l = ['Station']
-        # don't need the list row text, only ItemData, which is the record ID in the Stations table
+        # mostly need the ItemData, which is the record ID in the Stations table
         idx = self.GetFirstSelected()
         l.append(self.GetItemData(idx))
+        # as a convenience, pass the list row text 
+        l.append(self.GetItemText(idx))
+        # and the ChannelSegment list column to put it in
+        l.append(0)
 
         # Pickle the object
         itemdata = cPickle.dumps(l, 1)
@@ -52,9 +56,13 @@ class DragSeriesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def _startDrag(self, e):
         """ Put together a data object for drag-and-drop _from_ this list. """
         l = ['Series']
-        # don't need the list row text, only ItemData, which is the record ID in the DataSeries table
+        # mostly need the ItemData, which is the record ID in the DataSeries table
         idx = self.GetFirstSelected()
         l.append(self.GetItemData(idx))
+        # as a convenience, pass the list row text 
+        l.append(self.GetItemText(idx))
+        # and the ChannelSegment list column to put it in
+        l.append(1)
 
         # Pickle the object
         itemdata = cPickle.dumps(l, 1)
@@ -96,9 +104,20 @@ class DragChannelSegmentList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         print "flag from HitTest", flags
 
         if index != wx.NOT_FOUND: # clicked on an item
-            idx = self.InsertStringItem(index, lObj[0])
-            self.SetItemData(idx, 0)
+            ChanSegID = self.GetItemData(index)
+            stSQL = "UPDATE ChannelSegments SET " + lObj[0] + "ID = ? WHERE ID = ?;"
+#            if lObj[0] == 'Station':
+#                stSQL = "UPDATE ChannelSegments SET StationID = ? WHERE ID = ?;"
+#            if lObj[0] == 'Series':
+#                stSQL = "UPDATE ChannelSegments SET SeriesID = ? WHERE ID = ?;"
+            scidb.curD.execute(stSQL, (lObj[1], ChanSegID))
+            # on the next load, this change will show in the ChannelSegments list
+            # but for now just patch in the string
+            self.SetStringItem(index, lObj[3], lObj[2])
 
+#   maybe refresh entire list, but following formats are not quite right
+#            self.parent.fillChannelSegmentsList()
+#            framePanel.fillChannelSegmentsList()
 
 
 # customized for drop to a list of ChannelSegments
