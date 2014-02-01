@@ -15,25 +15,12 @@ class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
 
     def _startDrag(self, e):
         """ Put together a data object for drag-and-drop _from_ this list. """
-        lt = []
-        lu = []
-        print "about to do 'GetFirstSelected'"
+        l = ['Station']
+        # don't need the list row text, only ItemData, which is the record ID in the Stations table
         idx = self.GetFirstSelected()
-        print "GetFirstSelected: ", idx
-        lt.append(idx)
-        lu.append(idx)
-        print "Station, GetFirstSelected, Itemdata: ", self.GetItemData(idx)
-        lt.append(self.GetItemData(idx)) # Itemdata
-        lu.append(self.GetItemData(idx))
-        print "Station, GetFirstSelected, 1st column: ", self.GetItemText(idx)
-        lt.append(self.GetItemText(idx)) # Text first column
-        lu.append("Stations")
-        
-        l = []
-        l.append(lt)
-        l.append(lu)
+        l.append(self.GetItemData(idx))
 
-        # Pickle the items list.
+        # Pickle the object
         itemdata = cPickle.dumps(l, 1)
         # create our own data format and use it in a
         # custom data object
@@ -62,25 +49,14 @@ class DragSeriesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         ListCtrlAutoWidthMixin.__init__(self) # rightmost column will fill the rest of the list
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
 
-    def getItemInfo(self, idx):
-        """Collect all relevant data of a listitem, and put it in a list"""
-        l = []
-        l.append(idx) # We need the original index, so it is easier to eventualy delete it
-        l.append(self.GetItemData(idx)) # Itemdata
-        l.append(self.GetItemText(idx)) # Text first column
-        return l
-
     def _startDrag(self, e):
         """ Put together a data object for drag-and-drop _from_ this list. """
-        l = []
-        idx = -1
-        while True: # find all the selected items and put them in a list
-            idx = self.GetNextItem(idx, wx.LIST_NEXT_ALL, wx.LIST_STATE_SELECTED)
-            if idx == -1:
-                break
-            l.append(self.getItemInfo(idx))
+        l = ['Series']
+        # don't need the list row text, only ItemData, which is the record ID in the DataSeries table
+        idx = self.GetFirstSelected()
+        l.append(self.GetItemData(idx))
 
-        # Pickle the items list.
+        # Pickle the object
         itemdata = cPickle.dumps(l, 1)
         # create our own data format and use it in a
         # custom data object
@@ -111,40 +87,19 @@ class DragChannelSegmentList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         dt = ListChannelSegmentDrop(self)
         self.SetDropTarget(dt)
 
-    def _insert(self, x, y, seq):
-        """ Insert text at given x, y coordinates --- used with drag-and-drop. """
+    def _insert(self, x, y, lObj):
+        """ Target the drop to given x, y coordinates --- used with drag-and-drop. """
 
         # Find insertion point.
         index, flags = self.HitTest((x, y))
         print "index from HitTest", index
         print "flag from HitTest", flags
 
-        if index == wx.NOT_FOUND: # not clicked on an item
-            if flags & (wx.LIST_HITTEST_NOWHERE|wx.LIST_HITTEST_ABOVE|wx.LIST_HITTEST_BELOW): # empty list or below last item
-                index = self.GetItemCount() # append to end of list
-            elif self.GetItemCount() > 0:
-                if y <= self.GetItemRect(0).y: # clicked just above first item
-                    index = 0 # append to top of list
-                else:
-                    index = self.GetItemCount() + 1 # append to end of list
-        else: # clicked on an item
-            # Get bounding rectangle for the item the user is dropping over.
-            rect = self.GetItemRect(index)
+        if index != wx.NOT_FOUND: # clicked on an item
+            idx = self.InsertStringItem(index, lObj[0])
+            self.SetItemData(idx, 0)
 
-            # If the user is dropping into the lower half of the rect, we want to insert _after_ this item.
-            # Correct for the fact that there may be a heading involved
-            if y > rect.y - self.GetItemRect(0).y + rect.height/2:
-                index += 1
 
-        for i in seq: # insert the item data
-            idx = self.InsertStringItem(index, i[2])
-            self.SetItemData(idx, i[1])
-            for j in range(1, self.GetColumnCount()):
-                try: # Target list can have more columns than source
-                    self.SetStringItem(idx, j, i[2+j])
-                except:
-                    pass # ignore the extra columns
-            index += 1
 
 # customized for drop to a list of ChannelSegments
 # -----
@@ -252,7 +207,7 @@ class SetupStationsPanel(wx.Panel):
         self.lstChanSegs = DragChannelSegmentList(self, style=wx.LC_REPORT|wx.LC_VRULES|wx.LC_SINGLE_SEL)
         self.lstChanSegs.InsertColumn(0, "Station")
         self.lstChanSegs.InsertColumn(1, "Series")
-        self.lstChanSegs.InsertColumn(2, "Channel Segment")
+        self.lstChanSegs.InsertColumn(2, "Channel Segment (Col, Logger, Sensor, Type, Units, HrOffset)")
         self.lstChanSegs.InsertColumn(3, "Start")
         self.lstChanSegs.InsertColumn(4, "End")
 
