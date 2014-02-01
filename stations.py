@@ -12,29 +12,26 @@ class DragStationList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         ListCtrlAutoWidthMixin.__init__(self) # rightmost column will fill the rest of the list
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
 
-    def getItemInfo(self, idx):
-        """Collect all relevant data of a listitem, and put it in a list"""
-        l = []
-        print "Station, getItemInfo, idx: ", idx
-        l.append(idx) # We need the original index, so it is easier to eventualy delete it
-        print "Station, getItemInfo, Itemdata: ", self.GetItemData(idx)
-        l.append(self.GetItemData(idx)) # Itemdata
-        print "Station, getItemInfo, 1st column: ", self.GetItemText(idx)
-        l.append(self.GetItemText(idx)) # Text first column
-        return l
 
     def _startDrag(self, e):
         """ Put together a data object for drag-and-drop _from_ this list. """
+        lt = []
+        lu = []
         print "about to do 'GetFirstSelected'"
         idx = self.GetFirstSelected()
         print "GetFirstSelected: ", idx
+        lt.append(idx)
+        lu.append(idx)
+        print "Station, GetFirstSelected, Itemdata: ", self.GetItemData(idx)
+        lt.append(self.GetItemData(idx)) # Itemdata
+        lu.append(self.GetItemData(idx))
+        print "Station, GetFirstSelected, 1st column: ", self.GetItemText(idx)
+        lt.append(self.GetItemText(idx)) # Text first column
+        lu.append("Stations")
+        
         l = []
-        idx = -1
-        while True: # find all the selected items and put them in a list
-            idx = self.GetNextItem(idx, wx.LIST_NEXT_ALL, wx.LIST_STATE_SELECTED)
-            if idx == -1:
-                break
-            l.append(self.getItemInfo(idx))
+        l.append(lt)
+        l.append(lu)
 
         # Pickle the items list.
         itemdata = cPickle.dumps(l, 1)
@@ -165,6 +162,8 @@ class DragChannelSegmentList(wx.ListCtrl):
 
         # Find insertion point.
         index, flags = self.HitTest((x, y))
+        print "index from HitTest", index
+        print "flag from HitTest", flags
 
         if index == wx.NOT_FOUND: # not clicked on an item
             if flags & (wx.LIST_HITTEST_NOWHERE|wx.LIST_HITTEST_ABOVE|wx.LIST_HITTEST_BELOW): # empty list or below last item
