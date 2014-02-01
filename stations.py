@@ -100,7 +100,7 @@ class DragSeriesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
             pass # disable removing, we only want to assign its info to the other list
 
 # customized for drag/drop from list of ChannelSegments
-# may de-implement parts, as we usually only drag TO ChannelSegments
+# drag-TO is implemented, drag-FROM is disabled
 # DragChannelSegmentList
 class DragChannelSegmentList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
@@ -108,56 +108,8 @@ class DragChannelSegmentList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         ListCtrlAutoWidthMixin.__init__(self)
         self.setResizeColumn(3) # Channel column will take up any extra spaces
 
-        self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
-
         dt = ListChannelSegmentDrop(self)
         self.SetDropTarget(dt)
-
-    def getItemInfo(self, idx):
-        """Collect all relevant data of a listitem, and put it in a list"""
-        l = []
-        l.append(idx) # We need the original index, so it is easier to eventualy delete it
-        l.append(self.GetItemData(idx)) # Itemdata
-        l.append(self.GetItemText(idx)) # Text first column
-        for i in range(1, self.GetColumnCount()): # Possible extra columns
-            l.append(self.GetItem(idx, i).GetText())
-        return l
-
-    def _startDrag(self, e):
-        """ Put together a data object for drag-and-drop _from_ this list. """
-        l = []
-        idx = -1
-        while True: # find all the selected items and put them in a list
-            idx = self.GetNextItem(idx, wx.LIST_NEXT_ALL, wx.LIST_STATE_SELECTED)
-            if idx == -1:
-                break
-            l.append(self.getItemInfo(idx))
-
-        # Pickle the items list.
-        itemdata = cPickle.dumps(l, 1)
-        # create our own data format and use it in a
-        # custom data object
-        ldata = wx.CustomDataObject("RecIDandTable")
-        ldata.SetData(itemdata)
-        # Now make a data object for the  item list.
-        data = wx.DataObjectComposite()
-        data.Add(ldata)
-
-        # Create drop source and begin drag-and-drop.
-        dropSource = wx.DropSource(self)
-        dropSource.SetData(data)
-        res = dropSource.DoDragDrop(flags=wx.Drag_DefaultMove)
-
-        # If move, we want to remove the item from this list.
-        if res == wx.DragMove:
-            # It's possible we are dragging/dropping from this list to this list.  In which case, the
-            # index we are removing may have changed...
-
-            # Find correct position.
-            l.reverse() # Delete all the items, starting with the last item
-            for i in l:
-                pos = self.FindItem(i[0], i[2])
-                self.DeleteItem(pos)
 
     def _insert(self, x, y, seq):
         """ Insert text at given x, y coordinates --- used with drag-and-drop. """
