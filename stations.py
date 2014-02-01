@@ -102,9 +102,11 @@ class DragSeriesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
 # customized for drag/drop from list of ChannelSegments
 # may de-implement parts, as we usually only drag TO ChannelSegments
 # DragChannelSegmentList
-class DragChannelSegmentList(wx.ListCtrl):
+class DragChannelSegmentList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
         wx.ListCtrl.__init__(self, *arg, **kw)
+        ListCtrlAutoWidthMixin.__init__(self)
+        self.setResizeColumn(3) # Channel column will take up any extra spaces
 
         self.Bind(wx.EVT_LIST_BEGIN_DRAG, self._startDrag)
 
@@ -295,13 +297,16 @@ class SetupStationsPanel(wx.Panel):
         hdrChanSegs = wx.StaticText(self, label="Channel Segments:")
         sizerChanSegs.Add(hdrChanSegs, pos=(0, 0), span=(1, 1), flag=wx.ALIGN_LEFT|wx.TOP, border=5)
 
-        lstChanSegs = DragChannelSegmentList(self, style=wx.LC_REPORT|wx.LC_SINGLE_SEL)
-        lstChanSegs.InsertColumn(0, "Station")
-        lstChanSegs.InsertColumn(1, "Series")
-        lstChanSegs.InsertColumn(2, "Channel Segment")
-        lstChanSegs.InsertColumn(3, "Start")
-        lstChanSegs.InsertColumn(4, "End")
-        sizerChanSegs.Add(lstChanSegs, pos=(1, 0), span=(1, 2), flag=wx.EXPAND)
+        self.lstChanSegs = DragChannelSegmentList(self, style=wx.LC_REPORT|wx.LC_VRULES|wx.LC_SINGLE_SEL)
+        self.lstChanSegs.InsertColumn(0, "Station")
+        self.lstChanSegs.InsertColumn(1, "Series")
+        self.lstChanSegs.InsertColumn(2, "Channel Segment")
+        self.lstChanSegs.InsertColumn(3, "Start")
+        self.lstChanSegs.InsertColumn(4, "End")
+
+        self.fillChannelSegmentsList()
+
+        sizerChanSegs.Add(self.lstChanSegs, pos=(1, 0), span=(1, 2), flag=wx.EXPAND)
         sizerChanSegs.AddGrowableRow(1)
         sizerChanSegs.AddGrowableCol(1)
 
@@ -329,6 +334,36 @@ class SetupStationsPanel(wx.Panel):
         for rec in recs:
             idx = self.lstSeries.InsertStringItem(sys.maxint, rec["DataSeriesDescription"])
             self.lstSeries.SetItemData(idx, rec["ID"])
+
+    def fillChannelSegmentsList(self):
+        self.lstChanSegs.DeleteAllItems()
+        stSQL = """
+        SELECT ChannelSegments.ID,
+        COALESCE(Stations.StationName, '(none)') AS Station,
+        COALESCE( DataSeries.DataSeriesDescription, '(none)') AS Series,
+        DataChannels.Column || ', ' || Loggers.LoggerSerialNumber || ', ' ||
+        Sensors.SensorSerialNumber || ', ' || DataTypes.TypeText || ', ' ||
+        DataUnits.UnitsText || ', ' || DataChannels.UTC_Offset AS Channel,
+        COALESCE(ChannelSegments.SegmentBegin, '(open)') AS Begin,
+        COALESCE(ChannelSegments.SegmentEnd, '(open)') AS End
+        FROM ((((((ChannelSegments
+        LEFT JOIN Stations ON ChannelSegments.StationID = Stations.ID)
+        LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID)
+        LEFT JOIN DataChannels ON ChannelSegments.ChannelID = DataChannels.ID)
+        LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID)
+        LEFT JOIN Sensors ON DataChannels.SensorID = Sensors.ID)
+        LEFT JOIN DataTypes ON DataChannels.DataTypeID = DataTypes.ID)
+        LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID;
+        """
+        scidb.curD.execute(stSQL)
+        recs = scidb.curD.fetchall()
+        for rec in recs:
+            idx = self.lstChanSegs.InsertStringItem(sys.maxint, rec["Station"])
+            self.lstChanSegs.SetItemData(idx, rec["ID"])
+            self.lstChanSegs.SetStringItem(idx, 1, rec["Series"])
+            self.lstChanSegs.SetStringItem(idx, 2, rec["Channel"])
+            self.lstChanSegs.SetStringItem(idx, 3, rec["Begin"])
+            self.lstChanSegs.SetStringItem(idx, 4, rec["End"])
             
     def onButton(self, event, strLabel):
         """"""
