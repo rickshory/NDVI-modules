@@ -164,16 +164,28 @@ class SetupWorksheetsPanel(wx.Panel):
         self.InitUI()
 
     def InitUI(self):
+        #horizontal mean where the split goes across
+        #vertical means the split goes up and down
         hSplit = wx.SplitterWindow(self, -1)
-        colSetupPanel = wx.Panel(hSplit, -1)
-        wx.StaticText(colSetupPanel, -1, "This will be where you set up the datset columns.")
+        setupPanel = wx.Panel(hSplit, -1)
+#        wx.StaticText(setupPanel, -1, "This will be where you set up the datset columns.")
+        vSplit = wx.SplitterWindow(setupPanel, -1)
+        treeViewPanel = wx.Panel(vSplit, -1)
+        wx.StaticText(treeViewPanel, -1, "This is where you'll see the tree view of datasets")
+        detailsPanel = wx.Panel(vSplit, -1)
+        wx.StaticText(detailsPanel, -1, "This will have the details")
+        vSplit.SplitVertically(treeViewPanel, detailsPanel)
+        hSiz = wx.BoxSizer(wx.HORIZONTAL)
+        hSiz.Add(vSplit, 1, wx.EXPAND)
+        setupPanel.SetSizer(hSiz)
+        
         previewPanel = wx.Panel(hSplit, -1)
         wx.StaticText(previewPanel, -1, "This will be where you preview the dataset as a grid.")
-        hSplit.SplitHorizontally(colSetupPanel, previewPanel)
+        hSplit.SplitHorizontally(setupPanel, previewPanel)
 
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(hSplit, 1, wx.EXPAND)
-        self.SetSizer(sizer)
+        vSiz = wx.BoxSizer(wx.VERTICAL)
+        vSiz.Add(hSplit, 1, wx.EXPAND)
+        self.SetSizer(vSiz)
 
 
     def fillStationsList(self):
