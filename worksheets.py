@@ -2,6 +2,36 @@ import wx, sqlite3, datetime
 import os, sys, re, cPickle
 import scidb
 
+menu_titles = [ "Open",
+                "Properties",
+                "Rename",
+                "Delete" ]
+
+menu_title_by_id = {}
+#for title in menu_titles:
+for id in range(len(menu_titles)):
+    menu_title_by_id[ id + 101 ] = menu_titles[id]
+
+class dTreeCtrl(wx.TreeCtrl): 
+    def __init__(self, *args, **kargs): 
+        wx.TreeCtrl.__init__(self, *args, **kargs) 
+        self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvent) 
+    
+    def OnMouseEvent(self, event): 
+        if event.LeftDown() and not self.HasFlag(wx.TR_MULTIPLE): 
+            ht_item, ht_flags = self.HitTest(event.GetPosition()) 
+            if (ht_flags & wx.TREE_HITTEST_ONITEM) != 0: 
+                self.SetFocus() 
+                self.SelectItem(ht_item) 
+            else: 
+                event.Skip() 
+        elif event.LeftUp(): 
+            ht_item, ht_flags = self.HitTest(event.GetPosition()) 
+            if (ht_flags & wx.TREE_HITTEST_ONITEM) != 0: 
+                print "OnMouseEvent -> LeftUp" 
+        else: 
+            event.Skip() 
+
 class SetupWorksheetsPanel(wx.Panel):
     def __init__(self, parent, id):
         wx.Panel.__init__(self, parent, id)
@@ -23,9 +53,11 @@ class SetupWorksheetsPanel(wx.Panel):
 #         self.Bind(wx.EVT_COMBOBOX, self.EvtComboBox, self.trTaskCbx)
 #         self.Bind(wx.EVT_TEXT, self.EvtText,self.trTaskCbx)
 #        wx.StaticText(treeViewPanel, -1, "This is where you'll see the tree view of datasets")
-        self.dsTree = wx.TreeCtrl(treeViewPanel, 1, wx.DefaultPosition, (-1,-1), wx.TR_HAS_BUTTONS|wx.TR_LINES_AT_ROOT)
+        self.dsTree = dTreeCtrl(treeViewPanel, 1, wx.DefaultPosition, (-1,-1), wx.TR_HAS_BUTTONS|wx.TR_LINES_AT_ROOT)
         dsRoot = self.dsTree.AddRoot('DataSets')
-        self.Bind(wx.EVT_RIGHT_UP, self.OnRightUp)
+        ### 1. Register source's EVT_s to invoke launcher. ###
+        wx.EVT_TREE_ITEM_RIGHT_CLICK(self.dsTree, -1, self.dsTreeRightClick)
+        self.tree_item_clicked = None
 
 
         trPnlSiz = wx.BoxSizer(wx.VERTICAL)
@@ -48,6 +80,42 @@ class SetupWorksheetsPanel(wx.Panel):
         vSiz = wx.BoxSizer(wx.VERTICAL)
         vSiz.Add(hSplit, 1, wx.EXPAND)
         self.SetSizer(vSiz)
+
+    def dsTreeRightClick(self, event):
+        self.tree_item_clicked = right_click_context = event.GetItem()
+#        print "Item:", self.tree_item_clicked
+#        print "Dir:", dir(self.tree_item_clicked)
+#        print "Dir dict:", dir(self.tree_item_clicked.__dict__)
+#        label = event.GetLabel()
+#        print "Label:", label
+        keycode = event.GetKeyCode()
+        print "KeyCode:", keycode
+        point =  event.GetPoint()
+        print "Point:", point
+        menu = wx.Menu()
+        for (id,title) in menu_title_by_id.items():
+        
+#        for title in menu_titles:
+#        for id in range(len(menu_titles)):
+            
+            ### 3. Launcher packs menu with Append. ###
+#            id = wx.NewID()
+            print id, title
+            menu.Append( id, title )
+            ### 4. Launcher registers menu handlers with EVT_MENU, on the menu. ###
+            wx.EVT_MENU( menu, id, self.MenuSelectionCb )
+
+        ### 5. Launcher displays menu with call to PopupMenu, invoked on the source component, passing event's GetPoint. ###
+        self.PopupMenu( menu, event.GetPoint() )
+        menu.Destroy() # destroy to avoid mem leak
+
+    def MenuSelectionCb( self, event ):
+        # do something
+        operation = menu_title_by_id[ event.GetId() ]
+        target    = self.list_item_clicked
+        print 'Perform "%(operation)s" on "%(target)s."' % vars()
+        
+        
 
     def OnRightUp(self, event):
         index, flags = self.HitTest((x, y))

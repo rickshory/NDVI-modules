@@ -252,16 +252,16 @@ try:
     today = datetime.date.today()
     now = datetime.datetime.now()
 
-    curT.execute("insert into testDates(note, d, ts) values (?, ?, ?)", ('ck', today, now))
-    curT.execute("select note, d, ts from testDates")
-    rec = curT.fetchone()
-    print today, "=>", rec['d'], type(rec['d'])
-    print now, "=>", rec['ts'], type(rec['ts'])
+#    curT.execute("insert into testDates(note, d, ts) values (?, ?, ?)", ('ck', today, now))
+#    curT.execute("select note, d, ts from testDates")
+#    rec = curT.fetchone()
+#    print today, "=>", rec['d'], type(rec['d'])
+#    print now, "=>", rec['ts'], type(rec['ts'])
 
-    curT.execute('select current_date as "d [date]", current_timestamp as "ts [timestamp]"')
-    rec = curT.fetchone()
-    print "current_date", rec['d'], type(rec['d'])
-    print "current_timestamp", rec['ts'], type(rec['ts'])
+#    curT.execute('select current_date as "d [date]", current_timestamp as "ts [timestamp]"')
+#    rec = curT.fetchone()
+#    print "current_date", rec['d'], type(rec['d'])
+#    print "current_timestamp", rec['ts'], type(rec['ts'])
 
 except sqlite3.Error, e:
     print 'Error in "tmp.db": %s' % e.args[0]
