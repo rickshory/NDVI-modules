@@ -12,31 +12,6 @@ menu_title_by_id = {}
 for id in range(len(menu_titles)):
     menu_title_by_id[ id + 101 ] = menu_titles[id]
 
-class dTreeCtrl(wx.TreeCtrl): 
-    def __init__(self, *args, **kargs): 
-        wx.TreeCtrl.__init__(self, *args, **kargs) 
-        self.Bind(wx.EVT_MOUSE_EVENTS, self.OnMouseEvent) 
-    
-    def OnMouseEvent(self, event): 
-        if event.LeftDown() and not self.HasFlag(wx.TR_MULTIPLE): 
-            ht_item, ht_flags = self.HitTest(event.GetPosition())
-            print "LeftDown HitTest Item:", ht_item, "Flags:", ht_flags
-            if (ht_flags & wx.TREE_HITTEST_ONITEM) != 0: 
-                self.SetFocus() 
-                self.SelectItem(ht_item) 
-            else: 
-                event.Skip() 
-        elif event.LeftUp(): 
-            ht_item, ht_flags = self.HitTest(event.GetPosition())
-            print "LeftUp HitTest Item:", ht_item, "Flags:", ht_flags
-            if (ht_flags & wx.TREE_HITTEST_ONITEM) != 0: 
-                print "OnMouseEvent -> LeftUp"
-#                ItemData = ht_item.GetItemData()
-                print "Dir ht_item:", dir(ht_item)
-                print "ht_item.m_pItem:", ht_item.m_pItem
-        else: 
-            event.Skip() 
-
 class SetupWorksheetsPanel(wx.Panel):
     def __init__(self, parent, id):
         wx.Panel.__init__(self, parent, id)
@@ -47,29 +22,17 @@ class SetupWorksheetsPanel(wx.Panel):
         #vertical split means the split goes up and down
         hSplit = wx.SplitterWindow(self, -1)
         setupPanel = wx.Panel(hSplit, -1)
-#        wx.StaticText(setupPanel, -1, "This will be where you set up the datset columns.")
         vSplit = wx.SplitterWindow(setupPanel, -1)
         treeViewPanel = wx.Panel(vSplit, -1)
 
-#        # a combobox for tasks for the tree items
-#        self.tTaskList = ['Add', 'Delete']
-#        self.lblTaskList = wx.StaticText(self, label="Task")
-#        self.trTaskCbx = wx.ComboBox(self, size=(95, -1), choices=self.tTaskList, style=wx.CB_DROPDOWN)
-#         self.Bind(wx.EVT_COMBOBOX, self.EvtComboBox, self.trTaskCbx)
-#         self.Bind(wx.EVT_TEXT, self.EvtText,self.trTaskCbx)
-#        wx.StaticText(treeViewPanel, -1, "This is where you'll see the tree view of datasets")
         self.dsTree = wx.TreeCtrl(treeViewPanel, 1, wx.DefaultPosition, (-1,-1), wx.TR_HAS_BUTTONS|wx.TR_LINES_AT_ROOT)
-#        self.dsTree = dTreeCtrl(treeViewPanel, 1, wx.DefaultPosition, (-1,-1), wx.TR_HAS_BUTTONS|wx.TR_LINES_AT_ROOT)
         dsRoot = self.dsTree.AddRoot('DataSets')
         ### 1. Register source's EVT_s to invoke launcher. ###
-#        wx.EVT_TREE_ITEM_ACTIVATED(self.dsTree, -1, self.dsTreeLeftClick)
         wx.EVT_TREE_ITEM_RIGHT_CLICK(self.dsTree, -1, self.dsTreeRightClick)
         self.dsTree.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, id=1)
         self.tree_item_clicked = None
 
         trPnlSiz = wx.BoxSizer(wx.VERTICAL)
-#        trPnlSiz.Add(self.lblTaskList)
-#        trPnlSiz.Add(self.trTaskCbx)
         trPnlSiz.Add(self.dsTree, 1, wx.EXPAND)
         treeViewPanel.SetSizer(trPnlSiz)
 
@@ -93,24 +56,8 @@ class SetupWorksheetsPanel(wx.Panel):
         item = event.GetItem()
         self.detailsLabel.SetLabel(self.dsTree.GetItemText(item))
 
-
-    def dsTreeLeftClick(self, event):
-        print "Item left clicked"
-        item = event.GetItem()
-        self.detailsLabel.SetLabel(self.dsTree.GetItemText(item))
-
-
     def dsTreeRightClick(self, event):
         self.tree_item_clicked = right_click_context = event.GetItem()
-#        print "Item:", self.tree_item_clicked
-#        print "Dir:", dir(self.tree_item_clicked)
-#        print "Dir dict:", dir(self.tree_item_clicked.__dict__)
-#        label = event.GetLabel()
-#        print "Label:", label
-        keycode = event.GetKeyCode()
-        print "KeyCode:", keycode
-        point =  event.GetPoint()
-        print "Point:", point
         menu = wx.Menu()
         for (id,title) in menu_title_by_id.items():
         
@@ -118,7 +65,6 @@ class SetupWorksheetsPanel(wx.Panel):
 #        for id in range(len(menu_titles)):
             
             ### 3. Launcher packs menu with Append. ###
-#            id = wx.NewID()
             print id, title
             menu.Append( id, title )
             ### 4. Launcher registers menu handlers with EVT_MENU, on the menu. ###
