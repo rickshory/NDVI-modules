@@ -17,6 +17,17 @@ treePopMenuItems = {101:'Add a Book',
                     301:'Add a Column to this Sheet', 302:'Delete this Sheet',
                     402:'Delete this Column'}
 
+class showDataSetsInfoPanel(wx.Panel):
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id)
+        self.InitUI()
+        
+    def InitUI(self):
+        self.infoLabel = wx.StaticText(self, -1, 'Right-click the "DataSets" tree to the left to add a Book')
+        vSiz = wx.BoxSizer(wx.VERTICAL)
+        vSiz.Add(self.infoLabel, 1, wx.EXPAND)
+        self.SetSizer(vSiz)
+
 class SetupWorksheetsPanel(wx.Panel):
     def __init__(self, parent, id):
         wx.Panel.__init__(self, parent, id)
@@ -55,9 +66,9 @@ class SetupWorksheetsPanel(wx.Panel):
         trPnlSiz.Add(self.dsTree, 1, wx.EXPAND)
         treeViewPanel.SetSizer(trPnlSiz)
 
-        detailsPanel = wx.Panel(vSplit, -1)
-        self.detailsLabel = wx.StaticText(detailsPanel, -1, "This will have the details")
-        vSplit.SplitVertically(treeViewPanel, detailsPanel)
+        self.detailsPanel = wx.Panel(vSplit, -1)
+        self.detailsLabel = wx.StaticText(self.detailsPanel, -1, "This will have the details")
+        vSplit.SplitVertically(treeViewPanel, self.detailsPanel)
         hSiz = wx.BoxSizer(wx.HORIZONTAL)
         hSiz.Add(vSplit, 1, wx.EXPAND)
         setupPanel.SetSizer(hSiz)
@@ -77,6 +88,8 @@ class SetupWorksheetsPanel(wx.Panel):
 #        print "ItemData:", self.dsTree.GetItemData(item)
         ckPyData = self.dsTree.GetPyData(item)
         print "PyData:", ckPyData
+        if ckPyData[1] == 0:
+            dsInfoPnl = showDataSetsInfoPanel(self.detailsPanel, wx.ID_ANY)
 
     def dsTreeRightClick(self, event):
         self.tree_item_clicked = right_click_context = event.GetItem()
