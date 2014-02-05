@@ -216,6 +216,57 @@ try:
         WHERE (((Data.UTTimestamp)>(MaxSegmentEnds.MaxSegmEnd)))
         GROUP BY MaxSegmentEnds.ChannelID, MaxSegmentEnds.MaxSegmEnd;
 
+        CREATE TABLE IF NOT EXISTS "OutputBooks" (
+        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
+        "BookName" VARCHAR(30) NOT NULL UNIQUE,
+        "Longitude" FLOAT NOT NULL,
+        "HourOffset" FLOAT NOT NULL,
+        "OutputDataStart" date,
+        "OutputDataEnd" date,
+        "NumberOfTimeSlicesPerDay" INTEGER NOT NULL DEFAULT 1,
+        "PutAllOutputRowsInOneSheet" BOOL NOT NULL DEFAULT 0,
+        "BlankRowBetweenDataBlocks" BOOL NOT NULL DEFAULT 0,
+        CHECK ("NumberOfTimeSlicesPerDay" >= 1)
+        );
+        
+        CREATE TABLE IF NOT EXISTS "OutputSheets" (
+        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
+        "BookID" INTEGER NOT NULL,
+        "WorksheetName" VARCHAR(20) NOT NULL,
+        "DataSetNickname" VARCHAR(30),
+        "ListingOrder" INTEGER NOT NULL,
+        FOREIGN KEY("BookID") REFERENCES OutputBooks("ID")
+        );
+
+        CREATE TABLE IF NOT EXISTS "OutputColSourceTypes" (
+        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
+        "ColumnType" VARCHAR(10) NOT NULL UNIQUE
+        );
+        
+        CREATE TABLE IF NOT EXISTS "OutputColAggTypes" (
+        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
+        "AggType" VARCHAR(5) NOT NULL UNIQUE
+        );
+
+        CREATE TABLE IF NOT EXISTS "OutputColumns" (
+        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
+        "WorksheetID" INTEGER NOT NULL ,
+        "ColumnHeading" VARCHAR(20) NOT NULL,
+        "DataColSourceTypeID" INTEGER NOT NULL,
+        "Constant" VARCHAR(10),
+        "Formula" VARCHAR(1000),
+        "AggStationID" INTEGER,
+        "AggDataSeriesID" INTEGER,
+        "AggTypeID" INTEGER,
+        "ContentsFormat" VARCHAR(20),
+        "ListingOrder" INTEGER NOT NULL,
+        FOREIGN KEY("WorksheetID") REFERENCES OutputSheets("ID")
+        FOREIGN KEY("DataColSourceTypeID") REFERENCES OutputColSourceTypes("ID")
+        FOREIGN KEY("AggStationID") REFERENCES Stations ("ID")
+        FOREIGN KEY("AggDataSeriesID") REFERENCES DataSeries ("ID")
+        FOREIGN KEY("AggTypeID") REFERENCES OutputColAggTypes("ID")
+        );
+        
         """)
 
 except sqlite3.Error, e:
@@ -336,6 +387,17 @@ def assureChannelIsInDB(lChanList):
         lChanList[0] = t[0]
         lChanList[7] = 'existing'
     return lChanList
+
+i = assureItemIsInTableField('Date/Time', 'OutputColSourceTypes', 'ColumnType')
+i = assureItemIsInTableField('Constant', 'OutputColSourceTypes', 'ColumnType')
+i = assureItemIsInTableField('Aggregate', 'OutputColSourceTypes', 'ColumnType')
+i = assureItemIsInTableField('Formula', 'OutputColSourceTypes', 'ColumnType')
+i = assureItemIsInTableField('Avg', 'OutputColAggTypes', 'AggType')
+i = assureItemIsInTableField('Min', 'OutputColAggTypes', 'AggType')
+i = assureItemIsInTableField('Max', 'OutputColAggTypes', 'AggType')
+i = assureItemIsInTableField('Count', 'OutputColAggTypes', 'AggType')
+i = assureItemIsInTableField('Sum', 'OutputColAggTypes', 'AggType')
+i = assureItemIsInTableField('StDev', 'OutputColAggTypes', 'AggType')
 
 def autofixChannelSegments():
     """
