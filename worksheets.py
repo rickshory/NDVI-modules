@@ -12,9 +12,9 @@ menu_title_by_id = {}
 for id in range(len(menu_titles)):
     menu_title_by_id[ id + 101 ] = menu_titles[id]
 
-treePopMenuItems = {101:'Add Book',
-                    201:'Add Sheet', 202:'Delete this Book',
-                    301:'Add Column', 302:'Delete this Sheet',
+treePopMenuItems = {101:'Add a Book',
+                    201:'Add a Sheet to this Book', 202:'Delete this Book',
+                    301:'Add a Column to this Sheet', 302:'Delete this Sheet',
                     402:'Delete this Column'}
 
 class SetupWorksheetsPanel(wx.Panel):
@@ -32,9 +32,20 @@ class SetupWorksheetsPanel(wx.Panel):
 
         self.dsTree = wx.TreeCtrl(treeViewPanel, 1, wx.DefaultPosition, (-1,-1), wx.TR_HAS_BUTTONS|wx.TR_LINES_AT_ROOT)
         self.dsRootID = self.dsTree.AddRoot('DataSets')
-        print "dsRootID:", self.dsRootID
+#        print "dsRootID:", self.dsRootID
         # for every tree item except the root, the PyData is a 2-tuple: ([Table Name], [Record ID in that table])
         self.dsTree.SetPyData(self.dsRootID, ('(no table)',0))
+        # build out any branches of the tree
+        stSQL = "SELECT ID, BookName FROM OutputBooks;"
+        scidb.curD.execute(stSQL)
+        bookRecs = scidb.curD.fetchall()
+        bookDict = {}
+        for bookRec in bookRecs: # get them all now because another query to the same DB will stop the iterator
+            bookBranchID = self.dsTree.AppendItem(self.dsRootID, bookRec["BookName"])
+            # PyData is a 2-tuple: ([Table Name], [Record ID in that table])
+            self.dsTree.SetPyData(self.bookBranchID, ('OutputBooks', bookRec["ID"]))
+            bookDict[bookRec["ID"]] = [bookRec["BookName"], bookBranchID]
+
         self.dsTree.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, id=1)
         self.tree_item_clicked = None
         # 1. Register source's EVT_s to invoke pop-up menu launcher
@@ -74,10 +85,17 @@ class SetupWorksheetsPanel(wx.Panel):
         menu = wx.Menu()
 #        for (id,title) in menu_title_by_id.items():
         for (id,title) in treePopMenuItems.items():
-            
-            ### 3. Launcher packs menu with Append. ###
-            print id, title
-            menu.Append( id, title )
+            if ckPyData[1] == 0: # the root of the DataSets tree
+                if id > 100 and id < 200: # only insert these menu items
+                    print id, title
+                    menu.Append( id, title )
+            if ckPyData[0] == 'OutputBooks': # a Book branch
+                if id > 200 and id < 300: # only insert these menu items
+                    print id, title
+                    menu.Append( id, title )
+                
+#            print id, title
+#            menu.Append( id, title )
             ### 4. Launcher registers menu handlers with EVT_MENU, on the menu. ###
             wx.EVT_MENU( menu, id, self.MenuSelectionCb )
 
@@ -87,7 +105,7 @@ class SetupWorksheetsPanel(wx.Panel):
 
     def MenuSelectionCb( self, event ):
         # do something
-        operation = menu_title_by_id[ event.GetId() ]
+        operation = treePopMenuItems[ event.GetId() ]
         print "operation:", operation
 #        target = self.tree_item_clicked
         target = self.dsTree.GetItemText(self.tree_item_clicked)
