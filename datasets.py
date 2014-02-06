@@ -37,10 +37,14 @@ class InfoPanel_DataSets(wx.Panel):
         self.infoLabel1 = wx.StaticText(self, -1, 'Right-click the "DataSets" tree to the left to add a Book')
         self.infoLabel2 = wx.StaticText(self, -1, "Within a Book, you'll add one or more Sheets")
         self.infoLabel3 = wx.StaticText(self, -1, "Within a Sheet, you'll set up the Columns")
-        dsPnlSiz = wx.GridBagSizer(4, 4)
+        self.infoLabel4 = wx.StaticText(self, -1, "When enough information is entered, a preview will appear below.")
+        self.infoLabel5 = wx.StaticText(self, -1, "You can go back and edit any level at any time")
+        dsPnlSiz = wx.GridBagSizer(1, 1)
         dsPnlSiz.Add(self.infoLabel1, pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
         dsPnlSiz.Add(self.infoLabel2, pos=(1, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
         dsPnlSiz.Add(self.infoLabel3, pos=(2, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
+        dsPnlSiz.Add(self.infoLabel4, pos=(3, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
+        dsPnlSiz.Add(self.infoLabel5, pos=(4, 0), flag=wx.LEFT|wx.BOTTOM, border=10)
         
         self.SetSizer(dsPnlSiz)
 
@@ -51,9 +55,24 @@ class InfoPanel_Book(wx.Panel):
         
     def InitUI(self):
         self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
-        self.infoLabel = wx.StaticText(self, -1, 'This will be the Book panel')
-        bkPnlSiz = wx.GridBagSizer(4, 4)
-        bkPnlSiz.Add(self.infoLabel, pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        bkPnlSiz = wx.GridBagSizer(1, 1)
+        self.note1 = wx.StaticText(self, -1, 'Bold ')
+        bolded = self.note1.GetFont() 
+        bolded.SetWeight(wx.BOLD) 
+        self.note1.SetFont(bolded) 
+        bkPnlSiz.Add(self.note1, pos=(0, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.note2 = wx.StaticText(self, -1, 'items are required')
+        bkPnlSiz.Add(self.note2, pos=(0, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
+
+#        bolded = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.BOLD)
+        self.bookNameLabel = wx.StaticText(self, -1, 'Book Name')
+        self.bookNameLabel.SetFont(bolded)
+        bkPnlSiz.Add(self.bookNameLabel, pos=(1, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        tcBookName = wx.TextCtrl(self)
+        bkPnlSiz.Add(tcBookName, pos=(1, 1), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        self.bookNameHelp = wx.StaticText(self, -1, 'Book Name must be unique')
+        bkPnlSiz.Add(self.bookNameHelp, pos=(2, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.SetSizer(bkPnlSiz)
 
 class SetupWorksheetsPanel(wx.Panel):
