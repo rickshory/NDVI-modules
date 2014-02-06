@@ -2,31 +2,22 @@ import wx, sqlite3, datetime
 import os, sys, re, cPickle
 import scidb
 
-menu_titles = [ "Open",
-                "Properties",
-                "Rename",
-                "Delete" ]
-
-menu_title_by_id = {}
-#for title in menu_titles:
-for id in range(len(menu_titles)):
-    menu_title_by_id[ id + 101 ] = menu_titles[id]
-
 treePopMenuItems = {101:'Add a Book',
                     201:'Add a Sheet to this Book', 202:'Delete this Book',
                     301:'Add a Column to this Sheet', 302:'Delete this Sheet',
                     402:'Delete this Column'}
 
-class showDataSetsInfoPanel(wx.Panel):
+class InfoPanel_DataSets(wx.Panel):
     def __init__(self, parent, id):
         wx.Panel.__init__(self, parent, id)
         self.InitUI()
         
     def InitUI(self):
+#        self.SetBackgroundColour(wx.WHITE) # can use this to override color of enclosing panel
         self.infoLabel = wx.StaticText(self, -1, 'Right-click the "DataSets" tree to the left to add a Book')
-        vSiz = wx.BoxSizer(wx.VERTICAL)
-        vSiz.Add(self.infoLabel, 1, wx.EXPAND)
-        self.SetSizer(vSiz)
+#        vSiz = wx.BoxSizer(wx.VERTICAL)
+#        vSiz.Add(self.infoLabel, 1, wx.EXPAND)
+#        self.SetSizer(vSiz)
 
 class SetupWorksheetsPanel(wx.Panel):
     def __init__(self, parent, id):
@@ -67,7 +58,12 @@ class SetupWorksheetsPanel(wx.Panel):
         treeViewPanel.SetSizer(trPnlSiz)
 
         self.detailsPanel = wx.Panel(vSplit, -1)
+        self.detailsPanel.SetBackgroundColour(wx.WHITE)
         self.detailsLabel = wx.StaticText(self.detailsPanel, -1, "This will have the details")
+        self.detSiz = wx.BoxSizer(wx.VERTICAL)
+        self.detSiz.Add(self.detailsLabel, 1, wx.EXPAND)
+        self.detailsPanel.SetSizer(self.detSiz)
+        
         vSplit.SplitVertically(treeViewPanel, self.detailsPanel)
         hSiz = wx.BoxSizer(wx.HORIZONTAL)
         hSiz.Add(vSplit, 1, wx.EXPAND)
@@ -84,12 +80,16 @@ class SetupWorksheetsPanel(wx.Panel):
     def OnSelChanged(self, event):
         print "OnSelChanged"
         item = event.GetItem()
-        self.detailsLabel.SetLabel(self.dsTree.GetItemText(item))
+        
+#        self.detailsLabel.SetLabel(self.dsTree.GetItemText(item))
 #        print "ItemData:", self.dsTree.GetItemData(item)
         ckPyData = self.dsTree.GetPyData(item)
         print "PyData:", ckPyData
         if ckPyData[1] == 0:
-            dsInfoPnl = showDataSetsInfoPanel(self.detailsPanel, wx.ID_ANY)
+            self.detailsPanel.DestroyChildren()
+            dsInfoPnl = InfoPanel_DataSets(self.detailsPanel, wx.ID_ANY)
+            self.detSiz.Add(dsInfoPnl, 1, wx.ALL|wx.EXPAND, border=10)
+        self.detailsPanel.Layout()
 
     def dsTreeRightClick(self, event):
         self.tree_item_clicked = right_click_context = event.GetItem()
