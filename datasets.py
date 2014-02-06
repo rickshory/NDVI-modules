@@ -18,7 +18,7 @@ class Dialog_Book(wx.Dialog):
     def __init__(self, parent, id, title):
         wx.Dialog.__init__(self, parent, id, title)
         self.InitUI()
-        self.SetSize((450, 400))
+        self.SetSize((350, 300))
 #        self.SetTitle("Add new Book") # overrides title passed above
 
     def InitUI(self):
@@ -33,11 +33,16 @@ class InfoPanel_DataSets(wx.Panel):
         self.InitUI()
         
     def InitUI(self):
-#        self.SetBackgroundColour(wx.WHITE) # can use this to override color of enclosing panel
-        self.infoLabel = wx.StaticText(self, -1, 'Right-click the "DataSets" tree to the left to add a Book')
-#        vSiz = wx.BoxSizer(wx.VERTICAL)
-#        vSiz.Add(self.infoLabel, 1, wx.EXPAND)
-#        self.SetSizer(vSiz)
+        self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
+        self.infoLabel1 = wx.StaticText(self, -1, 'Right-click the "DataSets" tree to the left to add a Book')
+        self.infoLabel2 = wx.StaticText(self, -1, "Within a Book, you'll add one or more Sheets")
+        self.infoLabel3 = wx.StaticText(self, -1, "Within a Sheet, you'll set up the Columns")
+        dsPnlSiz = wx.GridBagSizer(4, 4)
+        dsPnlSiz.Add(self.infoLabel1, pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
+        dsPnlSiz.Add(self.infoLabel2, pos=(1, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
+        dsPnlSiz.Add(self.infoLabel3, pos=(2, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
+        
+        self.SetSizer(dsPnlSiz)
 
 class InfoPanel_Book(wx.Panel):
     def __init__(self, parent, id):
@@ -45,11 +50,11 @@ class InfoPanel_Book(wx.Panel):
         self.InitUI()
         
     def InitUI(self):
-#        self.SetBackgroundColour(wx.WHITE) # can use this to override color of enclosing panel
+        self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
         self.infoLabel = wx.StaticText(self, -1, 'This will be the Book panel')
-        vSiz = wx.BoxSizer(wx.VERTICAL)
-        vSiz.Add(self.infoLabel, 1, wx.EXPAND)
-        self.SetSizer(vSiz)
+        bkPnlSiz = wx.GridBagSizer(4, 4)
+        bkPnlSiz.Add(self.infoLabel, pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.SetSizer(bkPnlSiz)
 
 class SetupWorksheetsPanel(wx.Panel):
     def __init__(self, parent, id):
@@ -90,7 +95,9 @@ class SetupWorksheetsPanel(wx.Panel):
         treeViewPanel.SetSizer(trPnlSiz)
 
         self.detailsPanel = wx.Panel(vSplit, -1)
-        self.detailsPanel.SetBackgroundColour(wx.WHITE)
+        # SetBackgroundColour below is a test that this panel background does not show
+        # but instead all padding done within the enclosed panel
+        self.detailsPanel.SetBackgroundColour(wx.BLUE)
         self.detailsLabel = wx.StaticText(self.detailsPanel, -1, "This will have the details")
         self.detSiz = wx.BoxSizer(wx.VERTICAL)
         self.detSiz.Add(self.detailsLabel, 1, wx.EXPAND)
@@ -120,7 +127,7 @@ class SetupWorksheetsPanel(wx.Panel):
         if ckPyData[1] == 0:
             self.detailsPanel.DestroyChildren()
             dsInfoPnl = InfoPanel_DataSets(self.detailsPanel, wx.ID_ANY)
-            self.detSiz.Add(dsInfoPnl, 1, wx.ALL|wx.EXPAND, border=10)
+            self.detSiz.Add(dsInfoPnl, 1, wx.EXPAND)
         self.detailsPanel.Layout()
 
     def dsTreeRightClick(self, event):
@@ -138,9 +145,8 @@ class SetupWorksheetsPanel(wx.Panel):
                 if id > 200 and id < 300: # only insert these menu items
                     print "Added to menu (id, title):", id, title
                     menu.Append( id, title )
-                
-#            print id, title
-#            menu.Append( id, title )
+            # write others for Sheet and Column
+
             ### 4. Launcher registers menu handlers with EVT_MENU, on the menu. ###
             wx.EVT_MENU( menu, id, self.MenuSelectionCb )
 
