@@ -2,11 +2,31 @@ import wx, sqlite3, datetime
 import os, sys, re, cPickle
 import scidb
 
-treePopMenuItems = {101:'Add a Book',
-                    201:'Add a Sheet to this Book', 202:'Delete this Book',
-                    301:'Add a Column to this Sheet', 302:'Delete this Sheet',
-                    402:'Delete this Column'}
+ID_ADD_BOOK = 101
+ID_ADD_SHEET = 201
+ID_DEL_BOOK = 202
+ID_ADD_COL = 301
+ID_DEL_SHEET = 302
+ID_DEL_COL = 402
 
+treePopMenuItems = {ID_ADD_BOOK:'Add a Book',
+                    ID_ADD_SHEET:'Add a Sheet to this Book', ID_DEL_BOOK:'Delete this Book',
+                    ID_ADD_COL:'Add a Column to this Sheet', ID_DEL_SHEET:'Delete this Sheet',
+                    ID_DEL_COL:'Delete this Column'}
+
+class Dialog_Book(wx.Dialog):
+    def __init__(self, parent, id, title):
+        wx.Dialog.__init__(self, parent, id, title)
+        self.InitUI()
+        self.SetSize((450, 400))
+#        self.SetTitle("Add new Book") # overrides title passed above
+
+    def InitUI(self):
+        pnl = InfoPanel_Book(self, wx.ID_ANY)
+   
+    def OnClose(self, event):
+        self.Destroy()
+        
 class InfoPanel_DataSets(wx.Panel):
     def __init__(self, parent, id):
         wx.Panel.__init__(self, parent, id)
@@ -18,6 +38,18 @@ class InfoPanel_DataSets(wx.Panel):
 #        vSiz = wx.BoxSizer(wx.VERTICAL)
 #        vSiz.Add(self.infoLabel, 1, wx.EXPAND)
 #        self.SetSizer(vSiz)
+
+class InfoPanel_Book(wx.Panel):
+    def __init__(self, parent, id):
+        wx.Panel.__init__(self, parent, id)
+        self.InitUI()
+        
+    def InitUI(self):
+#        self.SetBackgroundColour(wx.WHITE) # can use this to override color of enclosing panel
+        self.infoLabel = wx.StaticText(self, -1, 'This will be the Book panel')
+        vSiz = wx.BoxSizer(wx.VERTICAL)
+        vSiz.Add(self.infoLabel, 1, wx.EXPAND)
+        self.SetSizer(vSiz)
 
 class SetupWorksheetsPanel(wx.Panel):
     def __init__(self, parent, id):
@@ -100,11 +132,11 @@ class SetupWorksheetsPanel(wx.Panel):
         for (id,title) in treePopMenuItems.items():
             if ckPyData[1] == 0: # the root of the DataSets tree
                 if id > 100 and id < 200: # only insert these menu items
-                    print id, title
+                    print "Added to menu (id, title):", id, title
                     menu.Append( id, title )
             if ckPyData[0] == 'OutputBooks': # a Book branch
                 if id > 200 and id < 300: # only insert these menu items
-                    print id, title
+                    print "Added to menu (id, title):", id, title
                     menu.Append( id, title )
                 
 #            print id, title
@@ -118,11 +150,20 @@ class SetupWorksheetsPanel(wx.Panel):
 
     def MenuSelectionCb( self, event ):
         # do something
-        operation = treePopMenuItems[ event.GetId() ]
+        opID = event.GetId()
+        operation = treePopMenuItems[opID]
         print "operation:", operation
+        
 #        target = self.tree_item_clicked
         target = self.dsTree.GetItemText(self.tree_item_clicked)
         print "target:", target
+        if opID == ID_ADD_BOOK:
+            print "operation is to add a new book"
+            dia = Dialog_Book(self, wx.ID_ANY, 'Add a new Book')
+            dia.ShowModal()
+            dia.Destroy()
+
+        
                     
     def onButton(self, event, strLabel):
         """"""
