@@ -64,7 +64,6 @@ class InfoPanel_Book(wx.Panel):
         self.note2 = wx.StaticText(self, -1, 'items are required')
         bkPnlSiz.Add(self.note2, pos=(0, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
-#        bolded = wx.Font(10, wx.DEFAULT, wx.NORMAL, wx.BOLD)
         self.bookNameLabel = wx.StaticText(self, -1, 'Book Name')
         self.bookNameLabel.SetFont(bolded)
         bkPnlSiz.Add(self.bookNameLabel, pos=(1, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
@@ -72,7 +71,48 @@ class InfoPanel_Book(wx.Panel):
         bkPnlSiz.Add(tcBookName, pos=(1, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
         self.bookNameHelp = wx.StaticText(self, -1, 'Book Name must be unique')
-        bkPnlSiz.Add(self.bookNameHelp, pos=(2, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        bkPnlSiz.Add(self.bookNameHelp, pos=(2, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        self.longitudeLabel = wx.StaticText(self, -1, 'Longitude')
+        self.longitudeLabel.SetFont(bolded)
+        bkPnlSiz.Add(self.longitudeLabel, pos=(3, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        tcLongitude = wx.TextCtrl(self)
+        bkPnlSiz.Add(tcLongitude, pos=(3, 1), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        self.longitudeHelp = wx.StaticText(self, -1, '(for calculating solar time)')
+        bkPnlSiz.Add(self.longitudeHelp, pos=(4, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        self.hrOffsetLabel = wx.StaticText(self, -1, 'Hour Offset')
+        self.hrOffsetLabel.SetFont(bolded)
+        bkPnlSiz.Add(self.hrOffsetLabel, pos=(5, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        tcHrOffset = wx.TextCtrl(self)
+        bkPnlSiz.Add(tcHrOffset, pos=(5, 1), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        self.hrOffsetHelp = wx.StaticText(self, -1, '(for calculating clock time)')
+        bkPnlSiz.Add(self.hrOffsetHelp, pos=(6, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        self.timeSlicesLabel = wx.StaticText(self, -1, 'Time slices per day')
+        self.timeSlicesLabel.SetFont(bolded)
+        bkPnlSiz.Add(self.timeSlicesLabel, pos=(7, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        tcTimeSlices = wx.TextCtrl(self)
+        bkPnlSiz.Add(tcTimeSlices, pos=(7, 1), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        self.timeSlicesHelp = wx.StaticText(self, -1, '(e.g. 1 for daily data, 24 for hourly data)')
+        bkPnlSiz.Add(self.timeSlicesHelp, pos=(8, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+        
+        lstDates = scidb.getDatesList()
+        self.dateLabelFrom = wx.StaticText(self, -1, 'From')
+        self.dateLabelTo = wx.StaticText(self, -1, 'To')
+        bkPnlSiz.Add(self.dateLabelFrom, pos=(9, 0), span=(1, 1), flag=wx.ALIGN_RIGHT)
+        bkPnlSiz.Add(self.dateLabelTo, pos=(10, 0), span=(1, 1), flag=wx.ALIGN_RIGHT)
+        self.cbxDateFrom = wx.ComboBox(self, -1, choices=lstDates, style=wx.CB_READONLY)
+        self.cbxDateTo = wx.ComboBox(self, -1, choices=lstDates, style=wx.CB_READONLY)
+        bkPnlSiz.Add(self.cbxDateFrom, pos=(9, 1), span=(1, 1), flag=wx.LEFT, border=5)
+        bkPnlSiz.Add(self.cbxDateTo, pos=(10, 1), span=(1, 1), flag=wx.LEFT, border=5)
+        self.dateOptLabel = wx.StaticText(self, -1, 'Optional,\nto limit\ndate range')
+        bkPnlSiz.Add(self.dateOptLabel, pos=(9, 2), span=(1, 2))
+
+        
         self.SetSizer(bkPnlSiz)
 
 class SetupWorksheetsPanel(wx.Panel):

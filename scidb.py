@@ -123,9 +123,6 @@ try:
         ON "Data"
         ("UTTimestamp" ASC, "ChannelID" ASC);
         
-        CREATE TABLE IF NOT EXISTS "DataDates" 
-        ("Date" date PRIMARY KEY  NOT NULL  UNIQUE );
-        
         CREATE TABLE IF NOT EXISTS "FieldSites" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "SiteName" VARCHAR(50) NOT NULL UNIQUE,
@@ -172,6 +169,10 @@ try:
         FOREIGN KEY("StationID") REFERENCES Stations("ID")
         FOREIGN KEY("SeriesID") REFERENCES DataSeries("ID")
         );
+        
+        CREATE VIEW IF NOT EXISTS "DataDates"
+        AS SELECT date(Data.UTTimestamp) AS Date FROM Data
+        GROUP BY  Date;
         
         CREATE VIEW IF NOT EXISTS "ChannelsWithOneSegment"
         AS SELECT ChannelSegments.ChannelID
@@ -317,6 +318,19 @@ try:
 except sqlite3.Error, e:
     print 'Error in "tmp.db": %s' % e.args[0]
     sys.exit(1)
+
+def getDatesList():
+    """
+    Gets the list of dates that have records in the Data table.
+    Used for filling combo boxes, to select from dates that have existing data.
+    Returns a Python list of the dates.
+    """
+    lstDates = []
+    curD.execute("SELECT Date FROM DataDates ORDER BY Date;")
+    recs = curD.fetchall()
+    for rec in recs:
+        lstDates.append(rec["Date"])
+    return lstDates
 
 def assureItemIsInTableField(stItem, stTable, stField):
     """
