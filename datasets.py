@@ -69,6 +69,9 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         bkPnlSiz.Add(self.note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.note2 = wx.StaticText(self, -1, 'items are required')
         bkPnlSiz.Add(self.note2, pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
         
         gRow += 1
         self.bookNameLabel = wx.StaticText(self, -1, 'Book Name')
@@ -83,6 +86,9 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         bkPnlSiz.Add(self.bookNameHelp, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
+        bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+
+        gRow += 1
         self.longitudeLabel = wx.StaticText(self, -1, 'Longitude')
         self.longitudeLabel.SetFont(bolded)
         bkPnlSiz.Add(self.longitudeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
@@ -93,6 +99,9 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         gRow += 1
         self.longitudeHelp = wx.StaticText(self, -1, '(for calculating solar time)')
         bkPnlSiz.Add(self.longitudeHelp, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
         gRow += 1
         self.hrOffsetLabel = wx.StaticText(self, -1, 'Hour Offset')
@@ -107,6 +116,9 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         bkPnlSiz.Add(self.hrOffsetHelp, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
+        bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+
+        gRow += 1
         self.timeSlicesLabel = wx.StaticText(self, -1, 'Time slices per day')
         self.timeSlicesLabel.SetFont(bolded)
         bkPnlSiz.Add(self.timeSlicesLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
@@ -117,6 +129,9 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         gRow += 1
         self.timeSlicesHelp = wx.StaticText(self, -1, '(e.g. 1 for daily data, 24 for hourly data)')
         bkPnlSiz.Add(self.timeSlicesHelp, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
         
         gRow += 1
         lstDates = scidb.getDatesList()
@@ -133,12 +148,11 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
 
         gRow += 1
         self.dateOptLabel = wx.StaticText(self, -1, 'Optional, to limit date range')
-        bkPnlSiz.Add(self.dateOptLabel, pos=(gRow, 0), span=(1, 2))
+        bkPnlSiz.Add(self.dateOptLabel, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
-        line = wx.StaticLine(self)
-        bkPnlSiz.Add(line, pos=(gRow, 0), span=(1, 2), 
-            flag=wx.EXPAND|wx.BOTTOM, border=10)
+        bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+
 
         self.SetSizer(bkPnlSiz)
         self.SetAutoLayout(1)
