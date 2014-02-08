@@ -71,7 +71,7 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         bkPnlSiz.Add(self.note2, pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
         gRow += 1
-        bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+        bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
         
         gRow += 1
         self.bookNameLabel = wx.StaticText(self, -1, 'Book Name')
@@ -153,10 +153,41 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         gRow += 1
         bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
+        gRow += 1
+        self.ckSheetsTogether = wx.CheckBox(self, label="Put all sheets' data together into one table")
+        bkPnlSiz.Add(self.ckSheetsTogether, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        self.ckSpaceBetwBlocks = wx.CheckBox(self, label="Blank row between these data blocks")
+        bkPnlSiz.Add(self.ckSpaceBetwBlocks, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+
+        gRow += 1
+        self.btnSave = wx.Button(self, label="Save", size=(90, 28))
+        self.btnSave.Bind(wx.EVT_BUTTON, lambda evt, str=self.btnSave.GetLabel(): self.onClick_BtnSave(evt, str))
+        bkPnlSiz.Add(self.btnSave, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
+        self.btnCancel = wx.Button(self, label="Cancel", size=(90, 28))
+        self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt, str=self.btnCancel.GetLabel(): self.onClick_BtnCancel(evt, str))
+        bkPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         self.SetSizer(bkPnlSiz)
         self.SetAutoLayout(1)
         self.SetupScrolling()
+
+    def onClick_BtnSave(self, event, strLabel):
+        """"""
+        wx.MessageBox('"Save" is not implemented yet', 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
+
+    def onClick_BtnCancel(self, event, strLabel):
+        """"""
+        wx.MessageBox('"Cancel" is not implemented yet', 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
+        parObject = self.GetParent()
+        print parObject
+#        self.Destroy()
 
 class SetupWorksheetsPanel(wx.Panel):
     def __init__(self, parent, id):
