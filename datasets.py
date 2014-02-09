@@ -2,6 +2,7 @@ import wx, sqlite3, datetime
 import os, sys, re, cPickle
 import scidb
 import wx.lib.scrolledpanel as scrolled
+import wx.lib.newevent
 
 ID_ADD_BOOK = 101
 ID_ADD_SHEET = 201
@@ -24,7 +25,7 @@ class Dialog_Book(wx.Dialog):
 
     def InitUI(self):
 #        pnl = InfoPanel_Book(self, wx.ID_ANY)
-        pnl = InfoPanel_Book(self)
+        self.pnl = InfoPanel_Book(self)
    
     def OnClose(self, event):
         self.Destroy()
@@ -51,14 +52,15 @@ class InfoPanel_DataSets(wx.Panel):
         self.SetSizer(dsPnlSiz)
 
 class InfoPanel_Book(scrolled.ScrolledPanel):
-    def __init__(self, parent):
+    def __init__(self, parent, treePyData = None):
         scrolled.ScrolledPanel.__init__(self, parent, -1)
 #    def __init__(self, parent, id):
 #        wx.Panel.__init__(self, parent, id)
-        self.InitUI()
+        self.InitUI(treePyData)
         
         
-    def InitUI(self):
+    def InitUI(self, treePyData):
+        self.treePyData = treePyData
         self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
         bkPnlSiz = wx.GridBagSizer(1, 1)
         self.note1 = wx.StaticText(self, -1, 'Bold ')
@@ -77,8 +79,8 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         self.bookNameLabel = wx.StaticText(self, -1, 'Book Name')
         self.bookNameLabel.SetFont(bolded)
         bkPnlSiz.Add(self.bookNameLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        tcBookName = wx.TextCtrl(self)
-        bkPnlSiz.Add(tcBookName, pos=(gRow, 1), span=(1, 1), 
+        self.tcBookName = wx.TextCtrl(self)
+        bkPnlSiz.Add(self.tcBookName, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
@@ -92,8 +94,8 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         self.longitudeLabel = wx.StaticText(self, -1, 'Longitude')
         self.longitudeLabel.SetFont(bolded)
         bkPnlSiz.Add(self.longitudeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        tcLongitude = wx.TextCtrl(self)
-        bkPnlSiz.Add(tcLongitude, pos=(gRow, 1), span=(1, 1), 
+        self.tcLongitude = wx.TextCtrl(self)
+        bkPnlSiz.Add(self.tcLongitude, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
@@ -107,8 +109,8 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         self.hrOffsetLabel = wx.StaticText(self, -1, 'Hour Offset')
         self.hrOffsetLabel.SetFont(bolded)
         bkPnlSiz.Add(self.hrOffsetLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        tcHrOffset = wx.TextCtrl(self)
-        bkPnlSiz.Add(tcHrOffset, pos=(gRow, 1), span=(1, 1), 
+        self.tcHrOffset = wx.TextCtrl(self)
+        bkPnlSiz.Add(self.tcHrOffset, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
@@ -122,8 +124,8 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         self.timeSlicesLabel = wx.StaticText(self, -1, 'Time slices per day')
         self.timeSlicesLabel.SetFont(bolded)
         bkPnlSiz.Add(self.timeSlicesLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        tcTimeSlices = wx.TextCtrl(self)
-        bkPnlSiz.Add(tcTimeSlices, pos=(gRow, 1), span=(1, 1), 
+        self.tcTimeSlices = wx.TextCtrl(self)
+        bkPnlSiz.Add(self.tcTimeSlices, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
@@ -172,24 +174,106 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt, str=self.btnCancel.GetLabel(): self.onClick_BtnCancel(evt, str))
         bkPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
 
+        if treePyData != None:
+            print "treePyData:", treePyData
+            self.fillBookPanelControls(treePyData)
+
+        else:
+            print "treePyData == None"
+
         self.SetSizer(bkPnlSiz)
         self.SetAutoLayout(1)
         self.SetupScrolling()
+
+    def fillBookPanelControls(treePyData):
+        # treePyData is the PyData from the tree item selected, a 2-tuple: ([Table Name], [Record ID in that table])
+#        stSQL = """
+#        SELECT BookName, Longitude, HourOffset,
+#        OutputDataStart, OutputDataEnd, NumberOfTimeSlicesPerDay,
+#        PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks
+#        FROM OutputBooks WHERE ID = ?
+#        """
+        stSQL = "SELECT * FROM ? WHERE ID=?"
+        scidb.curD.execute(stSQL, treePyData)
+        rec = scidb.curD.fetchone()
+        self.tcBookName.SetValue(rec['BookName'])
+        self.tcLongitude.SetValue(rec['Longitude'])
+        self.tcHrOffset.SetValue(rec['HourOffset'])
+        self.tcTimeSlices.SetValue(rec['NumberOfTimeSlicesPerDay'])
+        if rec['OutputDataStart'] != None:
+            self.cbxDateFrom.SetValue(rec['OutputDataStart'])
+        else:
+            self.cbxDateFrom.SetValue(None)
+        if rec['OutputDataEnd'] != None:
+            self.cbxDateTo.SetValue(rec['OutputDataEnd'])
+        else:
+            self.cbxDateTo.SetValue(None)
+        if rec['PutAllOutputRowsInOneSheet'] == 1:
+            self.ckSheetsTogether.SetValue(1)
+        else:
+            self.ckSheetsTogether.SetValue(0)
+        if rec['BlankRowBetweenDataBlocks'] == 1:
+            self.ckSpaceBetwBlocks.SetValue(1)
+        else:
+            self.ckSpaceBetwBlocks.SetValue(0)
 
     def onClick_BtnSave(self, event, strLabel):
         """"""
         wx.MessageBox('"Save" is not implemented yet', 'Info', 
             wx.OK | wx.ICON_INFORMATION)
+        try:
+            stSQL = """
+                INSERT INTO OutputBooks
+                (BookName, Longitude, HourOffset,
+                OutputDataStart, OutputDataEnd, NumberOfTimeSlicesPerDay,
+                PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks)
+                VALUES (?,?,?,?,?,?,?,?);
+                """
+            scidb.curD.execute(stSQL, (self.tcBookName.GetValue(), self.tcLongitude.GetValue(),
+                    self.tcHrOffset.GetValue(),
+                    self.cbxDateFrom.GetValue(), self.cbxDateTo.GetValue(),
+                    self.tcTimeSlices.GetValue(),
+                    self.ckSheetsTogether.GetValue(), self.ckSpaceBetwBlocks.GetValue()))
+            scidb.datConn.commit()
+            # get record ID of new record
+            recID = scidb.curD.lastrowid
+            # post an event to tell the DS tree to add a branch to itself
+#            CreateNewBranchEvent, EVT_FLAG_CREATE_NEW_BRANCH = wx.lib.newevent.NewCommandEvent()
+#            wx.PostEvent(framePanel.dsTree, CreateNewBranchEvent(TableName='OutputBooks', ID=recID))
+
+        except sqlite3.IntegrityError: # duplicate name or required field missing
+            print "could not add Book record to DB table"
+            wx.MessageBox('Error creating book', 'Info', 
+                wx.OK | wx.ICON_INFORMATION)
+
+        parObject = self.GetParent()
+        if parObject.GetClassName() == "wxDialog":
+#            parObject.Destroy() # changes made, exit this dialog
+            pass
+
+        
 
     def onClick_BtnCancel(self, event, strLabel):
-        """"""
-        wx.MessageBox('"Cancel" is not implemented yet', 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
+        """
+        If this frame is shown in a Dialog, the Book is being created. Exit with no changes.
+        If this frame is shown in the main form, restore it from the saved DB record
+        """
         parObject = self.GetParent()
-        print parObject
-#        self.Destroy()
+        if parObject.GetClassName() == "wxDialog":
+            # for testing, try sending a custom event to the datasets tree
+#            CreateNewBranchEvent, EVT_FLAG_CREATE_NEW_BRANCH = wx.lib.newevent.NewCommandEvent()
+            #create the event
+#            evt = CreateNewBranchEvent(TableName='(none)', ID=0)
+            #post the event
+#            wx.PostEvent(self, evt)
+            parObject.EndModal(0)
+#            parObject.Destroy() # if just in the creation dialog, exit with no changes to the DB
+        else:
+            wx.MessageBox('Undoing any edits', 'Info', 
+                wx.OK | wx.ICON_INFORMATION)
+            self.fillBookPanelControls(self.treePyData)
 
-class SetupWorksheetsPanel(wx.Panel):
+class SetupDatasetsPanel(wx.Panel):
     def __init__(self, parent, id):
         wx.Panel.__init__(self, parent, id)
         self.InitUI()
@@ -213,10 +297,10 @@ class SetupWorksheetsPanel(wx.Panel):
         bookRecs = scidb.curD.fetchall()
         bookDict = {}
         for bookRec in bookRecs: # get them all now because another query to the same DB will stop the iterator
-            bookBranchID = self.dsTree.AppendItem(self.dsRootID, bookRec["BookName"])
+            self.bookBranchID = self.dsTree.AppendItem(self.dsRootID, bookRec["BookName"])
             # PyData is a 2-tuple: ([Table Name], [Record ID in that table])
             self.dsTree.SetPyData(self.bookBranchID, ('OutputBooks', bookRec["ID"]))
-            bookDict[bookRec["ID"]] = [bookRec["BookName"], bookBranchID]
+            bookDict[bookRec["ID"]] = [bookRec["BookName"], self.bookBranchID]
 
         self.dsTree.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, id=1)
         self.tree_item_clicked = None
@@ -299,11 +383,17 @@ class SetupWorksheetsPanel(wx.Panel):
         if opID == ID_ADD_BOOK:
             print "operation is to add a new book"
             dia = Dialog_Book(self, wx.ID_ANY, 'Add a new Book')
-            dia.ShowModal()
+            # the dialog contains an 'InfoPanel_Book' named 'pnl'
+            result = dia.ShowModal()
+            # dialog is exited using EndModal, and comes back here
+            print "Modal dialog result:", result
+            # test of pulling things out of the modal dialog
+#            childFrame = self.FindWindowByName('pnl')
+#            print "dir of the Modal:", dir(dia)
+            print "children of the Modal:" , dia.GetChildren()
+            print "Text from the Modal:", dia.pnl.bookNameLabel.GetLabelText()
             dia.Destroy()
 
-        
-                    
     def onButton(self, event, strLabel):
         """"""
         print ' You clicked the button labeled "%s"' % strLabel
@@ -312,7 +402,7 @@ class SetupWorksheetsPanel(wx.Panel):
 #        wx.MessageBox('"Hello" is not implemented yet', 'Info', 
 #            wx.OK | wx.ICON_INFORMATION)
 
-class SetupWorksheetsFrame(wx.Frame):
+class SetupDatasetsFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title)
         self.InitUI()
@@ -321,11 +411,11 @@ class SetupWorksheetsFrame(wx.Frame):
         self.Show(True)
 
     def InitUI(self):
-        framePanel = SetupWorksheetsPanel(self, wx.ID_ANY)
+        framePanel = SetupDatasetsPanel(self, wx.ID_ANY)
 
 def main():
     app = wx.App(redirect=False)
-    SetupWorksheetsFrame(None, wx.ID_ANY, 'Set Up Worksheets')
+    dsFrame = SetupDatasetsFrame(None, wx.ID_ANY, 'Set Up Datasets')
     app.MainLoop() 
 
 if __name__ == '__main__':
