@@ -221,13 +221,19 @@ try:
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
         "BookName" VARCHAR(30) NOT NULL UNIQUE,
         "Longitude" FLOAT NOT NULL,
-        "HourOffset" FLOAT NOT NULL,
+        "HourOffset" INT NOT NULL,
+        "NumberOfTimeSlicesPerDay" INTEGER NOT NULL DEFAULT 1,
         "OutputDataStart" date,
         "OutputDataEnd" date,
-        "NumberOfTimeSlicesPerDay" INTEGER NOT NULL DEFAULT 1,
         "PutAllOutputRowsInOneSheet" BOOL NOT NULL DEFAULT 0,
         "BlankRowBetweenDataBlocks" BOOL NOT NULL DEFAULT 0,
+        CHECK ("Longitude" >= -180)
+        CHECK ("Longitude" <= 180)
+        CHECK ("HourOffset" >= -12)
+        CHECK ("HourOffset" <= 12)
         CHECK ("NumberOfTimeSlicesPerDay" >= 1)
+        CHECK (("OutputDataStart" is NULL) or ("OutputDataEnd" is NULL)
+        or ("OutputDataStart" <= "OutputDataEnd"))
         );
         
         CREATE TABLE IF NOT EXISTS "OutputSheets" (
@@ -363,7 +369,7 @@ def lenOfVarcharTableField(stTable, stField):
         \s*?[)]
         """, re.VERBOSE | re.IGNORECASE)
         lLen = reRecLen.findall(stSQL)
-        print "lLen in lenOfVarcharTableField:", lLen
+#        print "lLen in lenOfVarcharTableField:", lLen
         if len(lLen) == 0:
             return -2 # none found
         if len(lLen) > 1:

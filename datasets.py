@@ -217,7 +217,14 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
             self.ckSpaceBetwBlocks.SetValue(0)
 
     def onClick_BtnSave(self, event, strLabel):
-        """"""
+        """
+        If this frame is shown in a Dialog, the Book is being created.
+        Attempt to create a new record and exit with the new record ID.
+        If this frame is shown in the main form, attempt to save any changes to the existing DB record
+        """
+        parObject = self.GetParent()
+        parClassName = parObject.GetClassName() # "wxDialog" if in the dialog
+
         # clean up whitespace; remove leading/trailing & multiples
         stBookName = " ".join(self.tcBookName.GetValue().split())
         print "stBookName:", stBookName
@@ -228,13 +235,17 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
             self.tcBookName.SetFocus()
             self.Scroll(0, 0) # the required controls are all at the top
             return
-        if scidb.countTableFieldItems('OutputBooks', 'BookName', stBookName) > 0:
-            wx.MessageBox('There is already a Book Name "' + stBookName + '"', 'Duplicate',
-                wx.OK | wx.ICON_INFORMATION)
-            self.tcBookName.SetValue('')
-            self.tcBookName.SetFocus()
-            self.Scroll(0, 0) # the required controls are all at the top
-            return
+        if parClassName == "wxDialog":
+            if scidb.countTableFieldItems('OutputBooks', 'BookName', stBookName) > 0:
+                wx.MessageBox('There is already a Book Name "' + stBookName + '"', 'Duplicate',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.tcBookName.SetValue('')
+                self.tcBookName.SetFocus()
+                self.Scroll(0, 0) # the required controls are all at the top
+                return
+        else:
+            # write code to test that some record other than the current one does not have the same name
+            pass
         maxLen = scidb.lenOfVarcharTableField('OutputBooks', 'BookName')
         if maxLen < 1:
             wx.MessageBox('Error %d getting [OutputBooks].[BookName] field length.' % maxLen, 'Error',
@@ -247,40 +258,112 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
             self.tcBookName.SetFocus()
             self.Scroll(0, 0) # the required controls are all at the top
             return
-            
+        try:
+            fpLongitude = float(self.tcLongitude.GetValue())
+        except:
+            wx.MessageBox('Missing or invalid Longitude.', 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcLongitude.SetValue('')
+            self.tcLongitude.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        if fpLongitude < -180 or fpLongitude > 180:
+            wx.MessageBox('Longitude is outside the valid range +-180 degrees', 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcLongitude.SetValue('')
+            self.tcLongitude.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        print "Longitude:", fpLongitude
+        try:
+            iHrOffset = int(self.tcHrOffset.GetValue())
+        except:
+            wx.MessageBox('Missing or invalid Hour Offset.', 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcHrOffset.SetValue('')
+            self.tcHrOffset.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        if iHrOffset < -12 or iHrOffset > 12:
+            wx.MessageBox('Hour Offset is outside the valid range +-12 hours', 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcHrOffset.SetValue('')
+            self.tcHrOffset.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        print "HourOffset:", iHrOffset
+        try:
+            iTimeSlices = int(self.tcTimeSlices.GetValue())
+        except:
+            wx.MessageBox('Missing or invalid Time Slices number.', 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcTimeSlices.SetValue('')
+            self.tcTimeSlices.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        if iTimeSlices < 1:
+            wx.MessageBox('Time Slices per Day must be 1 or greater', 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcTimeSlices.SetValue('')
+            self.tcTimeSlices.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        print "TimeSlicesPerDay:", iTimeSlices
+        dtFrom = self.cbxDateFrom.GetValue()
+        dtTo = self.cbxDateTo.GetValue()
+        if dtFrom != '' and dtTo != '' and dtFrom > dtTo:
+            wx.MessageBox('Date "From" must be before date "To"', 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+#            self.cbxDateFrom.SetValue('')
+            self.cbxDateFrom.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return   
+        print "OutputDataStart:", dtFrom
+        print "OutputDataEnd:", dtTo
+        if self.ckSheetsTogether.GetValue():
+            bOneBlock = 1
+        else:
+            bOneBlock = 0
+        print "PutAllOutputRowsInOneSheet:", bOneBlock
+        if self.ckSpaceBetwBlocks.GetValue():
+            bSpBetw = 1
+        else:
+            bSpBetw = 0
+        print "BlankRowBetweenDataBlocks:", bSpBetw
+        
         wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
             wx.OK | wx.ICON_INFORMATION)
         return
-        try:
-            
+        if parClassName == "wxDialog": # in the Dialog, create a new record
+            try:
+                
+                stSQL = """
+                    INSERT INTO OutputBooks
+                    (BookName, Longitude, HourOffset,
+                    NumberOfTimeSlicesPerDay,
+                    OutputDataStart, OutputDataEnd, 
+                    PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks)
+                    VALUES (?,?,?,?,?,?,?,?);
+                    """
+                scidb.curD.execute(stSQL, (stBookName, fpLongitude, iHrOffset,
+                        iTimeSlices, dtFrom, dtTo, bOneBlock, bSpBetw))
+                scidb.datConn.commit()
+                # get record ID of new record
+                self.newRecID = scidb.curD.lastrowid
+                addRecOK = 1
+
+            except sqlite3.IntegrityError: # duplicate name or required field missing
+                print "could not add Book record to DB table"
+                wx.MessageBox('Error creating book', 'Error', 
+                    wx.OK | wx.ICON_INFORMATION)
+                self.newRecID = 0
+                addRecOK = 0
+            # let calling routine destroy, after getting any needed parameters
+            parObject.EndModal(addRecOK)
+ #            parObject.Destroy()
+       else: # in the frame, update the existing record
             stSQL = """
-                INSERT INTO OutputBooks
-                (BookName, Longitude, HourOffset,
-                OutputDataStart, OutputDataEnd, NumberOfTimeSlicesPerDay,
-                PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks)
-                VALUES (?,?,?,?,?,?,?,?);
-                """
-            scidb.curD.execute(stSQL, (self.tcBookName.GetValue(), self.tcLongitude.GetValue(),
-                    self.tcHrOffset.GetValue(),
-                    self.cbxDateFrom.GetValue(), self.cbxDateTo.GetValue(),
-                    self.tcTimeSlices.GetValue(),
-                    self.ckSheetsTogether.GetValue(), self.ckSpaceBetwBlocks.GetValue()))
-            scidb.datConn.commit()
-            # get record ID of new record
-            recID = scidb.curD.lastrowid
-            # post an event to tell the DS tree to add a branch to itself
-#            CreateNewBranchEvent, EVT_FLAG_CREATE_NEW_BRANCH = wx.lib.newevent.NewCommandEvent()
-#            wx.PostEvent(framePanel.dsTree, CreateNewBranchEvent(TableName='OutputBooks', ID=recID))
-
-        except sqlite3.IntegrityError: # duplicate name or required field missing
-            print "could not add Book record to DB table"
-            wx.MessageBox('Error creating book', 'Info', 
-                wx.OK | wx.ICON_INFORMATION)
-
-        parObject = self.GetParent()
-        if parObject.GetClassName() == "wxDialog":
-#            parObject.Destroy() # changes made, exit this dialog
-            pass
+            """
         return
         
 
