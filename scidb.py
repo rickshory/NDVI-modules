@@ -1,5 +1,5 @@
 import sqlite3, datetime
-import sys
+import sys, re
 datConn = None
 tmpConn = None
 
@@ -332,6 +332,63 @@ def getDatesList():
         lstDates.append(rec["Date"])
     return lstDates
 
+def lenOfVarcharTableField(stTable, stField):
+    """
+    Returns the stated size of the given VARCHAR field of a given table
+    Returns -1 if not a VARCHAR field, -2 if a nonexistent field, -3 if a nonexistent table, -4 if multiple matches
+    SQLite does not enforce length limits, so this is a way to programmatically test.
+    Input is two strings:
+    stTable is the table
+    stField is the field in that table
+    """
+    stSQL = "SELECT sql FROM sqlite_master WHERE type='table' and name=?"
+    curD.execute(stSQL, (stTable,))
+    rec = curD.fetchone()
+    if rec is None:
+        return -3
+    else:
+        stSQL = rec['sql']
+        # example of regular expression where field is 'BookName'
+        # ["']??BookName["']??\s+?VARCHAR\s*?[(]\s*?(?P<stRecLen>\d+)\s*?[)]
+#        stRE = r"""["']??""" + stField + r"""["']??\s+?VARCHAR\s*?[(]\s*?(?P<stRecLen>\d+)\s*?[)]"""
+        reRecLen = re.compile(r"""
+        ["']??              # may or may not have single or double quotes around the field name
+        """
+        + stField +
+        r"""
+        ["']??              # throughout, use non-greedy match format (extra '?')
+        \s+?VARCHAR\s*?     # optional whitespace around 'VARCHAR'
+        [(]\s*?             # optional whitespace within parentheses
+        (?P<stRecLen>\d+)   # capture the digits as stRecLen
+        \s*?[)]
+        """, re.VERBOSE | re.IGNORECASE)
+        lLen = reRecLen.findall(stSQL)
+        print "lLen in lenOfVarcharTableField:", lLen
+        if len(lLen) == 0:
+            return -2 # none found
+        if len(lLen) > 1:
+            return -4 # multiple found, invalid
+        return int(lLen[0])
+
+def countTableFieldItems(stTable, stField, stItem=None):
+    """
+    Tests whether an item is in the given field of a given table
+    Returns 0 if not, the number or matching records if so
+    Input is three strings:
+    stTable is the table
+    stField is the field in that table
+    stItem is the value to test
+    If stItem is None or left out, counts all records in the table
+    """
+    if stItem == None:
+        stSQL = 'SELECT ' + stField + ' FROM ' + stTable + ';'
+        curD.execute(stSQL)
+    else:
+        stSQL = 'SELECT ' + stField + ' FROM ' + stTable + ' WHERE ' + stField + ' = ?;'
+        curD.execute(stSQL, (stItem,))
+    recs = curD.fetchall()
+    return len(recs)    
+
 def assureItemIsInTableField(stItem, stTable, stField):
     """
     This is intended for use on tables that contain only two fields, a
@@ -356,7 +413,6 @@ def assureItemIsInTableField(stItem, stTable, stField):
         return t[0]
 #    except: # some other error
 #        return None
-    
 
 def assureChannelIsInDB(lChanList):
     """

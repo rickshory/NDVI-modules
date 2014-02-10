@@ -2,7 +2,6 @@ import wx, sqlite3, datetime
 import os, sys, re, cPickle
 import scidb
 import wx.lib.scrolledpanel as scrolled
-import wx.lib.newevent
 
 ID_ADD_BOOK = 101
 ID_ADD_SHEET = 201
@@ -219,9 +218,41 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
 
     def onClick_BtnSave(self, event, strLabel):
         """"""
-        wx.MessageBox('"Save" is not implemented yet', 'Info', 
+        # clean up whitespace; remove leading/trailing & multiples
+        stBookName = " ".join(self.tcBookName.GetValue().split())
+        print "stBookName:", stBookName
+        if stBookName == '':
+            wx.MessageBox('Need Book Name', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcBookName.SetValue(stBookName)
+            self.tcBookName.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        if scidb.countTableFieldItems('OutputBooks', 'BookName', stBookName) > 0:
+            wx.MessageBox('There is already a Book Name "' + stBookName + '"', 'Duplicate',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcBookName.SetValue('')
+            self.tcBookName.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        maxLen = scidb.lenOfVarcharTableField('OutputBooks', 'BookName')
+        if maxLen < 1:
+            wx.MessageBox('Error %d getting [OutputBooks].[BookName] field length.' % maxLen, 'Error',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+        if len(stBookName) > maxLen:
+            wx.MessageBox('Max length for Book Name is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcBookName.SetValue(stBookName[:(maxLen)])
+            self.tcBookName.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+            
+        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
             wx.OK | wx.ICON_INFORMATION)
+        return
         try:
+            
             stSQL = """
                 INSERT INTO OutputBooks
                 (BookName, Longitude, HourOffset,
@@ -250,7 +281,7 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         if parObject.GetClassName() == "wxDialog":
 #            parObject.Destroy() # changes made, exit this dialog
             pass
-
+        return
         
 
     def onClick_BtnCancel(self, event, strLabel):
@@ -384,13 +415,10 @@ class SetupDatasetsPanel(wx.Panel):
             print "operation is to add a new book"
             dia = Dialog_Book(self, wx.ID_ANY, 'Add a new Book')
             # the dialog contains an 'InfoPanel_Book' named 'pnl'
-            result = dia.ShowModal()
             # dialog is exited using EndModal, and comes back here
+            result = dia.ShowModal()
             print "Modal dialog result:", result
             # test of pulling things out of the modal dialog
-#            childFrame = self.FindWindowByName('pnl')
-#            print "dir of the Modal:", dir(dia)
-            print "children of the Modal:" , dia.GetChildren()
             print "Text from the Modal:", dia.pnl.bookNameLabel.GetLabelText()
             dia.Destroy()
 
