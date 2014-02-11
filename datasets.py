@@ -221,7 +221,7 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
     def onClick_BtnSave(self, event):
         """
         If this frame is shown in a Dialog, the Book is being created.
-        Attempt to create a new record and exit with the new record ID.
+        Attempt to create a new record and make the new record ID available.
         If this frame is shown in the main form, attempt to save any changes to the existing DB record
         """
         parObject = self.GetParent()
@@ -312,8 +312,12 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
             return
         print "TimeSlicesPerDay:", iTimeSlices
         dtFrom = self.cbxDateFrom.GetValue()
+        if dtFrom == '':
+            dtFrom = None
         dtTo = self.cbxDateTo.GetValue()
-        if dtFrom != '' and dtTo != '' and dtFrom > dtTo:
+        if dtTo == '':
+            dtTo = None
+        if dtFrom != None and dtTo != None and dtFrom > dtTo:
             wx.MessageBox('Date "From" must be before date "To"', 'Invalid',
                 wx.OK | wx.ICON_INFORMATION)
 #            self.cbxDateFrom.SetValue('')
@@ -336,7 +340,7 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
 #        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
 #            wx.OK | wx.ICON_INFORMATION)
 #        return
-        if parClassName == "wxDialog": # in the Dialog, create a new record
+        if parClassName == "wxDialog": # in the Dialog, create a new DB record
             stSQL = """
                 INSERT INTO OutputBooks
                 (BookName, Longitude, HourOffset,
@@ -377,6 +381,21 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
                         iTimeSlices, dtFrom, dtTo, bOneBlock, bSpBetw, self.recID ))
                 scidb.datConn.commit()
                 self.updateRecOK = 1
+                # update the label on the tree branch
+                parObject1 = self.GetParent() # the details panel
+#                print "Parent 1:", parObject1, ", Class", parObject1.GetClassName()
+                parObject2 = parObject1.GetParent() # the vertical splitter window
+#                print "Parent 2:", parObject2, ", Class", parObject2.GetClassName()
+                parObject3 = parObject2.GetParent() # panel
+#                print "Parent 3:", parObject3, ", Class", parObject3.GetClassName()
+                parObject4 = parObject3.GetParent() # the horizontal splitter window
+#                print "Parent 4:", parObject4, ", Class", parObject4.GetClassName()
+                parObject5 = parObject4.GetParent() # the main panel that owns the tree
+#                print "Parent 5:", parObject5, ", Class", parObject5.GetClassName()
+#                print "Parent 5 book branch ID?:", parObject5.bookBranchID
+                parObject5.dsTree.SetItemText(parObject5.bookBranchID, stBookName)
+                wx.MessageBox('Changes saved', 'Updated',
+                    wx.OK | wx.ICON_INFORMATION)
             except:
                 print "could not update Book record to DB table"
                 wx.MessageBox('Error updating book', 'Error', 
@@ -395,8 +414,8 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         if parObject.GetClassName() == "wxDialog":
             parObject.EndModal(0) # if in the creation dialog, exit with no changes to the DB
 #            parObject.Destroy() 
-        else:
-            wx.MessageBox('Undoing any edits', 'Info', 
+        else: # in the main form
+            wx.MessageBox('Undoing any edits', 'Undo', 
                 wx.OK | wx.ICON_INFORMATION)
             self.fillBookPanelControls()
         return
@@ -533,7 +552,7 @@ class SetupDatasetsPanel(wx.Panel):
                 # select it
                 self.dsTree.SelectItem(self.bookBranchID)
                 #generates wxEVT_TREE_SEL_CHANGING and wxEVT_TREE_SEL_CHANGED events
-                # display the information in the details panel
+                # wxEVT_TREE_SEL_CHANGED displays the information in the details panel
                 
 
     def onButton(self, event, strLabel):
