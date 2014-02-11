@@ -20,6 +20,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             fileresult = self.parseFileIntoDB(name)
 #            self.progressArea.SetInsertionPointEnd()
 #            self.progressArea.WriteText(fileresult + '\n')
+            scidb.refreshDataDates()
 
     def parseFileIntoDB(self, filename):
         """

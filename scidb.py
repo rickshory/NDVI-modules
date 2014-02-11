@@ -170,10 +170,6 @@ try:
         FOREIGN KEY("SeriesID") REFERENCES DataSeries("ID")
         );
         
-        CREATE VIEW IF NOT EXISTS "DataDates"
-        AS SELECT date(Data.UTTimestamp) AS Date FROM Data
-        GROUP BY  Date;
-        
         CREATE VIEW IF NOT EXISTS "ChannelsWithOneSegment"
         AS SELECT ChannelSegments.ChannelID
         FROM ChannelSegments
@@ -324,6 +320,17 @@ try:
 except sqlite3.Error, e:
     print 'Error in "tmp.db": %s' % e.args[0]
     sys.exit(1)
+
+def refreshDataDates(): # make externally callable
+    curD.executescript("""
+        DROP TABLE IF EXISTS "DataDates";
+        
+        CREATE TABLE IF NOT EXISTS "DataDates"
+        AS SELECT date(Data.UTTimestamp) AS Date FROM Data
+        GROUP BY Date;
+    """)
+
+refreshDataDates() # call it now
 
 def getDatesList():
     """
