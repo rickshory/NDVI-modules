@@ -177,12 +177,16 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
         bkPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
 
+#        parObjClass = self.GetParent().GetClassName()
+#        print "Parent object class:", parObjClass
+#        if parObjClass == 'wxDialog':
+#            print "in the Dialog, don't try to set up values"
+#        else:
         if self.recID:
             print "Source Table:", self.sourceTable, ", Record ID:", self.recID
             self.fillBookPanelControls()
         else:
-            print "not initialized"
-
+            print "no recID in Book panel, will not initialize values"
         self.SetSizer(bkPnlSiz)
         self.SetAutoLayout(1)
         self.SetupScrolling()
@@ -483,20 +487,28 @@ class SetupDatasetsPanel(wx.Panel):
     def OnSelChanged(self, event):
         print "OnSelChanged"
         item = event.GetItem()
-        
+        try:
+            if self.dsInfoPnl:
+                print "dsInfoPnl exists"
+                if self.dsInfoPnl.correspondingTreeItem:
+                    print "dsInfoPnl.correspondingTreeItem exists"
+                    if self.dsInfoPnl.correspondingTreeItem == item:
+                        print "panel already shows the right item"
+                        return # panel already shows the right item
+        except:
+            pass
 #        self.detailsLabel.SetLabel(self.dsTree.GetItemText(item))
 #        print "ItemData:", self.dsTree.GetItemData(item)
         ckPyData = self.dsTree.GetPyData(item)
         print "PyData:", ckPyData
+        self.detailsPanel.DestroyChildren()
         if ckPyData[1] == 0:
-            self.detailsPanel.DestroyChildren()
-            dsInfoPnl = InfoPanel_DataSets(self.detailsPanel, wx.ID_ANY)
-            self.detSiz.Add(dsInfoPnl, 1, wx.EXPAND)
+            self.dsInfoPnl = InfoPanel_DataSets(self.detailsPanel, wx.ID_ANY)
         if ckPyData[0] == "OutputBooks":
-            self.detailsPanel.DestroyChildren()
-            dsInfoPnl = InfoPanel_Book(self.detailsPanel, ckPyData)
-            self.detSiz.Add(dsInfoPnl, 1, wx.EXPAND)
+            self.dsInfoPnl = InfoPanel_Book(self.detailsPanel, ckPyData)
             
+        self.detSiz.Add(self.dsInfoPnl, 1, wx.EXPAND)
+        self.dsInfoPnl.correspondingTreeItem = item
         self.detailsPanel.Layout()
 
     def dsTreeRightClick(self, event):
