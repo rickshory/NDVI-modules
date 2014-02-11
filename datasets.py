@@ -36,18 +36,17 @@ class InfoPanel_DataSets(wx.Panel):
         
     def InitUI(self):
         self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
-        self.infoLabel1 = wx.StaticText(self, -1, 'Right-click the "DataSets" tree to the left to add a Book')
-        self.infoLabel2 = wx.StaticText(self, -1, "Within a Book, you'll add one or more Sheets")
-        self.infoLabel3 = wx.StaticText(self, -1, "Within a Sheet, you'll set up the Columns")
-        self.infoLabel4 = wx.StaticText(self, -1, "When enough information is entered, a preview will appear below.")
-        self.infoLabel5 = wx.StaticText(self, -1, "You can go back and edit any level at any time")
         dsPnlSiz = wx.GridBagSizer(1, 1)
-        dsPnlSiz.Add(self.infoLabel1, pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
-        dsPnlSiz.Add(self.infoLabel2, pos=(1, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
-        dsPnlSiz.Add(self.infoLabel3, pos=(2, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
-        dsPnlSiz.Add(self.infoLabel4, pos=(3, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
-        dsPnlSiz.Add(self.infoLabel5, pos=(4, 0), flag=wx.LEFT|wx.BOTTOM, border=10)
-        
+        dsPnlSiz.Add(wx.StaticText(self, -1, 'Right-click the "DataSets" tree to the left to add a Book'),
+                     pos=(0, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
+        dsPnlSiz.Add(wx.StaticText(self, -1, "Within a Book, you'll add one or more Sheets"),
+                     pos=(1, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
+        dsPnlSiz.Add(wx.StaticText(self, -1, "Within a Sheet, you'll set up the Columns"),
+                     pos=(2, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
+        dsPnlSiz.Add(wx.StaticText(self, -1, "When enough information is entered, a preview will appear below."),
+                     pos=(3, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=10)
+        dsPnlSiz.Add(wx.StaticText(self, -1, "You can go back and edit any level at any time"),
+                     pos=(4, 0), flag=wx.LEFT|wx.BOTTOM, border=10)
         self.SetSizer(dsPnlSiz)
 
 class InfoPanel_Book(scrolled.ScrolledPanel):
@@ -73,88 +72,88 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         note1.SetFont(bolded)
         gRow = 0
         bkPnlSiz.Add(note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        self.note2 = wx.StaticText(self, -1, 'items are required')
-        bkPnlSiz.Add(self.note2, pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
+        bkPnlSiz.Add(wx.StaticText(self, -1, 'items are required'),
+                     pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
         gRow += 1
         bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
         
         gRow += 1
-        self.bookNameLabel = wx.StaticText(self, -1, 'Book Name')
-        self.bookNameLabel.SetFont(bolded)
-        bkPnlSiz.Add(self.bookNameLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        bookNameLabel = wx.StaticText(self, -1, 'Book Name')
+        bookNameLabel.SetFont(bolded)
+        bkPnlSiz.Add(bookNameLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcBookName = wx.TextCtrl(self)
         bkPnlSiz.Add(self.tcBookName, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
-        self.bookNameHelp = wx.StaticText(self, -1, 'Book Name must be unique')
-        bkPnlSiz.Add(self.bookNameHelp, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+        bkPnlSiz.Add(wx.StaticText(self, -1, 'Book Name must be unique'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
         gRow += 1
-        self.longitudeLabel = wx.StaticText(self, -1, 'Longitude')
-        self.longitudeLabel.SetFont(bolded)
-        bkPnlSiz.Add(self.longitudeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        longitudeLabel = wx.StaticText(self, -1, 'Longitude')
+        longitudeLabel.SetFont(bolded)
+        bkPnlSiz.Add(longitudeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcLongitude = wx.TextCtrl(self)
         bkPnlSiz.Add(self.tcLongitude, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
-        self.longitudeHelp = wx.StaticText(self, -1, '(for calculating solar time)')
-        bkPnlSiz.Add(self.longitudeHelp, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+        bkPnlSiz.Add(wx.StaticText(self, -1, '(for calculating solar time)'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
         gRow += 1
-        self.hrOffsetLabel = wx.StaticText(self, -1, 'Hour Offset')
-        self.hrOffsetLabel.SetFont(bolded)
-        bkPnlSiz.Add(self.hrOffsetLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        hrOffsetLabel = wx.StaticText(self, -1, 'Hour Offset')
+        hrOffsetLabel.SetFont(bolded)
+        bkPnlSiz.Add(hrOffsetLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcHrOffset = wx.TextCtrl(self)
         bkPnlSiz.Add(self.tcHrOffset, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
-        self.hrOffsetHelp = wx.StaticText(self, -1, '(for calculating clock time)')
-        bkPnlSiz.Add(self.hrOffsetHelp, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+        bkPnlSiz.Add(wx.StaticText(self, -1, '(for calculating clock time)'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
         gRow += 1
-        self.timeSlicesLabel = wx.StaticText(self, -1, 'Time slices per day')
-        self.timeSlicesLabel.SetFont(bolded)
-        bkPnlSiz.Add(self.timeSlicesLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        timeSlicesLabel = wx.StaticText(self, -1, 'Time slices per day')
+        timeSlicesLabel.SetFont(bolded)
+        bkPnlSiz.Add(timeSlicesLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcTimeSlices = wx.TextCtrl(self)
         bkPnlSiz.Add(self.tcTimeSlices, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
-        self.timeSlicesHelp = wx.StaticText(self, -1, '(e.g. 1 for daily data, 24 for hourly data)')
-        bkPnlSiz.Add(self.timeSlicesHelp, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+        bkPnlSiz.Add(wx.StaticText(self, -1, '(e.g. 1 for daily data, 24 for hourly data)'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
         
         gRow += 1
         lstDates = scidb.getDatesList()
-        self.dateLabelFrom = wx.StaticText(self, -1, 'From')
-        bkPnlSiz.Add(self.dateLabelFrom, pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT)
+        bkPnlSiz.Add(wx.StaticText(self, -1, 'From'),
+                     pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT)
         self.cbxDateFrom = wx.ComboBox(self, -1, choices=lstDates, style=wx.CB_READONLY)
         bkPnlSiz.Add(self.cbxDateFrom, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
 
         gRow += 1
-        self.dateLabelTo = wx.StaticText(self, -1, 'To')
-        bkPnlSiz.Add(self.dateLabelTo, pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT)
+        bkPnlSiz.Add(wx.StaticText(self, -1, 'To'),
+                     pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT)
         self.cbxDateTo = wx.ComboBox(self, -1, choices=lstDates, style=wx.CB_READONLY)
         bkPnlSiz.Add(self.cbxDateTo, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
 
         gRow += 1
-        self.dateOptLabel = wx.StaticText(self, -1, 'Optional, to limit date range')
-        bkPnlSiz.Add(self.dateOptLabel, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+        bkPnlSiz.Add(wx.StaticText(self, -1, 'Optional, to limit date range'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         bkPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
