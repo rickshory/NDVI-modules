@@ -236,7 +236,7 @@ try:
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
         "BookID" INTEGER NOT NULL,
         "WorksheetName" VARCHAR(20) NOT NULL,
-        "DataSetNickname" VARCHAR(30),
+        "DataSetNickname" VARCHAR(50),
         "ListingOrder" INTEGER NOT NULL,
         FOREIGN KEY("BookID") REFERENCES OutputBooks("ID")
         );
