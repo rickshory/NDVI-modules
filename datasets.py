@@ -59,15 +59,20 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         
         
     def InitUI(self, treePyData):
-        self.treePyData = treePyData
+        if treePyData is None:
+            self.sourceTable = '(none)'
+            self.recID = 0
+        else:
+            self.sourceTable = treePyData[0]
+            self.recID = treePyData[1]
         self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
         bkPnlSiz = wx.GridBagSizer(1, 1)
-        self.note1 = wx.StaticText(self, -1, 'Bold ')
-        bolded = self.note1.GetFont() 
+        note1 = wx.StaticText(self, -1, 'Bold ')
+        bolded = note1.GetFont() 
         bolded.SetWeight(wx.BOLD) 
-        self.note1.SetFont(bolded)
+        note1.SetFont(bolded)
         gRow = 0
-        bkPnlSiz.Add(self.note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        bkPnlSiz.Add(note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.note2 = wx.StaticText(self, -1, 'items are required')
         bkPnlSiz.Add(self.note2, pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
@@ -167,46 +172,44 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
 
         gRow += 1
         self.btnSave = wx.Button(self, label="Save", size=(90, 28))
-        self.btnSave.Bind(wx.EVT_BUTTON, lambda evt, str=self.btnSave.GetLabel(): self.onClick_BtnSave(evt, str))
+        self.btnSave.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnSave(evt))
         bkPnlSiz.Add(self.btnSave, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
         self.btnCancel = wx.Button(self, label="Cancel", size=(90, 28))
-        self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt, str=self.btnCancel.GetLabel(): self.onClick_BtnCancel(evt, str))
+        self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
         bkPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
 
-        if treePyData != None:
-            print "treePyData:", treePyData
-            self.fillBookPanelControls(treePyData)
-
+        if self.recID:
+            print "Source Table:", self.sourceTable, ", Record ID:", self.recID
+            self.fillBookPanelControls()
         else:
-            print "treePyData == None"
+            print "not initialized"
 
         self.SetSizer(bkPnlSiz)
         self.SetAutoLayout(1)
         self.SetupScrolling()
 
-    def fillBookPanelControls(treePyData):
-        # treePyData is the PyData from the tree item selected, a 2-tuple: ([Table Name], [Record ID in that table])
+    def fillBookPanelControls(self):
 #        stSQL = """
 #        SELECT BookName, Longitude, HourOffset,
 #        OutputDataStart, OutputDataEnd, NumberOfTimeSlicesPerDay,
 #        PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks
 #        FROM OutputBooks WHERE ID = ?
 #        """
-        stSQL = "SELECT * FROM ? WHERE ID=?"
-        scidb.curD.execute(stSQL, treePyData)
+        stSQL = "SELECT * FROM OutputBooks WHERE ID=?"
+        scidb.curD.execute(stSQL, (self.recID,))
         rec = scidb.curD.fetchone()
         self.tcBookName.SetValue(rec['BookName'])
-        self.tcLongitude.SetValue(rec['Longitude'])
-        self.tcHrOffset.SetValue(rec['HourOffset'])
-        self.tcTimeSlices.SetValue(rec['NumberOfTimeSlicesPerDay'])
+        self.tcLongitude.SetValue('%f' % rec['Longitude'])
+        self.tcHrOffset.SetValue('%d' % rec['HourOffset'])
+        self.tcTimeSlices.SetValue('%d' % rec['NumberOfTimeSlicesPerDay'])
         if rec['OutputDataStart'] != None:
-            self.cbxDateFrom.SetValue(rec['OutputDataStart'])
+            self.cbxDateFrom.SetValue('%s' % rec['OutputDataStart'])
         else:
-            self.cbxDateFrom.SetValue(None)
+            self.cbxDateFrom.SetValue('')
         if rec['OutputDataEnd'] != None:
-            self.cbxDateTo.SetValue(rec['OutputDataEnd'])
+            self.cbxDateTo.SetValue('%s' % rec['OutputDataEnd'])
         else:
-            self.cbxDateTo.SetValue(None)
+            self.cbxDateTo.SetValue('')
         if rec['PutAllOutputRowsInOneSheet'] == 1:
             self.ckSheetsTogether.SetValue(1)
         else:
@@ -216,7 +219,7 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         else:
             self.ckSpaceBetwBlocks.SetValue(0)
 
-    def onClick_BtnSave(self, event, strLabel):
+    def onClick_BtnSave(self, event):
         """
         If this frame is shown in a Dialog, the Book is being created.
         Attempt to create a new record and exit with the new record ID.
@@ -331,61 +334,73 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
             bSpBetw = 0
         print "BlankRowBetweenDataBlocks:", bSpBetw
         
-        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
-        return
+#        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
+#            wx.OK | wx.ICON_INFORMATION)
+#        return
         if parClassName == "wxDialog": # in the Dialog, create a new record
+            stSQL = """
+                INSERT INTO OutputBooks
+                (BookName, Longitude, HourOffset,
+                NumberOfTimeSlicesPerDay,
+                OutputDataStart, OutputDataEnd, 
+                PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks)
+                VALUES (?,?,?,?,?,?,?,?);
+                """
             try:
-                
-                stSQL = """
-                    INSERT INTO OutputBooks
-                    (BookName, Longitude, HourOffset,
-                    NumberOfTimeSlicesPerDay,
-                    OutputDataStart, OutputDataEnd, 
-                    PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks)
-                    VALUES (?,?,?,?,?,?,?,?);
-                    """
                 scidb.curD.execute(stSQL, (stBookName, fpLongitude, iHrOffset,
                         iTimeSlices, dtFrom, dtTo, bOneBlock, bSpBetw))
                 scidb.datConn.commit()
                 # get record ID of new record
                 self.newRecID = scidb.curD.lastrowid
-                addRecOK = 1
+                self.addRecOK = 1
 
             except sqlite3.IntegrityError: # duplicate name or required field missing
                 print "could not add Book record to DB table"
                 wx.MessageBox('Error creating book', 'Error', 
                     wx.OK | wx.ICON_INFORMATION)
                 self.newRecID = 0
-                addRecOK = 0
+                self.addRecOK = 0
             # let calling routine destroy, after getting any needed parameters
-            parObject.EndModal(addRecOK)
+            parObject.EndModal(self.addRecOK)
  #            parObject.Destroy()
-       else: # in the frame, update the existing record
+        else: # in the frame, update the existing record
+            self.newRecID = 0 # this will not be a new record
             stSQL = """
+                UPDATE OutputBooks SET  
+                BookName = ?, Longitude = ?, HourOffset = ?,
+                NumberOfTimeSlicesPerDay = ?,
+                OutputDataStart = ?, OutputDataEnd = ?, 
+                PutAllOutputRowsInOneSheet = ?, BlankRowBetweenDataBlocks = ?
+                WHERE ID = ?;
             """
+            try:
+                scidb.curD.execute(stSQL, ( stBookName, fpLongitude, iHrOffset,
+                        iTimeSlices, dtFrom, dtTo, bOneBlock, bSpBetw, self.recID ))
+                scidb.datConn.commit()
+                self.updateRecOK = 1
+            except:
+                print "could not update Book record to DB table"
+                wx.MessageBox('Error updating book', 'Error', 
+                    wx.OK | wx.ICON_INFORMATION)
+                self.updateRecOK = 0
         return
         
 
-    def onClick_BtnCancel(self, event, strLabel):
+    def onClick_BtnCancel(self, event):
         """
         If this frame is shown in a Dialog, the Book is being created. Exit with no changes.
         If this frame is shown in the main form, restore it from the saved DB record
         """
+        self.newRecID = 0 # new record does not apply
         parObject = self.GetParent()
         if parObject.GetClassName() == "wxDialog":
-            # for testing, try sending a custom event to the datasets tree
-#            CreateNewBranchEvent, EVT_FLAG_CREATE_NEW_BRANCH = wx.lib.newevent.NewCommandEvent()
-            #create the event
-#            evt = CreateNewBranchEvent(TableName='(none)', ID=0)
-            #post the event
-#            wx.PostEvent(self, evt)
-            parObject.EndModal(0)
-#            parObject.Destroy() # if just in the creation dialog, exit with no changes to the DB
+            parObject.EndModal(0) # if in the creation dialog, exit with no changes to the DB
+#            parObject.Destroy() 
         else:
             wx.MessageBox('Undoing any edits', 'Info', 
                 wx.OK | wx.ICON_INFORMATION)
-            self.fillBookPanelControls(self.treePyData)
+            self.fillBookPanelControls()
+        return
 
 class SetupDatasetsPanel(wx.Panel):
     def __init__(self, parent, id):
@@ -459,6 +474,11 @@ class SetupDatasetsPanel(wx.Panel):
             self.detailsPanel.DestroyChildren()
             dsInfoPnl = InfoPanel_DataSets(self.detailsPanel, wx.ID_ANY)
             self.detSiz.Add(dsInfoPnl, 1, wx.EXPAND)
+        if ckPyData[0] == "OutputBooks":
+            self.detailsPanel.DestroyChildren()
+            dsInfoPnl = InfoPanel_Book(self.detailsPanel, ckPyData)
+            self.detSiz.Add(dsInfoPnl, 1, wx.EXPAND)
+            
         self.detailsPanel.Layout()
 
     def dsTreeRightClick(self, event):
@@ -498,12 +518,24 @@ class SetupDatasetsPanel(wx.Panel):
             print "operation is to add a new book"
             dia = Dialog_Book(self, wx.ID_ANY, 'Add a new Book')
             # the dialog contains an 'InfoPanel_Book' named 'pnl'
-            # dialog is exited using EndModal, and comes back here
             result = dia.ShowModal()
+            # dialog is exited using EndModal, and comes back here
             print "Modal dialog result:", result
             # test of pulling things out of the modal dialog
-            print "Text from the Modal:", dia.pnl.bookNameLabel.GetLabelText()
+            self.newBookName = dia.pnl.tcBookName.GetValue()
+            print "Name of new book, from the Modal:", self.newBookName
+            self.newRecID = dia.pnl.newRecID
+            print "record ID from the Modal:", self.newRecID
             dia.Destroy()
+            if result == 1: # new record successfully created
+                # create a new branch on the tree
+                self.bookBranchID = self.dsTree.AppendItem(self.dsRootID, self.newBookName)
+                self.dsTree.SetPyData(self.bookBranchID, ('OutputBooks', self.newRecID))
+                # select it
+                self.dsTree.SelectItem(self.bookBranchID)
+                #generates wxEVT_TREE_SEL_CHANGING and wxEVT_TREE_SEL_CHANGED events
+                # display the information in the details panel
+                
 
     def onButton(self, event, strLabel):
         """"""
