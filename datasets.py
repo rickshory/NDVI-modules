@@ -250,8 +250,20 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
                 self.Scroll(0, 0) # the required controls are all at the top
                 return
         else:
-            # write code to test that some record other than the current one does not have the same name
-            pass
+            # test that some record other than the current one does not have the same name we're trying to rename this one to
+            stSQL = "SELECT COUNT(*) AS CtDups FROM OutputBooks WHERE BookName = ? AND ID != ?;"
+            scidb.curD.execute(stSQL, (stBookName, self.recID))
+            rec = scidb.curD.fetchone() # will only be one record
+            if rec['CtDups'] > 0: # there is a conflict
+                wx.MessageBox('There is another Book named "' + stBookName + '". Use a different name.', 'Duplicate',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.tcBookName.SetValue(stBookName)
+                self.tcBookName.SetFocus()
+                self.Scroll(0, 0) # the required controls are all at the top
+                return
+
+            
+            
         maxLen = scidb.lenOfVarcharTableField('OutputBooks', 'BookName')
         if maxLen < 1:
             wx.MessageBox('Error %d getting [OutputBooks].[BookName] field length.' % maxLen, 'Error',
@@ -487,13 +499,13 @@ class SetupDatasetsPanel(wx.Panel):
     def OnSelChanged(self, event):
         print "OnSelChanged"
         item = event.GetItem()
-        try:
+        try: # event sometimes fires twice when new records created; this prevents errors from dead objects
             if self.dsInfoPnl:
-                print "dsInfoPnl exists"
+#                print "dsInfoPnl exists"
                 if self.dsInfoPnl.correspondingTreeItem:
-                    print "dsInfoPnl.correspondingTreeItem exists"
+#                    print "dsInfoPnl.correspondingTreeItem exists"
                     if self.dsInfoPnl.correspondingTreeItem == item:
-                        print "panel already shows the right item"
+#                        print "panel already shows the right item"
                         return # panel already shows the right item
         except:
             pass
