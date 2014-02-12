@@ -1,4 +1,4 @@
-import wx, sqlite3, datetime
+import wx, sqlite3, datetime, copy
 import os, sys, re, cPickle
 import scidb
 import wx.lib.scrolledpanel as scrolled
@@ -32,13 +32,13 @@ class Dialog_Book(wx.Dialog):
 class Dialog_Sheet(wx.Dialog):
     def __init__(self, parent, id, title = "Add a new Sheet", parentTableRec = None):
         wx.Dialog.__init__(self, parent, id)
-        self.InitUI()
+        self.InitUI(parentTableRec)
         self.SetSize((350, 300))
         self.SetTitle("Add a new sheet") # overrides title passed above
 
-    def InitUI(self):
+    def InitUI(self, parentTableRec):
 #        pnl = InfoPanel_Sheet(self, wx.ID_ANY)
-        self.pnl = InfoPanel_Sheet(self, parentTableRec = None)
+        self.pnl = InfoPanel_Sheet(self, parentTableRec)
    
     def OnClose(self, event):
         self.Destroy()
@@ -275,8 +275,6 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
                 self.Scroll(0, 0) # the required controls are all at the top
                 return
 
-            
-            
         maxLen = scidb.lenOfVarcharTableField('OutputBooks', 'BookName')
         if maxLen < 1:
             wx.MessageBox('Error %d getting [OutputBooks].[BookName] field length.' % maxLen, 'Error',
@@ -450,26 +448,39 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
         return
 
 class InfoPanel_Sheet(scrolled.ScrolledPanel):
-    def __init__(self, parent, treePyData = None, parentTableRec = None):
+    def __init__(self, parent, treePyData):
         scrolled.ScrolledPanel.__init__(self, parent, -1)
 #    def __init__(self, parent, id):
 #        wx.Panel.__init__(self, parent, id)
         self.InitUI(treePyData)
         
     def InitUI(self, treePyData):
-        if treePyData is None:
-            self.sourceTable = '(none)'
-            self.recID = 0
-        else:
-            self.sourceTable = treePyData[0]
-            self.recID = treePyData[1]
-        if parentTableRec is None:
-            self.parentTable = '(none)'
-            self.parentRecID = 0
-        else:
-            self.parentTable = parentTableRec[0]
-            self.parentRecID = parentTableRec[1]
-            
+        self.parentClassName = self.GetParent().GetClassName()
+        print "Initializing Sheet frame; self.parentClass:", self.parentClassName
+        if self.parentClassName == 'wxDialog':
+            # we are in the dialog we use to create a new Sheet record
+            # right-clicked tree item was the node we will create a new branch onto
+            self.parentTable = treePyData[0] # the parent table, should be 'OutputBooks'
+            self.parentRecID = treePyData[1] # the record ID in that table
+            # provides foreign key for completing a new record in the current table
+            self.sourceTable = 'OutputSheets'
+            self.recID = 0 # no record yet
+        else: # in the details panel to view/edit the information for an existing record
+            # selected tree item is the node to view/edit
+            self.sourceTable = treePyData[0] # should be 'OutputSheets'
+            self.recID = treePyData[1] # the record ID in that table
+            self.parentTable = 'OutputBooks' # the parent table
+            stSQL = "SELECT BookID FROM OutputSheets WHERE ID = ?;"
+            scidb.curD.execute(stSQL, (self.recID,))
+            rec = scidb.curD.fetchone()
+            self.parentRecID = rec['BookID'] # the foreign key ID in the parent table
+
+        print "Initializing InfoPanel_Sheet ->>>>"
+        print "treePyData:", treePyData
+        print "self.sourceTable:", self.sourceTable
+        print "self.recID:", self.recID
+        print "self.parentTable:", self.parentTable
+        print "self.parentRecID:", self.parentRecID
         self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
         shPnlSiz = wx.GridBagSizer(1, 1)
         note1 = wx.StaticText(self, -1, 'Bold ')
@@ -569,9 +580,7 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
         Attempt to create a new record and make the new record ID available.
         If this frame is shown in the main form, attempt to save any changes to the existing DB record
         """
-        parObject = self.GetParent()
-        parClassName = parObject.GetClassName() # "wxDialog" if in the dialog
-
+        
         # clean up whitespace; remove leading/trailing & multiples
         stSheetName = " ".join(self.tcSheetName.GetValue().split())
         print "stSheetName:", stSheetName
@@ -588,7 +597,7 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
             wx.MessageBox('Error %d getting [OutputSheets].[WorksheetName] field length.' % maxLen, 'Error',
                 wx.OK | wx.ICON_INFORMATION)
             return
-        if len(stBookName) > maxLen:
+        if len(stSheetName) > maxLen:
             wx.MessageBox('Max length for Sheet Name is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
                 wx.OK | wx.ICON_INFORMATION)
             self.tcSheetName.SetValue(stSheetName[:(maxLen)])
@@ -596,16 +605,16 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
             self.Scroll(0, 0) # the required controls are all at the top
             return
         
-        stNickName = " ".join(self.tcNickname.GetValue().split())
+        stNickname = " ".join(self.tcNickname.GetValue().split())
         maxLen = scidb.lenOfVarcharTableField('OutputSheets', 'DataSetNickname')
         if maxLen < 1:
             wx.MessageBox('Error %d getting [OutputSheets].[DataSetNickname] field length.' % maxLen, 'Error',
                 wx.OK | wx.ICON_INFORMATION)
             return
-        if len(stNickName) > maxLen:
+        if len(stNickname) > maxLen:
             wx.MessageBox('Max length for Sheet Nickname is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
                 wx.OK | wx.ICON_INFORMATION)
-            self.tcNickname.SetValue(stNickName[:(maxLen)])
+            self.tcNickname.SetValue(stNickname[:(maxLen)])
             self.tcNickname.SetFocus()
             self.Scroll(0, 0) # the required controls are all at the top
             return
@@ -613,115 +622,60 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
         try:
             iLstOrd = int(self.tcListingOrder.GetValue())
         except:
-            # finish rewriting this for Sheets
-            
-            wx.MessageBox('Missing or invalid Hour Offset.', 'Invalid',
+            # autocreate, 1 higher than previously existing
+            print "self.parentRecID, to use in ListingOrder query:",  self.parentRecID
+            stSQL = "SELECT MAX(OutputSheets.ListingOrder) AS MaxLstOrd FROM OutputSheets WHERE BookID = ?;"
+            scidb.curD.execute(stSQL, (self.parentRecID,))
+            rec = scidb.curD.fetchone()
+            print "Max Listing order fetched:", rec
+            if rec['MaxLstOrd'] == None: # none yet
+                iLstOrd = 1
+            else:
+                iLstOrd = rec['MaxLstOrd'] + 1
+            wx.MessageBox('Listing Order auto-set to %d.' % iLstOrd, 'Info',
                 wx.OK | wx.ICON_INFORMATION)
-            self.tcHrOffset.SetValue('')
-            self.tcHrOffset.SetFocus()
-            self.Scroll(0, 0) # the required controls are all at the top
-            return
-        if iHrOffset < -12 or iHrOffset > 12:
-            wx.MessageBox('Hour Offset is outside the valid range +-12 hours', 'Invalid',
-                wx.OK | wx.ICON_INFORMATION)
-            self.tcHrOffset.SetValue('')
-            self.tcHrOffset.SetFocus()
-            self.Scroll(0, 0) # the required controls are all at the top
-            return
-        print "HourOffset:", iHrOffset
-        # finish rewriting this for Sheets
-        try:
-            iTimeSlices = int(self.tcTimeSlices.GetValue())
-        except:
-            wx.MessageBox('Missing or invalid Time Slices number.', 'Invalid',
-                wx.OK | wx.ICON_INFORMATION)
-            self.tcTimeSlices.SetValue('')
-            self.tcTimeSlices.SetFocus()
-            self.Scroll(0, 0) # the required controls are all at the top
-            return
-        if iTimeSlices < 1:
-            wx.MessageBox('Time Slices per Day must be 1 or greater', 'Invalid',
-                wx.OK | wx.ICON_INFORMATION)
-            self.tcTimeSlices.SetValue('')
-            self.tcTimeSlices.SetFocus()
-            self.Scroll(0, 0) # the required controls are all at the top
-            return
-        print "TimeSlicesPerDay:", iTimeSlices
-        # finish rewriting this for Sheets
-        dtFrom = self.cbxDateFrom.GetValue()
-        if dtFrom == '':
-            dtFrom = None
-        dtTo = self.cbxDateTo.GetValue()
-        if dtTo == '':
-            dtTo = None
-        if dtFrom != None and dtTo != None and dtFrom > dtTo:
-            wx.MessageBox('Date "From" must be before date "To"', 'Invalid',
-                wx.OK | wx.ICON_INFORMATION)
-#            self.cbxDateFrom.SetValue('')
-            self.cbxDateFrom.SetFocus()
-            self.Scroll(0, 0) # the required controls are all at the top
-            return   
-        print "OutputDataStart:", dtFrom
-        # finish rewriting this for Sheets
-        print "OutputDataEnd:", dtTo
-        # finish rewriting this for Sheets
-        if self.ckSheetsTogether.GetValue():
-            bOneBlock = 1
-        else:
-            bOneBlock = 0
-        print "PutAllOutputRowsInOneSheet:", bOneBlock
-        if self.ckSpaceBetwBlocks.GetValue():
-            bSpBetw = 1
-        else:
-            bSpBetw = 0
-        print "BlankRowBetweenDataBlocks:", bSpBetw
+        print "Listing Order:", iLstOrd
+
         # finish rewriting this for Sheets
         
-        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
-        return
-        if parClassName == "wxDialog": # in the Dialog, create a new DB record
-            # finish rewriting this for Sheets
+#        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
+#            wx.OK | wx.ICON_INFORMATION)
+#        return
+
+        # we have self.parentClassName from initialization; "wxDialog" if in the dialog
+        if self.parentClassName == "wxDialog": # in the Dialog, create a new DB record
             stSQL = """
-                INSERT INTO OutputBooks
-                (BookName, Longitude, HourOffset,
-                NumberOfTimeSlicesPerDay,
-                OutputDataStart, OutputDataEnd, 
-                PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks)
-                VALUES (?,?,?,?,?,?,?,?);
+                INSERT INTO OutputSheets
+                (BookID, WorksheetName, DataSetNickname, ListingOrder)
+                VALUES (?,?,?,?);
                 """
             try:
-                scidb.curD.execute(stSQL, (stBookName, fpLongitude, iHrOffset,
-                        iTimeSlices, dtFrom, dtTo, bOneBlock, bSpBetw))
+                scidb.curD.execute(stSQL, (self.parentRecID, 
+                        stSheetName, stNickname, iLstOrd))
                 scidb.datConn.commit()
                 # get record ID of new record
                 self.newRecID = scidb.curD.lastrowid
                 self.addRecOK = 1
 
             except sqlite3.IntegrityError: # duplicate name or required field missing
-                # finish rewriting this for Sheets
-                print "could not add Book record to DB table"
-                wx.MessageBox('Error creating book', 'Error', 
+                print "could not add Sheet record to DB table"
+                wx.MessageBox('Error creating sheet', 'Error', 
                     wx.OK | wx.ICON_INFORMATION)
                 self.newRecID = 0
                 self.addRecOK = 0
             # let calling routine destroy, after getting any needed parameters
-            parObject.EndModal(self.addRecOK)
+            parObject = self.GetParent() # the dialog
+            parObject.EndModal(self.addRecOK) #exit the dialog
  #            parObject.Destroy()
-        else: # in the frame, update the existing record
-            # finish rewriting this for Sheets
+        else: # self.parentClassNameis not "wxDialog"; we're in the frame, update the existing record
             self.newRecID = 0 # this will not be a new record
             stSQL = """
-                UPDATE OutputBooks SET  
-                BookName = ?, Longitude = ?, HourOffset = ?,
-                NumberOfTimeSlicesPerDay = ?,
-                OutputDataStart = ?, OutputDataEnd = ?, 
-                PutAllOutputRowsInOneSheet = ?, BlankRowBetweenDataBlocks = ?
+                UPDATE OutputSheets SET  
+                WorksheetName = ?, DataSetNickname = ?, ListingOrder = ?
                 WHERE ID = ?;
             """
             try:
-                scidb.curD.execute(stSQL, ( stBookName, fpLongitude, iHrOffset,
-                        iTimeSlices, dtFrom, dtTo, bOneBlock, bSpBetw, self.recID ))
+                scidb.curD.execute(stSQL, (stSheetName, stNickname, iLstOrd, self.recID))
                 scidb.datConn.commit()
                 self.updateRecOK = 1
                 # update the label on the tree branch
@@ -736,21 +690,20 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
                 parObject5 = parObject4.GetParent() # the main panel that owns the tree
 #                print "Parent 5:", parObject5, ", Class", parObject5.GetClassName()
 #                print "Parent 5 book branch ID?:", parObject5.bookBranchID
-                parObject5.dsTree.SetItemText(parObject5.bookBranchID, stBookName)
+                parObject5.dsTree.SetItemText(parObject5.sheetBranchID, stSheetName)
                 wx.MessageBox('Changes saved', 'Updated',
                     wx.OK | wx.ICON_INFORMATION)
             except:
-                print "could not update Book record to DB table"
-                wx.MessageBox('Error updating book', 'Error', 
+                print "could not update Sheet record to DB table"
+                wx.MessageBox('Error updating sheet', 'Error', 
                     wx.OK | wx.ICON_INFORMATION)
                 self.updateRecOK = 0
         return
         
 
     def onClick_BtnCancel(self, event):
-        # finish rewriting this for Sheets
         """
-        If this frame is shown in a Dialog, the Book is being created. Exit with no changes.
+        If this frame is shown in a Dialog, the Sheet is being created. Exit with no changes.
         If this frame is shown in the main form, restore it from the saved DB record
         """
         self.newRecID = 0 # new record does not apply
@@ -761,7 +714,7 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
         else: # in the main form
             wx.MessageBox('Undoing any edits', 'Undo', 
                 wx.OK | wx.ICON_INFORMATION)
-            self.fillBookPanelControls()
+            self.fillSheetPanelControls()
         return
 
 
@@ -792,7 +745,32 @@ class SetupDatasetsPanel(wx.Panel):
             self.bookBranchID = self.dsTree.AppendItem(self.dsRootID, bookRec["BookName"])
             # PyData is a 2-tuple: ([Table Name], [Record ID in that table])
             self.dsTree.SetPyData(self.bookBranchID, ('OutputBooks', bookRec["ID"]))
-            bookDict[bookRec["ID"]] = [bookRec["BookName"], self.bookBranchID]
+            bookDict[bookRec["ID"]] = [bookRec["BookName"], copy.copy(self.bookBranchID)]
+        # iterate over the Books dictionary to get each one's Sheets
+        for bookRecID in bookDict:
+            stSQL = "SELECT ID, WorksheetName, ListingOrder FROM OutputSheets WHERE BookID = ?;"
+            scidb.curD.execute(stSQL, (bookRecID,))
+            sheetRecs = scidb.curD.fetchall()
+            sheetDict = {}
+            for sheetRec in sheetRecs: # get them all now because another query to the same DB will stop the iterator
+                bookInfoList = bookDict[bookRecID]
+                print "retrieved bookInfoList:", bookInfoList
+                bookBranchID = bookInfoList[1]
+                print "retrieved bookBranchID:", bookBranchID
+                self.sheetBranchID = self.dsTree.AppendItem(bookBranchID, sheetRec["WorksheetName"])
+                # PyData is a 2-tuple: ([Table Name], [Record ID in that table])
+                self.dsTree.SetPyData(self.sheetBranchID, ('OutputSheets', sheetRec["ID"]))
+                sheetDict[sheetRec["ID"]] = [sheetRec["WorksheetName"], copy.copy(self.sheetBranchID)]
+            for sheetRecID in sheetDict:
+                stSQL = "SELECT ID, ColumnHeading, ListingOrder FROM OutputColumns WHERE WorksheetID = ?;"
+                scidb.curD.execute(stSQL, (sheetRecID,))
+                colRecs = scidb.curD.fetchall()
+                colDict = {}
+                for colRec in colRecs:  # get them all now, another query to the same DB will stop the iterator
+                    self.colBranchID = self.dsTree.AppendItem(sheetDict[sheetRecID[1]], colRec["ColumnHeading"])
+                    # PyData is a 2-tuple: ([Table Name], [Record ID in that table])
+                    self.dsTree.SetPyData(self.colBranchID, ('OutputColumns', colRec["ID"]))
+                    colDict[colRec["ID"]] = [colRec["ColumnHeading"], copy.copy(self.colBranchID)]
 
         self.dsTree.Bind(wx.EVT_TREE_SEL_CHANGED, self.OnSelChanged, id=1)
         self.tree_item_clicked = None
@@ -828,14 +806,14 @@ class SetupDatasetsPanel(wx.Panel):
     def OnSelChanged(self, event):
         print "OnSelChanged"
         item = event.GetItem()
-        try: # event sometimes fires twice when new records created; following prevents errors from dead objects
+        try: # event sometimes fires twice when new records created; following prevents errors caused by dead objects
             if self.dsInfoPnl:
 #                print "dsInfoPnl exists"
                 if self.dsInfoPnl.correspondingTreeItem:
 #                    print "dsInfoPnl.correspondingTreeItem exists"
                     if self.dsInfoPnl.correspondingTreeItem == item:
-#                        print "panel already shows the right item"
-                        return # panel already shows the right item
+#                        print "panel already shows the correct item"
+                        return # panel already shows the correct item
         except:
             pass
 #        self.detailsLabel.SetLabel(self.dsTree.GetItemText(item))
@@ -847,6 +825,10 @@ class SetupDatasetsPanel(wx.Panel):
             self.dsInfoPnl = InfoPanel_DataSets(self.detailsPanel, wx.ID_ANY)
         if ckPyData[0] == "OutputBooks":
             self.dsInfoPnl = InfoPanel_Book(self.detailsPanel, ckPyData)
+        if ckPyData[0] == "OutputSheets":
+            self.dsInfoPnl = InfoPanel_Sheet(self.detailsPanel, ckPyData)
+        if ckPyData[0] == "OutputColumns":
+            self.dsInfoPnl = InfoPanel_Column(self.detailsPanel, ckPyData)
             
         self.detSiz.Add(self.dsInfoPnl, 1, wx.EXPAND)
         self.dsInfoPnl.correspondingTreeItem = item
@@ -894,6 +876,9 @@ class SetupDatasetsPanel(wx.Panel):
         print "target:", target
         treeItemPyData = self.dsTree.GetPyData(self.tree_item_clicked)
         print "PyData of tree item right-clicked:", treeItemPyData
+        # treeItemPyData (a 2-tuple; [table],[recID]) provides the record ID every
+        # level below Book needs in order to create a new record.
+        # e.g. Book ID for creating a Sheet in that book, Sheet ID for creating a Column in that sheet
         if opID == ID_ADD_BOOK:
             print "operation is to add a new book"
             dia = Dialog_Book(self, wx.ID_ANY)
