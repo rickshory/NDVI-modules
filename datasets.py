@@ -420,7 +420,8 @@ class InfoPanel_Book(scrolled.ScrolledPanel):
                 parObject5 = parObject4.GetParent() # the main panel that owns the tree
 #                print "Parent 5:", parObject5, ", Class", parObject5.GetClassName()
 #                print "Parent 5 book branch ID?:", parObject5.bookBranchID
-                parObject5.dsTree.SetItemText(parObject5.bookBranchID, stBookName)
+#                parObject5.dsTree.SetItemText(parObject5.bookBranchID, stBookName)
+                parObject5.dsTree.SetItemText(parObject5.dsInfoPnl.correspondingTreeItem, stBookName)
                 wx.MessageBox('Changes saved', 'Updated',
                     wx.OK | wx.ICON_INFORMATION)
             except:
@@ -690,7 +691,8 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
                 parObject5 = parObject4.GetParent() # the main panel that owns the tree
 #                print "Parent 5:", parObject5, ", Class", parObject5.GetClassName()
 #                print "Parent 5 book branch ID?:", parObject5.bookBranchID
-                parObject5.dsTree.SetItemText(parObject5.sheetBranchID, stSheetName)
+#                parObject5.dsTree.SetItemText(parObject5.sheetBranchID, stSheetName)
+                parObject5.dsTree.SetItemText(parObject5.dsInfoPnl.correspondingTreeItem, stSheetName)
                 wx.MessageBox('Changes saved', 'Updated',
                     wx.OK | wx.ICON_INFORMATION)
             except:
@@ -754,9 +756,9 @@ class SetupDatasetsPanel(wx.Panel):
             sheetDict = {}
             for sheetRec in sheetRecs: # get them all now because another query to the same DB will stop the iterator
                 bookInfoList = bookDict[bookRecID]
-                print "retrieved bookInfoList:", bookInfoList
+#                print "retrieved bookInfoList:", bookInfoList
                 bookBranchID = bookInfoList[1]
-                print "retrieved bookBranchID:", bookBranchID
+#                print "retrieved bookBranchID:", bookBranchID
                 self.sheetBranchID = self.dsTree.AppendItem(bookBranchID, sheetRec["WorksheetName"])
                 # PyData is a 2-tuple: ([Table Name], [Record ID in that table])
                 self.dsTree.SetPyData(self.sheetBranchID, ('OutputSheets', sheetRec["ID"]))
@@ -861,7 +863,8 @@ class SetupDatasetsPanel(wx.Panel):
             ### 4. Launcher registers menu handlers with EVT_MENU, on the menu. ###
             wx.EVT_MENU( menu, id, self.MenuSelectionCb )
 
-        ### 5. Launcher displays menu with call to PopupMenu, invoked on the source component, passing event's GetPoint. ###
+        ### 5. Launcher displays menu with call to PopupMenu, invoked on the
+            #source component, passing event's GetPoint. ###
         self.PopupMenu( menu, event.GetPoint() )
         menu.Destroy() # destroy to avoid mem leak
 
@@ -894,7 +897,8 @@ class SetupDatasetsPanel(wx.Panel):
             dia.Destroy()
             if result == 1: # new record successfully created
                 # create a new branch on the tree
-                self.bookBranchID = self.dsTree.AppendItem(self.dsRootID, self.newBookName)
+#                self.bookBranchID = self.dsTree.AppendItem(self.dsRootID, self.newBookName)
+                self.bookBranchID = self.dsTree.AppendItem(self.tree_item_clicked, self.newBookName)
                 self.dsTree.SetPyData(self.bookBranchID, ('OutputBooks', self.newRecID))
                 # select it
                 self.dsTree.SelectItem(self.bookBranchID)
