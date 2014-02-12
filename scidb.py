@@ -241,33 +241,33 @@ try:
         FOREIGN KEY("BookID") REFERENCES OutputBooks("ID")
         );
 
-        CREATE TABLE IF NOT EXISTS "OutputColSourceTypes" (
-        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
-        "ColumnType" VARCHAR(10) NOT NULL UNIQUE
-        );
-        
-        CREATE TABLE IF NOT EXISTS "OutputColAggTypes" (
-        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
-        "AggType" VARCHAR(5) NOT NULL UNIQUE
-        );
-
         CREATE TABLE IF NOT EXISTS "OutputColumns" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
         "WorksheetID" INTEGER NOT NULL ,
         "ColumnHeading" VARCHAR(20) NOT NULL,
-        "DataColSourceTypeID" INTEGER NOT NULL,
+        "ColType" VARCHAR(10) NOT NULL,
+        "TimeSystem"  VARCHAR(10) DEFAULT 'Clock Time',
+        "TimeIsInterval" BOOL NOT NULL DEFAULT 0,
+        "IntervalIsFrom" DATETIME,
         "Constant" VARCHAR(10),
         "Formula" VARCHAR(1000),
+        "AggType" VARCHAR(5),
         "AggStationID" INTEGER,
         "AggDataSeriesID" INTEGER,
-        "AggTypeID" INTEGER,
         "ContentsFormat" VARCHAR(20),
         "ListingOrder" INTEGER NOT NULL,
+        CHECK ("ColType" IN ('Timestamp', 'Constant', 'Aggregate', 'Formula'))
+        CHECK ("TimeSystem" IN ('Clock Time', 'Solar Time'))
+        CHECK ("AggType" IN ('Avg', 'Min', 'Max', 'Count', 'Sum', 'StDev'))
+        CHECK (NOT (("ColType" = 'Timestamp') AND ("TimeSystem" IS NULL)))
+        CHECK (NOT (("TimeIsInterval" = 1) AND ("IntervalIsFrom" IS NULL)))
+        CHECK (NOT (("ColType" = 'Constant') AND ("Constant" IS NULL)))
+        CHECK (NOT (("ColType" = 'Aggregate') AND (("AggType" IS NULL)
+        OR ("AggStationID" IS NULL) OR ("AggDataSeriesID" IS NULL))))
+        CHECK (NOT (("ColType" = 'Formula') AND ("Formula" IS NULL)))
         FOREIGN KEY("WorksheetID") REFERENCES OutputSheets("ID")
-        FOREIGN KEY("DataColSourceTypeID") REFERENCES OutputColSourceTypes("ID")
         FOREIGN KEY("AggStationID") REFERENCES Stations ("ID")
         FOREIGN KEY("AggDataSeriesID") REFERENCES DataSeries ("ID")
-        FOREIGN KEY("AggTypeID") REFERENCES OutputColAggTypes("ID")
         );
         
         """)
@@ -470,17 +470,6 @@ def assureChannelIsInDB(lChanList):
         lChanList[0] = t[0]
         lChanList[7] = 'existing'
     return lChanList
-
-i = assureItemIsInTableField('Date/Time', 'OutputColSourceTypes', 'ColumnType')
-i = assureItemIsInTableField('Constant', 'OutputColSourceTypes', 'ColumnType')
-i = assureItemIsInTableField('Aggregate', 'OutputColSourceTypes', 'ColumnType')
-i = assureItemIsInTableField('Formula', 'OutputColSourceTypes', 'ColumnType')
-i = assureItemIsInTableField('Avg', 'OutputColAggTypes', 'AggType')
-i = assureItemIsInTableField('Min', 'OutputColAggTypes', 'AggType')
-i = assureItemIsInTableField('Max', 'OutputColAggTypes', 'AggType')
-i = assureItemIsInTableField('Count', 'OutputColAggTypes', 'AggType')
-i = assureItemIsInTableField('Sum', 'OutputColAggTypes', 'AggType')
-i = assureItemIsInTableField('StDev', 'OutputColAggTypes', 'AggType')
 
 def autofixChannelSegments():
     """
