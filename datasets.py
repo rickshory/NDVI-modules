@@ -780,7 +780,6 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
         
         # build panel differently depending whether a new or existing record
-        ColDict = {}
 
 #        CREATE TABLE IF NOT EXISTS "OutputColumns" (
 #        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
@@ -799,79 +798,64 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
 #        "ListingOrder" INTEGER NOT NULL,
 
         if self.parentClassName == "wxDialog": # in the Dialog, create a new DB record
-            ColDict['ID'] = None
-            ColDict['WorksheetID'] = None
-            ColDict['ColumnHeading'] = None
-            ColDict['ColType'] = None
-            ColDict['TimeSystem'] = None
-            ColDict['TimeIsInterval'] = None
-            ColDict['IntervalIsFrom'] = None
-            ColDict['Constant'] = None
-            ColDict['Formula'] = None
-            ColDict['AggType'] = None
-            ColDict['AggStationID'] = None
-            ColDict['AggDataSeriesID'] = None
-            ColDict['ContentsFormat'] = None
-            ColDict['ListingOrder'] = None
+            ColDict = dict(ID = None, WorksheetID = None, ColumnHeading = None, ColType = None,
+                TimeSystem = None, TimeIsInterval = None, IntervalIsFrom = None,
+                Constant = None, Formula = None,
+                AggType = None, AggStationID = None, AggDataSeriesID = None,
+                ContentsFormat = None, ListingOrder = None)
 
         else: # an existing record
             stSQL = "SELECT * FROM OutputColumns WHERE ID = ?;"
             scidb.curD.execute(stSQL, (self.recID,))
             rec = scidb.curD.fetchone()
-#            self.parentRecID = rec['WorksheetID'] # the foreign key ID in the parent table
-            for recName in rec.keys:
+#            ColDict = copy.copy(rec) # this crashes
+            ColDict = {}
+            for recName in rec.keys():
                 ColDict[recName] = rec[recName]
-            print "Retrieved column record as ColDict:", ColDict   
-
-# rewrite for Column    
+        print "ColDict:", ColDict
+              
         gRow += 1
-        sheetNameLabel = wx.StaticText(self, -1, 'Sheet Name')
-        sheetNameLabel.SetFont(bolded)
-        shPnlSiz.Add(sheetNameLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        self.tcSheetName = wx.TextCtrl(self)
-        shPnlSiz.Add(self.tcSheetName, pos=(gRow, 1), span=(1, 1), 
+        colHeadLabel = wx.StaticText(self, -1, 'Column Heading')
+        colHeadLabel.SetFont(bolded)
+        shPnlSiz.Add(colHeadLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcColHead = wx.TextCtrl(self)
+        self.tcColHead.SetValue('%s' % ColDict['ColumnHeading'])
+        shPnlSiz.Add(self.tcColHead, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
-
-# rewrite for Column    
+  
         gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'Will be the Worksheet name if output as Excel'),
+        shPnlSiz.Add(wx.StaticText(self, -1, "Text for the column's top cell, in the output dataset"),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
-
-# rewrite for Column    
         gRow += 1
         shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
-
-# rewrite for Column    
-        gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'Dataset nickname'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        self.tcNickname = wx.TextCtrl(self)
-        shPnlSiz.Add(self.tcNickname, pos=(gRow, 1), span=(1, 2), 
-            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
-
-# rewrite for Column    
-        gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'Longer descriptive name, optional'),
-                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
-
-# rewrite for Column    
-        gRow += 1
-        shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
-
-# rewrite for Column    
+   
         gRow += 1
         shPnlSiz.Add(wx.StaticText(self, -1, 'Listing order'),
                      pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcListingOrder = wx.TextCtrl(self)
+        self.tcListingOrder.SetValue('%d' % ColDict['ListingOrder'])
         shPnlSiz.Add(self.tcListingOrder, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
 # rewrite for Column    
         gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'Use this to specify the order of Worksheets \nin a workbook (if in Excel). Will be \nauto-assigned if you leave it out.'),
+        shPnlSiz.Add(wx.StaticText(self, -1, 'Use this to specify the order of Columns in a sheet. \nWill be auto-assigned if you leave it out.'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+   
+        gRow += 1
+        shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+ 
+        gRow += 1
+        colTypeLabel = wx.StaticText(self, -1, 'Column Type')
+        colTypeLabel.SetFont(bolded)
+        shPnlSiz.Add(colTypeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula']
 
-# rewrite for Column    
+        self.cbxColType = wx.ComboBox(self, -1, choices=lstColTypes, style=wx.CB_READONLY)
+        shPnlSiz.Add(self.cbxColType, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
+        if ColDict['ColType'] != None:
+            self.cbxColType.SetValue('%s' % ColDict['ColType'])
+      
         gRow += 1
         shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
@@ -1273,6 +1257,29 @@ class SetupDatasetsPanel(wx.Panel):
                 # wxEVT_TREE_SEL_CHANGED displays the information in the details panel
             return
 
+        if opID == ID_ADD_COL:
+            print "operation is to add a new column"
+            dia = Dialog_Column(self, wx.ID_ANY, parentTableRec = treeItemPyData)
+            # the dialog contains an 'InfoPanel_Column' named 'pnl'
+            result = dia.ShowModal()
+            # dialog is exited using EndModal, and comes back here
+            print "Modal dialog result:", result
+            # test of pulling things out of the modal dialog
+            self.newColHead = dia.pnl.tcColHead.GetValue()
+            print "Heading for new Column, from the Modal:", self.newColHead
+            self.newRecID = dia.pnl.newRecID
+            print "record ID from the Modal:", self.newRecID
+            dia.Destroy()
+            if result == 1: # new record successfully created
+                # create a new branch on the tree
+                self.colBranchID = self.dsTree.AppendItem(self.tree_item_clicked, self.newSheetName)
+                self.dsTree.SetPyData(self.colBranchID, ('OutputColumns', self.newRecID))
+                # select it
+                self.dsTree.SelectItem(self.colBranchID)
+                #generates wxEVT_TREE_SEL_CHANGING and wxEVT_TREE_SEL_CHANGED events
+                # wxEVT_TREE_SEL_CHANGED displays the information in the details panel
+            return
+        
         wx.MessageBox('Not implemented yet', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
 
