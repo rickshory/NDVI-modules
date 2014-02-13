@@ -852,6 +852,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         colPnlSiz.Add(colTypeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula']
         self.cbxColType = wx.ComboBox(self, -1, choices=lstColTypes, style=wx.CB_READONLY)
+        self.cbxColType.Bind(wx.EVT_COMBOBOX, lambda evt: self.onSelColType(evt))
         if self.ColDict['ColType'] != None:
             self.cbxColType.SetValue('%s' % self.ColDict['ColType'])
         colPnlSiz.Add(self.cbxColType, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
@@ -860,7 +861,11 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
         self.colDetailPnl = wx.Panel(self, wx.ID_ANY) # content varies by ColType
-        
+#        self.fillColDetailsPanel()
+        self.onSelColType(-1) # see if we explictly have to call this
+
+        gRow += 1
+        colPnlSiz.Add(self.colDetailPnl, pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
         
 
 # rewrite for Column    
@@ -886,6 +891,33 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         self.SetAutoLayout(1)
         self.SetupScrolling()
 
+    def fillColDetailsPanel(self):
+        """
+        Fills in the relevant fields based on the column type
+        """
+        colTyp = self.cbxColType.GetValue()
+        lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula'] # valid values
+        colDetailSiz = wx.GridBagSizer(1, 1)
+        self.colDetailPnl.DestroyChildren()
+        gRow = 0
+        if colTyp == 'Timestamp':
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Time System'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        if colTyp == 'Constant':
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Constant'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        if colTyp == 'Aggregate':
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Aggregate'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        if colTyp == 'Formula':
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Formula'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.colDetailPnl.SetSizer(colDetailSiz)
+        self.colDetailPnl.SetAutoLayout(1)
+        self.Layout()
+            
+
+
 # rewrite for Column    
     def fillSheetPanelControls(self):
 #        stSQL = """
@@ -899,6 +931,31 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         self.tcSheetName.SetValue(rec['WorksheetName'])
         self.tcNickname.SetValue(rec['DataSetNickname'])
         self.tcListingOrder.SetValue('%d' % rec['ListingOrder'])
+
+    def onSelColType(self, event):
+        """
+        Fills in the relevant fields based on the column type
+        """
+        colTyp = self.cbxColType.GetValue()
+        lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula'] # valid values
+        colDetailSiz = wx.GridBagSizer(1, 1)
+        self.colDetailPnl.DestroyChildren()
+        gRow = 0
+        if colTyp == 'Timestamp':
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Time System'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        if colTyp == 'Constant':
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Constant'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        if colTyp == 'Aggregate':
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Aggregate'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        if colTyp == 'Formula':
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Formula'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.colDetailPnl.SetSizer(colDetailSiz)
+        self.colDetailPnl.SetAutoLayout(1)
+        self.Layout()        
 
 # rewrite for Column    
     def onClick_BtnSave(self, event):
