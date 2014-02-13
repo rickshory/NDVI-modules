@@ -912,9 +912,18 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             colDetailSiz.Add(self.cbxTmSys, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
 
             gRow += 1
-            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'If interval, the start'),
-                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+            self.ckTmIsInterval = wx.CheckBox(self.colDetailPnl, label="Interval from a starting timestamp?")
+            colDetailSiz.Add(self.ckTmIsInterval, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+            self.ckTmIsInterval.SetValue(self.ColDict['TimeIsInterval'])
 
+            gRow += 1
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Starting timestamp'),
+                     pos=(gRow, 0), span=(1, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+            self.tcIntervalIsFrom = wx.TextCtrl(self.colDetailPnl)
+            if self.ColDict['IntervalIsFrom'] != None:
+                self.tcIntervalIsFrom.SetValue('%s' % self.ColDict['IntervalIsFrom'])
+            colDetailSiz.Add(self.tcIntervalIsFrom, pos=(gRow, 1), span=(1, 1), 
+                flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
             
         if colTyp == 'Constant':
             dtlLabel = wx.StaticText(self.colDetailPnl, -1, 'Constant')
@@ -934,6 +943,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             aggLabel = wx.StaticText(self.colDetailPnl, -1, 'Aggregate')
             aggLabel.SetFont(self.bolded)
             colDetailSiz.Add(aggLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            
         if colTyp == 'Formula':
             fmlLabel = wx.StaticText(self.colDetailPnl, -1, 'Formula')
             fmlLabel.SetFont(self.bolded)
@@ -949,10 +959,10 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Only used for Excel output'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
+        # show the Contents Format textbox for any Column Type
         gRow += 1
         colDetailSiz.Add(wx.StaticLine(self.colDetailPnl), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
-##
         gRow += 1
         colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format'),
                          pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
@@ -963,12 +973,9 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         colDetailSiz.Add(self.tcContentsFormat, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
-##
-
         gRow += 1
-        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format varies by Column Type'),
+        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format depends on Column Type'),
                  pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
-
 
         self.colDetailPnl.SetSizer(colDetailSiz)
         self.colDetailPnl.SetAutoLayout(1)
