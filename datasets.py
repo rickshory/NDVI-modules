@@ -798,7 +798,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
 #        "ListingOrder" INTEGER NOT NULL,
 
         if self.parentClassName == "wxDialog": # in the Dialog, create a new DB record
-            ColDict = dict(ID = None, WorksheetID = None, ColumnHeading = None, ColType = None,
+            self.ColDict = dict(ID = None, WorksheetID = None, ColumnHeading = None, ColType = None,
                 TimeSystem = None, TimeIsInterval = None, IntervalIsFrom = None,
                 Constant = None, Formula = None,
                 AggType = None, AggStationID = None, AggDataSeriesID = None,
@@ -809,17 +809,18 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             scidb.curD.execute(stSQL, (self.recID,))
             rec = scidb.curD.fetchone()
 #            ColDict = copy.copy(rec) # this crashes
-            ColDict = {}
+            self.ColDict = {}
             for recName in rec.keys():
-                ColDict[recName] = rec[recName]
-        print "ColDict:", ColDict
+                self.ColDict[recName] = rec[recName]
+        print "ColDict:", self.ColDict
               
         gRow += 1
         colHeadLabel = wx.StaticText(self, -1, 'Column Heading')
         colHeadLabel.SetFont(bolded)
         colPnlSiz.Add(colHeadLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcColHead = wx.TextCtrl(self)
-        self.tcColHead.SetValue('%s' % ColDict['ColumnHeading'])
+        if self.ColDict['ColumnHeading'] != None:
+            self.tcColHead.SetValue('%s' % self.ColDict['ColumnHeading'])
         colPnlSiz.Add(self.tcColHead, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
   
@@ -833,11 +834,11 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         colPnlSiz.Add(wx.StaticText(self, -1, 'Listing order'),
                      pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcListingOrder = wx.TextCtrl(self)
-        self.tcListingOrder.SetValue('%d' % ColDict['ListingOrder'])
+        if self.ColDict['ListingOrder'] != None:
+            self.tcListingOrder.SetValue('%d' % self.ColDict['ListingOrder'])
         colPnlSiz.Add(self.tcListingOrder, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
-
-# rewrite for Column    
+   
         gRow += 1
         colPnlSiz.Add(wx.StaticText(self, -1, 'Use this to specify the order of Columns in a sheet. \nWill be auto-assigned if you leave it out.'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
@@ -850,14 +851,17 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         colTypeLabel.SetFont(bolded)
         colPnlSiz.Add(colTypeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula']
-
         self.cbxColType = wx.ComboBox(self, -1, choices=lstColTypes, style=wx.CB_READONLY)
+        if self.ColDict['ColType'] != None:
+            self.cbxColType.SetValue('%s' % self.ColDict['ColType'])
         colPnlSiz.Add(self.cbxColType, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
-        if ColDict['ColType'] != None:
-            self.cbxColType.SetValue('%s' % ColDict['ColType'])
-      
+
         gRow += 1
         colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+
+        self.colDetailPnl = wx.Panel(self, wx.ID_ANY) # content varies by ColType
+        
+        
 
 # rewrite for Column    
         gRow += 1
