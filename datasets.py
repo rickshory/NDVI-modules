@@ -902,6 +902,19 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             tsyLabel = wx.StaticText(self.colDetailPnl, -1, 'Time System')
             tsyLabel.SetFont(self.bolded)
             colDetailSiz.Add(tsyLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            lstTmSysOpts = ['Clock Time', 'Solar Time']
+            self.cbxTmSys = wx.ComboBox(self.colDetailPnl, -1, choices=lstTmSysOpts, style=wx.CB_READONLY)
+
+            if self.ColDict['TimeSystem'] == None:
+                self.cbxTmSys.SetValue('%s' % lstTmSysOpts[0]) # default, usual
+            else:
+                self.cbxTmSys.SetValue('%s' % self.ColDict['TimeSystem'])
+            colDetailSiz.Add(self.cbxTmSys, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
+
+            gRow += 1
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'If interval, the start'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
             
         if colTyp == 'Constant':
             dtlLabel = wx.StaticText(self.colDetailPnl, -1, 'Constant')
@@ -925,6 +938,38 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             fmlLabel = wx.StaticText(self.colDetailPnl, -1, 'Formula')
             fmlLabel.SetFont(self.bolded)
             colDetailSiz.Add(fmlLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+            self.tcFormula = wx.TextCtrl(self.colDetailPnl)
+            if self.ColDict['Formula'] != None:
+                self.tcFormula.SetValue('%s' % self.ColDict['Formula'])
+            colDetailSiz.Add(self.tcFormula, pos=(gRow, 1), span=(1, 1), 
+                flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+            
+            gRow += 1
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Only used for Excel output'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        colDetailSiz.Add(wx.StaticLine(self.colDetailPnl), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+
+##
+        gRow += 1
+        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format'),
+                         pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        self.tcContentsFormat = wx.TextCtrl(self.colDetailPnl)
+        if self.ColDict['ContentsFormat'] != None:
+            self.tcContentsFormat.SetValue('%s' % self.ColDict['ContentsFormat'])
+        colDetailSiz.Add(self.tcContentsFormat, pos=(gRow, 1), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+##
+
+        gRow += 1
+        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format varies by Column Type'),
+                 pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+
         self.colDetailPnl.SetSizer(colDetailSiz)
         self.colDetailPnl.SetAutoLayout(1)
         self.colDetailPnl.Layout()
