@@ -765,19 +765,19 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         print "self.parentTable:", self.parentTable
         print "self.parentRecID:", self.parentRecID
         self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
-        shPnlSiz = wx.GridBagSizer(1, 1)
+        colPnlSiz = wx.GridBagSizer(1, 1)
         note1 = wx.StaticText(self, -1, 'Bold ')
         bolded = note1.GetFont() 
         bolded.SetWeight(wx.BOLD) 
         note1.SetFont(bolded)
         gRow = 0
-        shPnlSiz.Add(note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        shPnlSiz.Add(wx.StaticText(self, -1, 'items are required'),
+        colPnlSiz.Add(note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        colPnlSiz.Add(wx.StaticText(self, -1, 'items are required'),
                      pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
 # rewrite for Column    
         gRow += 1
-        shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+        colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
         
         # build panel differently depending whether a new or existing record
 
@@ -817,56 +817,56 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         gRow += 1
         colHeadLabel = wx.StaticText(self, -1, 'Column Heading')
         colHeadLabel.SetFont(bolded)
-        shPnlSiz.Add(colHeadLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        colPnlSiz.Add(colHeadLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcColHead = wx.TextCtrl(self)
         self.tcColHead.SetValue('%s' % ColDict['ColumnHeading'])
-        shPnlSiz.Add(self.tcColHead, pos=(gRow, 1), span=(1, 1), 
+        colPnlSiz.Add(self.tcColHead, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
   
         gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, "Text for the column's top cell, in the output dataset"),
+        colPnlSiz.Add(wx.StaticText(self, -1, "Text for the column's top cell, in the output dataset"),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
         gRow += 1
-        shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+        colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
    
         gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'Listing order'),
+        colPnlSiz.Add(wx.StaticText(self, -1, 'Listing order'),
                      pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcListingOrder = wx.TextCtrl(self)
         self.tcListingOrder.SetValue('%d' % ColDict['ListingOrder'])
-        shPnlSiz.Add(self.tcListingOrder, pos=(gRow, 1), span=(1, 1), 
+        colPnlSiz.Add(self.tcListingOrder, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
 # rewrite for Column    
         gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'Use this to specify the order of Columns in a sheet. \nWill be auto-assigned if you leave it out.'),
+        colPnlSiz.Add(wx.StaticText(self, -1, 'Use this to specify the order of Columns in a sheet. \nWill be auto-assigned if you leave it out.'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
    
         gRow += 1
-        shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+        colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
  
         gRow += 1
         colTypeLabel = wx.StaticText(self, -1, 'Column Type')
         colTypeLabel.SetFont(bolded)
-        shPnlSiz.Add(colTypeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        colPnlSiz.Add(colTypeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula']
 
         self.cbxColType = wx.ComboBox(self, -1, choices=lstColTypes, style=wx.CB_READONLY)
-        shPnlSiz.Add(self.cbxColType, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
+        colPnlSiz.Add(self.cbxColType, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
         if ColDict['ColType'] != None:
             self.cbxColType.SetValue('%s' % ColDict['ColType'])
       
         gRow += 1
-        shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+        colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
 # rewrite for Column    
         gRow += 1
         self.btnSave = wx.Button(self, label="Save", size=(90, 28))
         self.btnSave.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnSave(evt))
-        shPnlSiz.Add(self.btnSave, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
+        colPnlSiz.Add(self.btnSave, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
         self.btnCancel = wx.Button(self, label="Cancel", size=(90, 28))
         self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
-        shPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+        colPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
 
 #        parObjClass = self.GetParent().GetClassName()
 #        print "Parent object class:", parObjClass
@@ -878,7 +878,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
 #            self.fillSheetPanelControls()
         else:
             print "no recID in Sheet panel, will not initialize values"
-        self.SetSizer(shPnlSiz)
+        self.SetSizer(colPnlSiz)
         self.SetAutoLayout(1)
         self.SetupScrolling()
 
