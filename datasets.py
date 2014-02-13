@@ -767,20 +767,17 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
         colPnlSiz = wx.GridBagSizer(1, 1)
         note1 = wx.StaticText(self, -1, 'Bold ')
-        bolded = note1.GetFont() 
-        bolded.SetWeight(wx.BOLD) 
-        note1.SetFont(bolded)
+        self.bolded = note1.GetFont() 
+        self.bolded.SetWeight(wx.BOLD) 
+        note1.SetFont(self.bolded)
         gRow = 0
         colPnlSiz.Add(note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         colPnlSiz.Add(wx.StaticText(self, -1, 'items are required'),
                      pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
-
-# rewrite for Column    
+  
         gRow += 1
         colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
         
-        # build panel differently depending whether a new or existing record
-
 #        CREATE TABLE IF NOT EXISTS "OutputColumns" (
 #        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
 #        "WorksheetID" INTEGER NOT NULL ,
@@ -816,7 +813,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
               
         gRow += 1
         colHeadLabel = wx.StaticText(self, -1, 'Column Heading')
-        colHeadLabel.SetFont(bolded)
+        colHeadLabel.SetFont(self.bolded)
         colPnlSiz.Add(colHeadLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcColHead = wx.TextCtrl(self)
         if self.ColDict['ColumnHeading'] != None:
@@ -848,7 +845,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
  
         gRow += 1
         colTypeLabel = wx.StaticText(self, -1, 'Column Type')
-        colTypeLabel.SetFont(bolded)
+        colTypeLabel.SetFont(self.bolded)
         colPnlSiz.Add(colTypeLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula']
         self.cbxColType = wx.ComboBox(self, -1, choices=lstColTypes, style=wx.CB_READONLY)
@@ -861,12 +858,13 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
         self.colDetailPnl = wx.Panel(self, wx.ID_ANY) # content varies by ColType
-#        self.fillColDetailsPanel()
-        self.onSelColType(-1) # see if we explictly have to call this
+        self.onSelColType(-1) # have to explictly call this 1st time
 
         gRow += 1
         colPnlSiz.Add(self.colDetailPnl, pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
         
+        gRow += 1
+        colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
 
 # rewrite for Column    
         gRow += 1
@@ -891,50 +889,9 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         self.SetAutoLayout(1)
         self.SetupScrolling()
 
-    def fillColDetailsPanel(self):
-        """
-        Fills in the relevant fields based on the column type
-        """
-        colTyp = self.cbxColType.GetValue()
-        lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula'] # valid values
-        colDetailSiz = wx.GridBagSizer(1, 1)
-        self.colDetailPnl.DestroyChildren()
-        gRow = 0
-        if colTyp == 'Timestamp':
-            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Time System'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        if colTyp == 'Constant':
-            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Constant'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        if colTyp == 'Aggregate':
-            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Aggregate'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        if colTyp == 'Formula':
-            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Formula'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        self.colDetailPnl.SetSizer(colDetailSiz)
-        self.colDetailPnl.SetAutoLayout(1)
-        self.Layout()
-            
-
-
-# rewrite for Column    
-    def fillSheetPanelControls(self):
-#        stSQL = """
-#        SELECT BookID,
-#        WorksheetName, DataSetNickname, ListingOrder
-#        FROM OutputSheets WHERE ID = ?
-#        """
-        stSQL = "SELECT * FROM OutputSheets WHERE ID=?"
-        scidb.curD.execute(stSQL, (self.recID,))
-        rec = scidb.curD.fetchone()
-        self.tcSheetName.SetValue(rec['WorksheetName'])
-        self.tcNickname.SetValue(rec['DataSetNickname'])
-        self.tcListingOrder.SetValue('%d' % rec['ListingOrder'])
-
     def onSelColType(self, event):
         """
-        Fills in the relevant fields based on the column type
+        Shows the relevant fields based on Column Type
         """
         colTyp = self.cbxColType.GetValue()
         lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula'] # valid values
@@ -942,20 +899,37 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         self.colDetailPnl.DestroyChildren()
         gRow = 0
         if colTyp == 'Timestamp':
-            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Time System'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            tsyLabel = wx.StaticText(self.colDetailPnl, -1, 'Time System')
+            tsyLabel.SetFont(self.bolded)
+            colDetailSiz.Add(tsyLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            
         if colTyp == 'Constant':
-            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Constant'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            dtlLabel = wx.StaticText(self.colDetailPnl, -1, 'Constant')
+            dtlLabel.SetFont(self.bolded)
+            colDetailSiz.Add(dtlLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            self.tcConstant = wx.TextCtrl(self.colDetailPnl)
+            if self.ColDict['Constant'] != None:
+                self.tcConstant.SetValue('%s' % self.ColDict['Constant'])
+            colDetailSiz.Add(self.tcConstant, pos=(gRow, 1), span=(1, 1), 
+                flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+            
+            gRow += 1
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'A label to appear in each row'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+            
         if colTyp == 'Aggregate':
-            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Aggregate'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            aggLabel = wx.StaticText(self.colDetailPnl, -1, 'Aggregate')
+            aggLabel.SetFont(self.bolded)
+            colDetailSiz.Add(aggLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         if colTyp == 'Formula':
-            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Formula'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            fmlLabel = wx.StaticText(self.colDetailPnl, -1, 'Formula')
+            fmlLabel.SetFont(self.bolded)
+            colDetailSiz.Add(fmlLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.colDetailPnl.SetSizer(colDetailSiz)
         self.colDetailPnl.SetAutoLayout(1)
-        self.Layout()        
+        self.colDetailPnl.Layout()
+        self.Layout()
+
 
 # rewrite for Column    
     def onClick_BtnSave(self, event):
