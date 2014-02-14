@@ -584,7 +584,7 @@ def autofixChannelSegments():
     # for Data table with 141,811 records, took 2.455ms
     # created 15 segments
     
-def fillComboboxFromSQL(objComboBox, stSQL, keyCol, visibleCol):
+def fillComboboxFromSQL(objComboBox, stSQL, keyCol=0, visibleCol=1):
     """
     Given a combobox with it's list currently empty and
     an SQL statement that returns at least two columns
@@ -593,12 +593,35 @@ def fillComboboxFromSQL(objComboBox, stSQL, keyCol, visibleCol):
     The 'keyCol' items can be retrieved using this format, where CB is the combobox:
     keyItem = CB.GetClientData(CB.GetSelection())
     both columns are zero based
-    
     """
     curD.execute(stSQL)
     recs = curD.fetchall()
     for rec in recs:
         objComboBox.Append(rec[visibleCol], rec[keyCol])
+
+def setComboboxToClientData(objComboBox, keyVal):
+    """
+    Given a combobox with it's list filled by the 'fillComboboxFromSQL' function
+    and given a variable containing the key value,
+    sets the combobox selection to the item with that key
+    """
+    if keyVal != None:
+        for i in range(objComboBox.GetCount()):
+            if objComboBox.GetClientData(i) == keyVal:
+                objComboBox.SetSelection(i)
+                return
+
+def getComboboxIndex(objComboBox):
+    """
+    Given a combobox with it's list filled by the 'fillComboboxFromSQL' function
+    returns the key value of the selected item, if any
+    """
+    try:
+        keyVal = objComboBox.GetClientData(objComboBox.GetSelection())
+        return keyValue
+    except:
+        return None
+
 
 if __name__ == "__main__":
     pass # nothing yet

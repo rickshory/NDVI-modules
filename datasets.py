@@ -960,10 +960,8 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
 
             stSQL = "SELECT ID, StationName FROM Stations ORDER BY ID;"
             self.cbxAggStation = wx.ComboBox(self.colDetailPnl, -1, choices=[], style=wx.CB_READONLY)
-            scidb.fillComboboxFromSQL(self.cbxAggStation, stSQL, 0, 1)
-
-#            if self.ColDict['AggStationID'] != None:
-#                self.cbxAggType.SetValue('%s' % self.ColDict['AggStationID'])
+            scidb.fillComboboxFromSQL(self.cbxAggStation, stSQL, keyCol=0, visibleCol=1)
+            scidb.setComboboxToClientData(self.cbxAggStation, self.ColDict['AggStationID'])
             colDetailSiz.Add(self.cbxAggStation, pos=(gRow, 1), span=(1, 2), flag=wx.LEFT, border=5)
 
             gRow += 1
@@ -973,10 +971,8 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             
             stSQL = "SELECT ID, DataSeriesDescription FROM DataSeries ORDER BY ID;"
             self.cbxAggSeries = wx.ComboBox(self.colDetailPnl, -1, choices=[], style=wx.CB_READONLY)
-            scidb.fillComboboxFromSQL(self.cbxAggSeries, stSQL, 0, 1)
-
-#            if self.ColDict['AggStationID'] != None:
-#                self.cbxAggType.SetValue('%s' % self.ColDict['AggStationID'])
+            scidb.fillComboboxFromSQL(self.cbxAggSeries, stSQL, keyCol=0, visibleCol=1)
+            scidb.setComboboxToClientData(self.cbxAggSeries, self.ColDict['AggDataSeriesID'])
             colDetailSiz.Add(self.cbxAggSeries, pos=(gRow, 1), span=(1, 2), flag=wx.LEFT, border=5)
 
         if colTyp == 'Formula':
