@@ -943,7 +943,42 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             aggLabel = wx.StaticText(self.colDetailPnl, -1, 'Aggregate')
             aggLabel.SetFont(self.bolded)
             colDetailSiz.Add(aggLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+            lstAggOpts = ['Avg', 'Min', 'Max', 'Count', 'Sum', 'StDev']
+            self.cbxAggType = wx.ComboBox(self.colDetailPnl, -1, choices=lstAggOpts, style=wx.CB_READONLY)
+
+            if self.ColDict['AggType'] == None:
+                self.cbxAggType.SetValue('%s' % lstTmSysOpts[0]) # default, usual
+            else:
+                self.cbxAggType.SetValue('%s' % self.ColDict['AggType'])
+            colDetailSiz.Add(self.cbxAggType, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
+
+            gRow += 1
+            aggStaLabel = wx.StaticText(self.colDetailPnl, -1, 'Station')
+            aggStaLabel.SetFont(self.bolded)
+            colDetailSiz.Add(aggStaLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+            stSQL = "SELECT ID, StationName FROM Stations ORDER BY ID;"
+            self.cbxAggStation = wx.ComboBox(self.colDetailPnl, -1, choices=[], style=wx.CB_READONLY)
+            scidb.fillComboboxFromSQL(self.cbxAggStation, stSQL, 0, 1)
+
+#            if self.ColDict['AggStationID'] != None:
+#                self.cbxAggType.SetValue('%s' % self.ColDict['AggStationID'])
+            colDetailSiz.Add(self.cbxAggStation, pos=(gRow, 1), span=(1, 2), flag=wx.LEFT, border=5)
+
+            gRow += 1
+            aggSeriesLabel = wx.StaticText(self.colDetailPnl, -1, 'Series')
+            aggSeriesLabel.SetFont(self.bolded)
+            colDetailSiz.Add(aggSeriesLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
             
+            stSQL = "SELECT ID, DataSeriesDescription FROM DataSeries ORDER BY ID;"
+            self.cbxAggSeries = wx.ComboBox(self.colDetailPnl, -1, choices=[], style=wx.CB_READONLY)
+            scidb.fillComboboxFromSQL(self.cbxAggSeries, stSQL, 0, 1)
+
+#            if self.ColDict['AggStationID'] != None:
+#                self.cbxAggType.SetValue('%s' % self.ColDict['AggStationID'])
+            colDetailSiz.Add(self.cbxAggSeries, pos=(gRow, 1), span=(1, 2), flag=wx.LEFT, border=5)
+
         if colTyp == 'Formula':
             fmlLabel = wx.StaticText(self.colDetailPnl, -1, 'Formula')
             fmlLabel.SetFont(self.bolded)

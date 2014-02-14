@@ -584,6 +584,21 @@ def autofixChannelSegments():
     # for Data table with 141,811 records, took 2.455ms
     # created 15 segments
     
+def fillComboboxFromSQL(objComboBox, stSQL, keyCol, visibleCol):
+    """
+    Given a combobox with it's list currently empty and
+    an SQL statement that returns at least two columns
+    Returns the combobox with the records appended as it's selection entries
+    The visible items are from 'visibleCol' in the results set.
+    The 'keyCol' items can be retrieved using this format, where CB is the combobox:
+    keyItem = CB.GetClientData(CB.GetSelection())
+    both columns are zero based
+    
+    """
+    curD.execute(stSQL)
+    recs = curD.fetchall()
+    for rec in recs:
+        objComboBox.Append(rec[visibleCol], rec[keyCol])
 
 if __name__ == "__main__":
     pass # nothing yet
