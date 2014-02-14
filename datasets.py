@@ -1064,34 +1064,82 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             return
         
         if self.ColDict['ColType'] == 'Timestamp':
-#            self.ColDict['TimeSystem'] = self.colDetailPnl.cbxTmSys.GetValue() # constrained to list
             self.ColDict['TimeSystem'] = self.cbxTmSys.GetValue() # constrained to list
             if self.ColDict['TimeSystem'] == '':
                 wx.MessageBox('Need Time System', 'Missing',
                     wx.OK | wx.ICON_INFORMATION)
-#                self.colDetailPnl.cbxTmSys.SetFocus()
                 self.cbxTmSys.SetFocus()
                 self.Scroll(0, 0) # the required controls are all at the top
                 return
-## working here --->
-#            self.ColDict['TimeIsInterval'] = self.colDetailPnl.ckTmIsInterval.GetValue()
+
             self.ColDict['TimeIsInterval'] = self.ckTmIsInterval.GetValue()
-            print "Retrieved TimeIsInterval:", self.ColDict['TimeIsInterval']
             if self.ColDict['TimeIsInterval'] == 1:
-                pass
-            sFmt = '%Y-%m-%d %H:%M:%S'
-            try:
-                #datetime.strptime(date_string, format)
-#                self.ColDict['IntervalIsFrom'] = datetime.datetime.strptime(self.colDetailPnl.tcIntervalIsFrom.GetValue(), sFmt)
-                self.ColDict['IntervalIsFrom'] = datetime.datetime.strptime(self.tcIntervalIsFrom.GetValue(), sFmt)
-            except:
-                self.ColDict['IntervalIsFrom'] = None
-            print "Retrieved IntervalIsFrom:", self.ColDict['IntervalIsFrom']
+                sFmt = '%Y-%m-%d %H:%M:%S'
+                try:
+                    #datetime.strptime(date_string, format)
+                    self.ColDict['IntervalIsFrom'] = datetime.datetime.strptime(self.tcIntervalIsFrom.GetValue(), sFmt)
+                except:
+                    self.ColDict['IntervalIsFrom'] = None
+                print "Retrieved IntervalIsFrom:", self.ColDict['IntervalIsFrom']
+                if self.ColDict['IntervalIsFrom'] == None:
+                    # offer a reasonable default
+                    startOfCurYear = datetime.datetime(datetime.datetime.now().year, 1, 1)
+                    self.tcIntervalIsFrom.SetValue(startOfCurYear.strftime(sFmt))
+                    self.tcContentsFormat.SetValue('0.00')
+                    wx.MessageBox("""Starting timestamp set to beginning of this year,
+                        which will give Julian Day for this year.
+                        Adjust as needed, but keep the same format.""", 'Missing',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
 
+        if self.ColDict['ColType'] == 'Constant':
+            # clean up whitespace; remove leading/trailing & multiples
+            self.ColDict['Constant'] = " ".join(self.tcConstant.GetValue().split())
+            self.tcConstant.SetValue(self.ColDict['Constant'])
+            if self.ColDict['Constant'] == '':
+                wx.MessageBox('Blank "Constant" will just create an empty column.', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.ColDict['Constant'] = None
+            else:
+                maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'Constant')
+                if maxLen < 1:
+                    wx.MessageBox('Error %d getting [OutputColumns].[Constant] field length.' % maxLen, 'Error',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+                if len(self.ColDict['Constant']) > maxLen:
+                    wx.MessageBox("""Max length for "Constant" is %d characters.\nIf trimmed version is acceptable, retry.""" % maxLen, 'Too Long',
+                        wx.OK | wx.ICON_INFORMATION)
+                    self.tcConstant.SetValue(self.ColDict['Constant'][:(maxLen)])
+                    self.tcConstant.SetFocus()
+                    return
 
+## working here --->
 
+        if self.ColDict['ColType'] == 'Aggregate':
+            wx.MessageBox(' Column type Aggregate', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+            #still to write
 ## <--- to here        
-
+        if self.ColDict['ColType'] == 'Formula':
+            # clean up whitespace; remove leading/trailing & multiples
+            self.ColDict['Formula'] = " ".join(self.tcFormula.GetValue().split())
+            self.tcFormula.SetValue(self.ColDict['Formula'])
+            if self.ColDict['Formula'] == '':
+                wx.MessageBox('Blank "Formula" will just create an empty column.', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.ColDict['Formula'] = None
+            else:
+                maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'Formula')
+                if maxLen < 1:
+                    wx.MessageBox('Error %d getting [OutputColumns].[Formula] field length.' % maxLen, 'Error',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+                if len(self.ColDict['Formula']) > maxLen:
+                    wx.MessageBox("""Max length for "Formula" is %d characters.\nIf trimmed version is acceptable, retry.""" % maxLen, 'Too Long',
+                        wx.OK | wx.ICON_INFORMATION)
+                    self.tcFormula.SetValue(self.ColDict['Formula'][:(maxLen)])
+                    self.tcFormula.SetFocus()
+                    return
 
 # rewrite for Column    
 
