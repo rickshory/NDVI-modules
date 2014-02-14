@@ -1,5 +1,5 @@
 import wx, sqlite3, datetime, copy
-import os, sys, re, cPickle
+import os, sys, re, cPickle, datetime
 import scidb
 import wx.lib.scrolledpanel as scrolled
 
@@ -777,26 +777,10 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
   
         gRow += 1
         colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
-        
-#        CREATE TABLE IF NOT EXISTS "OutputColumns" (
-#        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
-#        "WorksheetID" INTEGER NOT NULL ,
-#        "ColumnHeading" VARCHAR(20) NOT NULL,
-#        "ColType" VARCHAR(10) NOT NULL,
-#        "TimeSystem"  VARCHAR(10) DEFAULT 'Clock Time',
-#        "TimeIsInterval" BOOL NOT NULL DEFAULT 0,
-#        "IntervalIsFrom" DATETIME,
-#        "Constant" VARCHAR(10),
-#        "Formula" VARCHAR(1000),
-#        "AggType" VARCHAR(5),
-#        "AggStationID" INTEGER,
-#        "AggDataSeriesID" INTEGER,
-#        "ContentsFormat" VARCHAR(20),
-#        "ListingOrder" INTEGER NOT NULL,
 
         if self.parentClassName == "wxDialog": # in the Dialog, create a new DB record
             self.ColDict = dict(ID = None, WorksheetID = None, ColumnHeading = None, ColType = None,
-                TimeSystem = None, TimeIsInterval = None, IntervalIsFrom = None,
+                TimeSystem = None, TimeIsInterval = 0, IntervalIsFrom = None,
                 Constant = None, Formula = None,
                 AggType = None, AggStationID = None, AggDataSeriesID = None,
                 ContentsFormat = None, ListingOrder = None)
@@ -858,7 +842,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
         self.colDetailPnl = wx.Panel(self, wx.ID_ANY) # content varies by ColType
-        self.onSelColType(-1) # have to explictly call this 1st time
+        self.onSelColType() # have to explictly call this 1st time
 
         gRow += 1
         colPnlSiz.Add(self.colDetailPnl, pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
@@ -889,9 +873,11 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         self.SetAutoLayout(1)
         self.SetupScrolling()
 
-    def onSelColType(self, event):
+
+    def onSelColType(self, event = -1):
         """
         Shows the relevant fields based on Column Type
+        Default 'event = -1' is dummy value for initial call when first created
         """
         colTyp = self.cbxColType.GetValue()
         lstColTypes = ['Timestamp', 'Constant', 'Aggregate', 'Formula'] # valid values
@@ -948,7 +934,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             self.cbxAggType = wx.ComboBox(self.colDetailPnl, -1, choices=lstAggOpts, style=wx.CB_READONLY)
 
             if self.ColDict['AggType'] == None:
-                self.cbxAggType.SetValue('%s' % lstTmSysOpts[0]) # default, usual
+                self.cbxAggType.SetValue('%s' % lstAggOpts[0]) # default, usual
             else:
                 self.cbxAggType.SetValue('%s' % self.ColDict['AggType'])
             colDetailSiz.Add(self.cbxAggType, pos=(gRow, 1), span=(1, 1), flag=wx.LEFT, border=5)
@@ -1012,76 +998,107 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         self.colDetailPnl.SetAutoLayout(1)
         self.colDetailPnl.Layout()
         self.Layout()
+        # re-set up scrolling for panel; size change can cancel it
+        self.SetAutoLayout(1)
+        self.SetupScrolling()
 
 
 # rewrite for Column    
     def onClick_BtnSave(self, event):
         # finish rewriting this for Sheets
         """
-        If this frame is shown in a Dialog, the Sheet is being created.
+        If this frame is shown in a Dialog, the Column is being created.
         Attempt to create a new record and make the new record ID available.
         If this frame is shown in the main form, attempt to save any changes to the existing DB record
         """
         
         # clean up whitespace; remove leading/trailing & multiples
-        stSheetName = " ".join(self.tcSheetName.GetValue().split())
-        print "stSheetName:", stSheetName
-        if stSheetName == '':
-            wx.MessageBox('Need Sheet Name', 'Missing',
+        self.ColDict['ColumnHeading'] = " ".join(self.tcColHead.GetValue().split())
+        print "ColumnHeading:", self.ColDict['ColumnHeading']
+        if self.ColDict['ColumnHeading'] == '':
+            wx.MessageBox('Need Column Heading', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
-            self.tcSheetName.SetValue(stSheetName)
-            self.tcSheetName.SetFocus()
+            self.tcColHead.SetValue(self.ColDict['ColumnHeading'])
+            self.tcColHead.SetFocus()
             self.Scroll(0, 0) # the required controls are all at the top
             return
     
-        maxLen = scidb.lenOfVarcharTableField('OutputSheets', 'WorksheetName')
+        maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'ColumnHeading')
         if maxLen < 1:
-            wx.MessageBox('Error %d getting [OutputSheets].[WorksheetName] field length.' % maxLen, 'Error',
+            wx.MessageBox('Error %d getting [OutputColumns].[ColumnHeading] field length.' % maxLen, 'Error',
                 wx.OK | wx.ICON_INFORMATION)
             return
-        if len(stSheetName) > maxLen:
-            wx.MessageBox('Max length for Sheet Name is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
+        if len(self.ColDict['ColumnHeading']) > maxLen:
+            wx.MessageBox('Max length for Column Heading is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
                 wx.OK | wx.ICON_INFORMATION)
-            self.tcSheetName.SetValue(stSheetName[:(maxLen)])
-            self.tcSheetName.SetFocus()
+            self.tcColHead.SetValue(self.ColDict['ColumnHeading'][:(maxLen)])
+            self.tcColHead.SetFocus()
             self.Scroll(0, 0) # the required controls are all at the top
             return
         
-        stNickname = " ".join(self.tcNickname.GetValue().split())
-        maxLen = scidb.lenOfVarcharTableField('OutputSheets', 'DataSetNickname')
-        if maxLen < 1:
-            wx.MessageBox('Error %d getting [OutputSheets].[DataSetNickname] field length.' % maxLen, 'Error',
-                wx.OK | wx.ICON_INFORMATION)
-            return
-        if len(stNickname) > maxLen:
-            wx.MessageBox('Max length for Sheet Nickname is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
-                wx.OK | wx.ICON_INFORMATION)
-            self.tcNickname.SetValue(stNickname[:(maxLen)])
-            self.tcNickname.SetFocus()
-            self.Scroll(0, 0) # the required controls are all at the top
-            return
-
-# rewrite for Column    
         try:
-            iLstOrd = int(self.tcListingOrder.GetValue())
+            self.ColDict['ListingOrder'] = int(self.tcListingOrder.GetValue())
         except:
             # autocreate, 1 higher than previously existing
             print "self.parentRecID, to use in ListingOrder query:",  self.parentRecID
-            stSQL = "SELECT MAX(OutputSheets.ListingOrder) AS MaxLstOrd FROM OutputSheets WHERE BookID = ?;"
+            stSQL = "SELECT MAX(OutputColumns.ListingOrder) AS MaxLstOrd FROM OutputColumns WHERE WorksheetID = ?;"
             scidb.curD.execute(stSQL, (self.parentRecID,))
             rec = scidb.curD.fetchone()
             print "Max Listing order fetched:", rec
             if rec['MaxLstOrd'] == None: # none yet
-                iLstOrd = 1
+                self.ColDict['ListingOrder'] = 1
             else:
-                iLstOrd = rec['MaxLstOrd'] + 1
-            wx.MessageBox('Listing Order auto-set to %d.' % iLstOrd, 'Info',
+                self.ColDict['ListingOrder'] = rec['MaxLstOrd'] + 1
+            self.tcListingOrder.SetValue('%d' % self.ColDict['ListingOrder'])
+            wx.MessageBox('Listing Order auto-set to %d.' % self.ColDict['ListingOrder'], 'Info',
                 wx.OK | wx.ICON_INFORMATION)
-        print "Listing Order:", iLstOrd
+        print "Listing Order:", self.ColDict['ListingOrder']
         
-#        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
-#            wx.OK | wx.ICON_INFORMATION)
-#        return
+        self.ColDict['ColType'] = self.cbxColType.GetValue() # constrained to list
+        print "Column Type:", self.ColDict['ColType']
+        if self.ColDict['ColType'] == '':
+            wx.MessageBox('Need Column Type', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.cbxColType.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        
+        if self.ColDict['ColType'] == 'Timestamp':
+#            self.ColDict['TimeSystem'] = self.colDetailPnl.cbxTmSys.GetValue() # constrained to list
+            self.ColDict['TimeSystem'] = self.cbxTmSys.GetValue() # constrained to list
+            if self.ColDict['TimeSystem'] == '':
+                wx.MessageBox('Need Time System', 'Missing',
+                    wx.OK | wx.ICON_INFORMATION)
+#                self.colDetailPnl.cbxTmSys.SetFocus()
+                self.cbxTmSys.SetFocus()
+                self.Scroll(0, 0) # the required controls are all at the top
+                return
+## working here --->
+#            self.ColDict['TimeIsInterval'] = self.colDetailPnl.ckTmIsInterval.GetValue()
+            self.ColDict['TimeIsInterval'] = self.ckTmIsInterval.GetValue()
+            print "Retrieved TimeIsInterval:", self.ColDict['TimeIsInterval']
+            if self.ColDict['TimeIsInterval'] == 1:
+                pass
+            sFmt = '%Y-%m-%d %H:%M:%S'
+            try:
+                #datetime.strptime(date_string, format)
+#                self.ColDict['IntervalIsFrom'] = datetime.datetime.strptime(self.colDetailPnl.tcIntervalIsFrom.GetValue(), sFmt)
+                self.ColDict['IntervalIsFrom'] = datetime.datetime.strptime(self.tcIntervalIsFrom.GetValue(), sFmt)
+            except:
+                self.ColDict['IntervalIsFrom'] = None
+            print "Retrieved IntervalIsFrom:", self.ColDict['IntervalIsFrom']
+
+
+
+## <--- to here        
+
+
+# rewrite for Column    
+
+        
+        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
+        return
 
 # rewrite for Column    
         # we have self.parentClassName from initialization; "wxDialog" if in the dialog
