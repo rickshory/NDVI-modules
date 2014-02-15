@@ -1276,27 +1276,12 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             parObject.EndModal(0) # if in the creation dialog, exit with no changes to the DB
 #            parObject.Destroy() 
         else: # in the main form
-            wx.MessageBox('Undoing any edits', 'Undo', 
+            wx.MessageBox('To lose canges, click a different tree item, then click this one again.', 'Undo', 
                 wx.OK | wx.ICON_INFORMATION)
-## working on this ->
-            # how to restore the Column panel from the DB; maybe call the dsTree select event?
-            parObject1 = self.GetParent() # the details panel
-            print "Parent 1:", parObject1, ", Class", parObject1.GetClassName()
-            parObject2 = parObject1.GetParent() # the vertical splitter window
-            print "Parent 2:", parObject2, ", Class", parObject2.GetClassName()
-            parObject3 = parObject2.GetParent() # panel
-            print "Parent 3:", parObject3, ", Class", parObject3.GetClassName()
-            parObject4 = parObject3.GetParent() # the horizontal splitter window
-            print "Parent 4:", parObject4, ", Class", parObject4.GetClassName()
-            parObject5 = parObject4.GetParent() # the main panel that owns the tree
-            print "Parent 5:", parObject5, ", Class", parObject5.GetClassName()
-#            parObject5.dsTree.SetItemText(parObject5.dsInfoPnl.correspondingTreeItem, self.ColDict['ColumnHeading'])
-
-## <- to here        
+#            wx.MessageBox('Undoing any edits', 'Undo', 
+#                wx.OK | wx.ICON_INFORMATION)
             
-        return
-
-# rewrite for Column    
+        return   
 
 class SetupDatasetsPanel(wx.Panel):
     def __init__(self, parent, id):
