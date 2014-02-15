@@ -849,8 +849,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         
         gRow += 1
         colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
-
-# rewrite for Column    
+   
         gRow += 1
         self.btnSave = wx.Button(self, label="Save", size=(90, 28))
         self.btnSave.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnSave(evt))
@@ -1002,16 +1001,11 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         self.SetAutoLayout(1)
         self.SetupScrolling()
 
-
-# rewrite for Column    
-    def onClick_BtnSave(self, event):
-        # finish rewriting this for Sheets
+    def validateColPanel(self):
         """
-        If this frame is shown in a Dialog, the Column is being created.
-        Attempt to create a new record and make the new record ID available.
-        If this frame is shown in the main form, attempt to save any changes to the existing DB record
+        Validate Column panel and extract values into 'ColDict'.
+        Returns 0 if anything incomplete, 1 in all OK
         """
-        
         # clean up whitespace; remove leading/trailing & multiples
         self.ColDict['ColumnHeading'] = " ".join(self.tcColHead.GetValue().split())
         print "ColumnHeading:", self.ColDict['ColumnHeading']
@@ -1021,20 +1015,20 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             self.tcColHead.SetValue(self.ColDict['ColumnHeading'])
             self.tcColHead.SetFocus()
             self.Scroll(0, 0) # the required controls are all at the top
-            return
+            return 0
     
         maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'ColumnHeading')
         if maxLen < 1:
             wx.MessageBox('Error %d getting [OutputColumns].[ColumnHeading] field length.' % maxLen, 'Error',
                 wx.OK | wx.ICON_INFORMATION)
-            return
+            return 0
         if len(self.ColDict['ColumnHeading']) > maxLen:
             wx.MessageBox('Max length for Column Heading is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
                 wx.OK | wx.ICON_INFORMATION)
             self.tcColHead.SetValue(self.ColDict['ColumnHeading'][:(maxLen)])
             self.tcColHead.SetFocus()
             self.Scroll(0, 0) # the required controls are all at the top
-            return
+            return 0
         
         try:
             self.ColDict['ListingOrder'] = int(self.tcListingOrder.GetValue())
@@ -1061,7 +1055,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 wx.OK | wx.ICON_INFORMATION)
             self.cbxColType.SetFocus()
             self.Scroll(0, 0) # the required controls are all at the top
-            return
+            return 0
         
         if self.ColDict['ColType'] == 'Timestamp':
             self.ColDict['TimeSystem'] = self.cbxTmSys.GetValue() # constrained to list
@@ -1070,7 +1064,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                     wx.OK | wx.ICON_INFORMATION)
                 self.cbxTmSys.SetFocus()
                 self.Scroll(0, 0) # the required controls are all at the top
-                return
+                return 0
 
             self.ColDict['TimeIsInterval'] = self.ckTmIsInterval.GetValue()
             if self.ColDict['TimeIsInterval'] == 1:
@@ -1090,7 +1084,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                         which will give Julian Day for this year.
                         Adjust as needed, but keep the same format.""", 'Missing',
                         wx.OK | wx.ICON_INFORMATION)
-                    return
+                    return 0
 
         if self.ColDict['ColType'] == 'Constant':
             # clean up whitespace; remove leading/trailing & multiples
@@ -1105,13 +1099,13 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 if maxLen < 1:
                     wx.MessageBox('Error %d getting [OutputColumns].[Constant] field length.' % maxLen, 'Error',
                         wx.OK | wx.ICON_INFORMATION)
-                    return
+                    return 0
                 if len(self.ColDict['Constant']) > maxLen:
                     wx.MessageBox("""Max length for "Constant" is %d characters.\nIf trimmed version is acceptable, retry.""" % maxLen, 'Too Long',
                         wx.OK | wx.ICON_INFORMATION)
                     self.tcConstant.SetValue(self.ColDict['Constant'][:(maxLen)])
                     self.tcConstant.SetFocus()
-                    return
+                    return 0
 
         if self.ColDict['ColType'] == 'Aggregate':
             self.ColDict['AggType'] = self.cbxAggType.GetValue() # constrained to list
@@ -1120,7 +1114,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 wx.MessageBox('Need Aggregate Type', 'Missing',
                     wx.OK | wx.ICON_INFORMATION)
                 self.cbxAggType.SetFocus()
-                return
+                return 0
 
             self.ColDict['AggStationID'] = scidb.getComboboxIndex(self.cbxAggStation)
             print "Station ID:", self.ColDict['AggStationID']
@@ -1128,7 +1122,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 wx.MessageBox('Select the Station to use data from', 'Missing',
                     wx.OK | wx.ICON_INFORMATION)
                 self.cbxAggStation.SetFocus()
-                return
+                return 0
 
             self.ColDict['AggDataSeriesID'] = scidb.getComboboxIndex(self.cbxAggSeries)
             print "Station ID:", self.ColDict['AggDataSeriesID']
@@ -1136,7 +1130,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 wx.MessageBox('Select the Data Series to use data from', 'Missing',
                     wx.OK | wx.ICON_INFORMATION)
                 self.cbxAggSeries.SetFocus()
-                return
+                return 0
 
         if self.ColDict['ColType'] == 'Formula':
             # clean up whitespace; remove leading/trailing & multiples
@@ -1151,13 +1145,13 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 if maxLen < 1:
                     wx.MessageBox('Error %d getting [OutputColumns].[Formula] field length.' % maxLen, 'Error',
                         wx.OK | wx.ICON_INFORMATION)
-                    return
+                    return 0
                 if len(self.ColDict['Formula']) > maxLen:
                     wx.MessageBox("""Max length for "Formula" is %d characters.\nIf trimmed version is acceptable, retry.""" % maxLen, 'Too Long',
                         wx.OK | wx.ICON_INFORMATION)
                     self.tcFormula.SetValue(self.ColDict['Formula'][:(maxLen)])
                     self.tcFormula.SetFocus()
-                    return
+                    return 0
 
         self.ColDict['ContentsFormat'] = " ".join(self.tcContentsFormat.GetValue().split())
         print "Contents Format:", self.ColDict['ContentsFormat']
@@ -1167,15 +1161,27 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         if maxLen < 1:
             wx.MessageBox('Error %d getting [OutputColumns].[ContentsFormat] field length.' % maxLen, 'Error',
                 wx.OK | wx.ICON_INFORMATION)
-            return
+            return 0
         if len(self.ColDict['ContentsFormat']) > maxLen:
             wx.MessageBox('Max length for Contents Format is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
                 wx.OK | wx.ICON_INFORMATION)
             self.tcContentsFormat.SetValue(self.ColDict['ContentsFormat'][:(maxLen)])
             self.tcContentsFormat.SetFocus()
-            return
+            return 0
         if self.ColDict['ContentsFormat'] == '':
             self.ColDict['ContentsFormat'] = None # store Null instead of empty string
+
+        return 1 # everything validated
+   
+    def onClick_BtnSave(self, event):
+        # finish rewriting this for Sheets
+        """
+        If this frame is shown in a Dialog, the Column is being created.
+        Attempt to create a new record and make the new record ID available.
+        If this frame is shown in the main form, attempt to save any changes to the existing DB record
+        """
+        if self.validateColPanel() == 0:
+            return
 
 #        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
 #            wx.OK | wx.ICON_INFORMATION)
