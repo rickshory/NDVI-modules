@@ -1113,12 +1113,32 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                     self.tcConstant.SetFocus()
                     return
 
-## working here --->
-
         if self.ColDict['ColType'] == 'Aggregate':
-            wx.MessageBox(' Column type Aggregate', 'Info',
-                        wx.OK | wx.ICON_INFORMATION)
-            #still to write
+            self.ColDict['AggType'] = self.cbxAggType.GetValue() # constrained to list
+            print "Aggregate Type:", self.ColDict['AggType']
+            if self.ColDict['AggType'] == '':
+                wx.MessageBox('Need Aggregate Type', 'Missing',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.cbxAggType.SetFocus()
+                return
+
+            self.ColDict['AggStationID'] = scidb.getComboboxIndex(self.cbxAggStation)
+            print "Station ID:", self.ColDict['AggStationID']
+            if self.ColDict['AggStationID'] == None:
+                wx.MessageBox('Select the Station to use data from', 'Missing',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.cbxAggStation.SetFocus()
+                return
+
+## working here --->
+            self.ColDict['AggDataSeriesID'] = scidb.getComboboxIndex(self.cbxAggSeries)
+            print "Station ID:", self.ColDict['AggDataSeriesID']
+            if self.ColDict['AggDataSeriesID'] == None:
+                wx.MessageBox('Select the Data Series to use data from', 'Missing',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.cbxAggSeries.SetFocus()
+                return
+
 ## <--- to here        
         if self.ColDict['ColType'] == 'Formula':
             # clean up whitespace; remove leading/trailing & multiples

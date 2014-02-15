@@ -616,12 +616,7 @@ def getComboboxIndex(objComboBox):
     Given a combobox with it's list filled by the 'fillComboboxFromSQL' function
     returns the key value of the selected item, if any
     """
-    try:
-        keyVal = objComboBox.GetClientData(objComboBox.GetSelection())
-        return keyValue
-    except:
-        return None
-
+    return objComboBox.GetClientData(objComboBox.GetSelection())
 
 if __name__ == "__main__":
     pass # nothing yet
