@@ -1130,7 +1130,6 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 self.cbxAggStation.SetFocus()
                 return
 
-## working here --->
             self.ColDict['AggDataSeriesID'] = scidb.getComboboxIndex(self.cbxAggSeries)
             print "Station ID:", self.ColDict['AggDataSeriesID']
             if self.ColDict['AggDataSeriesID'] == None:
@@ -1139,7 +1138,6 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 self.cbxAggSeries.SetFocus()
                 return
 
-## <--- to here        
         if self.ColDict['ColType'] == 'Formula':
             # clean up whitespace; remove leading/trailing & multiples
             self.ColDict['Formula'] = " ".join(self.tcFormula.GetValue().split())
@@ -1161,32 +1159,54 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                     self.tcFormula.SetFocus()
                     return
 
-# rewrite for Column    
+        self.ColDict['ContentsFormat'] = " ".join(self.tcContentsFormat.GetValue().split())
+        print "Contents Format:", self.ColDict['ContentsFormat']
+        if self.ColDict['ContentsFormat'] == '':
+            self.tcContentsFormat.SetValue(self.ColDict['ContentsFormat'])    
+        maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'ContentsFormat')
+        if maxLen < 1:
+            wx.MessageBox('Error %d getting [OutputColumns].[ContentsFormat] field length.' % maxLen, 'Error',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+        if len(self.ColDict['ContentsFormat']) > maxLen:
+            wx.MessageBox('Max length for Contents Format is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcContentsFormat.SetValue(self.ColDict['ContentsFormat'][:(maxLen)])
+            self.tcContentsFormat.SetFocus()
+            return
+        if self.ColDict['ContentsFormat'] == '':
+            self.ColDict['ContentsFormat'] = None # store Null instead of empty string
 
-        
-        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
-        return
-
-# rewrite for Column    
+#        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
+#            wx.OK | wx.ICON_INFORMATION)
+#        return
+   
         # we have self.parentClassName from initialization; "wxDialog" if in the dialog
         if self.parentClassName == "wxDialog": # in the Dialog, create a new DB record
+## working here --->
             stSQL = """
-                INSERT INTO OutputSheets
-                (BookID, WorksheetName, DataSetNickname, ListingOrder)
-                VALUES (?,?,?,?);
+                INSERT INTO OutputColumns
+                (WorksheetID, ColumnHeading, ColType,
+                TimeSystem, TimeIsInterval, IntervalIsFrom,
+                Constant, Formula, AggType, AggStationID, AggDataSeriesID,
+                ContentsFormat, ListingOrder)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);
                 """
             try:
                 scidb.curD.execute(stSQL, (self.parentRecID, 
-                        stSheetName, stNickname, iLstOrd))
+                    self.ColDict['ColumnHeading'], self.ColDict['ColType'], 
+                    self.ColDict['TimeSystem'], self.ColDict['TimeIsInterval'], self.ColDict['IntervalIsFrom'], 
+                    self.ColDict['Constant'], self.ColDict['Formula'], 
+                    self.ColDict['AggType'], self.ColDict['AggStationID'], self.ColDict['AggDataSeriesID'], 
+                    self.ColDict['ContentsFormat'], self.ColDict['ListingOrder']))
                 scidb.datConn.commit()
                 # get record ID of new record
                 self.newRecID = scidb.curD.lastrowid
                 self.addRecOK = 1
 
             except sqlite3.IntegrityError: # duplicate name or required field missing
-                print "could not add Sheet record to DB table"
-                wx.MessageBox('Error creating sheet', 'Error', 
+                print "could not add Column record to DB table"
+                wx.MessageBox('Error creating Column', 'Error', 
                     wx.OK | wx.ICON_INFORMATION)
                 self.newRecID = 0
                 self.addRecOK = 0
@@ -1198,12 +1218,20 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         else: # self.parentClassNameis not "wxDialog"; we're in the frame, update the existing record
             self.newRecID = 0 # this will not be a new record
             stSQL = """
-                UPDATE OutputSheets SET  
-                WorksheetName = ?, DataSetNickname = ?, ListingOrder = ?
+                UPDATE OutputColumns SET  
+                ColumnHeading = ?, ColType = ?,
+                TimeSystem = ?, TimeIsInterval = ?, IntervalIsFrom = ?,
+                Constant = ?, Formula = ?,
+                AggType = ?, AggStationID = ?, AggDataSeriesID = ?,
+                ContentsFormat = ?, ListingOrder = ?
                 WHERE ID = ?;
             """
             try:
-                scidb.curD.execute(stSQL, (stSheetName, stNickname, iLstOrd, self.recID))
+                scidb.curD.execute(stSQL, (self.ColDict['ColumnHeading'], self.ColDict['ColType'], 
+                    self.ColDict['TimeSystem'], self.ColDict['TimeIsInterval'], self.ColDict['IntervalIsFrom'], 
+                    self.ColDict['Constant'], self.ColDict['Formula'], 
+                    self.ColDict['AggType'], self.ColDict['AggStationID'], self.ColDict['AggDataSeriesID'], 
+                    self.ColDict['ContentsFormat'], self.ColDict['ListingOrder'], self.recID))
                 scidb.datConn.commit()
                 self.updateRecOK = 1
                 # update the label on the tree branch
@@ -1217,16 +1245,15 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
 #                print "Parent 4:", parObject4, ", Class", parObject4.GetClassName()
                 parObject5 = parObject4.GetParent() # the main panel that owns the tree
 #                print "Parent 5:", parObject5, ", Class", parObject5.GetClassName()
-#                print "Parent 5 book branch ID?:", parObject5.bookBranchID
-#                parObject5.dsTree.SetItemText(parObject5.sheetBranchID, stSheetName)
-                parObject5.dsTree.SetItemText(parObject5.dsInfoPnl.correspondingTreeItem, stSheetName)
+                parObject5.dsTree.SetItemText(parObject5.dsInfoPnl.correspondingTreeItem, self.ColDict['ColumnHeading'])
                 wx.MessageBox('Changes saved', 'Updated',
                     wx.OK | wx.ICON_INFORMATION)
-            except:
-                print "could not update Sheet record to DB table"
-                wx.MessageBox('Error updating sheet', 'Error', 
+            except sqlite3.IntegrityError:
+                print "could not update Column record to DB table"
+                wx.MessageBox('Error updating Column', 'Error', 
                     wx.OK | wx.ICON_INFORMATION)
                 self.updateRecOK = 0
+## <--- to here        
         return
         
 # rewrite for Column    
@@ -1475,7 +1502,7 @@ class SetupDatasetsPanel(wx.Panel):
             dia.Destroy()
             if result == 1: # new record successfully created
                 # create a new branch on the tree
-                self.colBranchID = self.dsTree.AppendItem(self.tree_item_clicked, self.newSheetName)
+                self.colBranchID = self.dsTree.AppendItem(self.tree_item_clicked, self.newColHead)
                 self.dsTree.SetPyData(self.colBranchID, ('OutputColumns', self.newRecID))
                 # select it
                 self.dsTree.SelectItem(self.colBranchID)
