@@ -764,19 +764,6 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         print "self.recID:", self.recID
         print "self.parentTable:", self.parentTable
         print "self.parentRecID:", self.parentRecID
-        self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
-        colPnlSiz = wx.GridBagSizer(1, 1)
-        note1 = wx.StaticText(self, -1, 'Bold ')
-        self.bolded = note1.GetFont() 
-        self.bolded.SetWeight(wx.BOLD) 
-        note1.SetFont(self.bolded)
-        gRow = 0
-        colPnlSiz.Add(note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        colPnlSiz.Add(wx.StaticText(self, -1, 'items are required'),
-                     pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
-  
-        gRow += 1
-        colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
 
         if self.parentClassName == "wxDialog": # in the Dialog, create a new DB record
             self.ColDict = dict(ID = None, WorksheetID = None, ColumnHeading = None, ColType = None,
@@ -794,6 +781,20 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             for recName in rec.keys():
                 self.ColDict[recName] = rec[recName]
         print "ColDict:", self.ColDict
+
+        self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
+        colPnlSiz = wx.GridBagSizer(1, 1)
+        note1 = wx.StaticText(self, -1, 'Bold ')
+        self.bolded = note1.GetFont() 
+        self.bolded.SetWeight(wx.BOLD) 
+        note1.SetFont(self.bolded)
+        gRow = 0
+        colPnlSiz.Add(note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        colPnlSiz.Add(wx.StaticText(self, -1, 'items are required'),
+                     pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
+  
+        gRow += 1
+        colPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
               
         gRow += 1
         colHeadLabel = wx.StaticText(self, -1, 'Column Heading')
@@ -1277,7 +1278,22 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         else: # in the main form
             wx.MessageBox('Undoing any edits', 'Undo', 
                 wx.OK | wx.ICON_INFORMATION)
-            self.fillSheetPanelControls()
+## working on this ->
+            # how to restore the Column panel from the DB; maybe call the dsTree select event?
+            parObject1 = self.GetParent() # the details panel
+            print "Parent 1:", parObject1, ", Class", parObject1.GetClassName()
+            parObject2 = parObject1.GetParent() # the vertical splitter window
+            print "Parent 2:", parObject2, ", Class", parObject2.GetClassName()
+            parObject3 = parObject2.GetParent() # panel
+            print "Parent 3:", parObject3, ", Class", parObject3.GetClassName()
+            parObject4 = parObject3.GetParent() # the horizontal splitter window
+            print "Parent 4:", parObject4, ", Class", parObject4.GetClassName()
+            parObject5 = parObject4.GetParent() # the main panel that owns the tree
+            print "Parent 5:", parObject5, ", Class", parObject5.GetClassName()
+#            parObject5.dsTree.SetItemText(parObject5.dsInfoPnl.correspondingTreeItem, self.ColDict['ColumnHeading'])
+
+## <- to here        
+            
         return
 
 # rewrite for Column    
