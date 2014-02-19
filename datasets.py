@@ -1,7 +1,7 @@
 import wx, sqlite3, datetime, copy
 import os, sys, re, cPickle, datetime
 import scidb
-import wx.lib.scrolledpanel as scrolled
+import wx.lib.scrolledpanel as scrolled, wx.grid
 
 ID_ADD_BOOK = 101
 ID_ADD_SHEET = 201
@@ -1190,7 +1190,6 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
    
         # we have self.parentClassName from initialization; "wxDialog" if in the dialog
         if self.parentClassName == "wxDialog": # in the Dialog, create a new DB record
-## working here --->
             stSQL = """
                 INSERT INTO OutputColumns
                 (WorksheetID, ColumnHeading, ColType,
@@ -1220,8 +1219,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             # let calling routine destroy, after getting any needed parameters
             parObject = self.GetParent() # the dialog
             parObject.EndModal(self.addRecOK) #exit the dialog
- #            parObject.Destroy()
-# rewrite for Column    
+   
         else: # self.parentClassNameis not "wxDialog"; we're in the frame, update the existing record
             self.newRecID = 0 # this will not be a new record
             stSQL = """
@@ -1259,8 +1257,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 print "could not update Column record to DB table"
                 wx.MessageBox('Error updating Column', 'Error', 
                     wx.OK | wx.ICON_INFORMATION)
-                self.updateRecOK = 0
-## <--- to here        
+                self.updateRecOK = 0       
         return
         
 # rewrite for Column    
@@ -1362,16 +1359,40 @@ class SetupDatasetsPanel(wx.Panel):
         hSiz.Add(vSplit, 1, wx.EXPAND)
         setupPanel.SetSizer(hSiz)
         
-        previewPanel = wx.Panel(hSplit, -1)
-        wx.StaticText(previewPanel, -1, "This will be where you preview the dataset as a grid.")
-        hSplit.SplitHorizontally(setupPanel, previewPanel)
+        self.previewPanel = scrolled.ScrolledPanel(hSplit, -1)
+        self.previewPanel.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
+        pvwSiz = wx.GridBagSizer(1, 1)
+        gRow = 0
+        pvwSiz.Add(wx.StaticText(self.previewPanel, -1, 'Dataset preview below'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        pvwSiz.Add(wx.StaticLine(self.previewPanel), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+        
+        gRow += 1
+        self.pvwGrid = wx.grid.Grid(self.previewPanel, -1)
+        self.pvwGrid.CreateGrid(0, 0)
+
+        # hide row and column labels, the numbers down the left and the letters across the top
+        self.pvwGrid.SetRowLabelSize(0)
+        self.pvwGrid.SetColLabelSize(0)
+
+        pvwSiz.Add(self.pvwGrid, pos=(gRow, 0), flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+#        self.pvwGrid.AppendRows()
+
+        self.previewPanel.SetSizer(pvwSiz)
+        self.previewPanel.SetAutoLayout(1)
+        self.previewPanel.SetupScrolling()
+
+        hSplit.SplitHorizontally(setupPanel, self.previewPanel)
 
         vSiz = wx.BoxSizer(wx.VERTICAL)
         vSiz.Add(hSplit, 1, wx.EXPAND)
-        self.SetSizer(vSiz)
+        self.SetSizer(vSiz)        
 
     def OnSelChanged(self, event):
         print "OnSelChanged"
+#        self.newGridRow()
         item = event.GetItem()
         try: # event sometimes fires twice when new records created; following prevents errors caused by dead objects
             if self.dsInfoPnl:
@@ -1400,6 +1421,14 @@ class SetupDatasetsPanel(wx.Panel):
         self.detSiz.Add(self.dsInfoPnl, 1, wx.EXPAND)
         self.dsInfoPnl.correspondingTreeItem = item
         self.detailsPanel.Layout()
+
+        # test the grid
+
+        self.pvwGrid.AppendCols()
+        self.pvwGrid.AppendRows()
+        self.pvwGrid.SetCellValue(0, 0, 'Header')
+        self.previewPanel.SetupScrolling()
+        
 
     def dsTreeRightClick(self, event):
         self.tree_item_clicked = right_click_context = event.GetItem()

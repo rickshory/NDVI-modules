@@ -1,4 +1,0 @@
-                # test if SQLite time function will correctly update a Python timestamp
-                # needed if batch-correcting clock errors in logging instruments
-                stSQL = "UPDATE testDates SET ts = datetime(ts, '+8 hour') WHERE ts < '2014-01-01'"
-                scidb.curT.execute(stSQL)
