@@ -1363,8 +1363,8 @@ class SetupDatasetsPanel(wx.Panel):
         self.previewPanel.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
         pvwSiz = wx.GridBagSizer(1, 1)
         gRow = 0
-        pvwSiz.Add(wx.StaticText(self.previewPanel, -1, 'Dataset preview below'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.pvwLabel = wx.StaticText(self.previewPanel, -1, 'Dataset preview below')
+        pvwSiz.Add(self.pvwLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         pvwSiz.Add(wx.StaticLine(self.previewPanel), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
@@ -1377,8 +1377,9 @@ class SetupDatasetsPanel(wx.Panel):
         self.pvwGrid.SetRowLabelSize(0)
         self.pvwGrid.SetColLabelSize(0)
 
-        pvwSiz.Add(self.pvwGrid, pos=(gRow, 0), flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-#        self.pvwGrid.AppendRows()
+        pvwSiz.Add(self.pvwGrid, pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        pvwSiz.AddGrowableCol(4)
+        pvwSiz.AddGrowableRow(gRow)
 
         self.previewPanel.SetSizer(pvwSiz)
         self.previewPanel.SetAutoLayout(1)
@@ -1431,11 +1432,13 @@ class SetupDatasetsPanel(wx.Panel):
         if nC > 0:
             self.pvwGrid.DeleteCols(numCols=nC)
         # build grid based on what is selected in the tree
-        self.pvwGrid.AppendRows() # always at least one row
+#        self.pvwGrid.AppendRows() # always at least one row
 
         if ckPyData[1] == 0: # 'DataSets' root of the tree
-            self.pvwGrid.AppendCols()
-            self.pvwGrid.SetCellValue(0, 0, 'Preview will appear here when you click on a tree item above')
+#            self.pvwGrid.AppendCols()
+            st = 'Preview will appear below when you click on a tree item above'
+#            self.pvwGrid.SetCellValue(0, 0, st)
+            self.pvwLabel.SetLabel(st)
         if ckPyData[0] == "OutputBooks":
             # look for the first sheet in this book
             stSQL = """SELECT ID as SheetID, WorksheetName, ListingOrder
@@ -1445,15 +1448,37 @@ class SetupDatasetsPanel(wx.Panel):
             scidb.curD.execute(stSQL, (ckPyData[1],))
             rec = scidb.curD.fetchone()
             if rec == None:
-                self.pvwGrid.AppendCols()
-                self.pvwGrid.SetCellValue(0, 0, 'No sheets in this book yet')
+                self.pvwLabel.SetLabel('No sheets in this book yet')
+#                self.pvwGrid.AppendCols()
+#                self.pvwGrid.SetCellValue(0, 0, 'No sheets in this book yet')
             else:
-                self.pvwGrid.AppendCols()
+                self.sheetID = rec['SheetID']
 #                st = 'Preview of sheet %d' % rec['ListingOrder']
 #                st = 'Preview of sheet "%s"' % rec['WorksheetName']
 #                st = 'Preview of sheet %d, "%s"' % rec['ListingOrder'], rec['WorksheetName']
                 st = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-                self.pvwGrid.SetCellValue(0, 0, st)
+                self.pvwLabel.SetLabel(st)
+                self.insertPreviewGridHeaders(self.sheetID)
+#                self.pvwGrid.AppendRows() #1st row for headers
+#                self.pvwGrid.AppendCols() # one now for testing
+#                self.pvwGrid.SetCellValue(0, 0, "(headers will go here)")
+
+        if ckPyData[0] == "OutputSheets":
+            # get this sheet
+            self.sheetID = ckPyData[1]
+            stSQL = """SELECT ID as SheetID, WorksheetName, ListingOrder
+                FROM OutputSheets
+                WHERE ID = ?
+                ORDER BY ListingOrder, ID;"""
+            scidb.curD.execute(stSQL, (self.sheetID,))
+            rec = scidb.curD.fetchone()
+            st = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
+            self.pvwLabel.SetLabel(st)
+            self.insertPreviewGridHeaders(self.sheetID)
+#            self.pvwGrid.AppendRows() #1st row for headers
+#            self.pvwGrid.AppendCols() # one now for testing
+#            self.pvwGrid.SetCellValue(0, 0, "(headers will go here)")
+            
 
 #        else:
 #            self.pvwGrid.AppendCols()
@@ -1461,6 +1486,25 @@ class SetupDatasetsPanel(wx.Panel):
 
         self.pvwGrid.AutoSize()
         self.previewPanel.SetupScrolling()
+
+    def insertPreviewGridHeaders(self, sheetID):
+        stSQL = """SELECT Max(ListingOrder) AS MaxCol
+            FROM OutputColumns
+            WHERE WorksheetID = ?;"""
+        scidb.curD.execute(stSQL, (sheetID,))
+        rec = scidb.curD.fetchone()
+        self.pvwGrid.AppendRows() #1st row for headers
+        self.pvwGrid.AppendCols(rec['MaxCol']) # make enough columns
+        
+        stSQL = """SELECT ID as ColID, ColumnHeading, ListingOrder
+            FROM OutputColumns
+            WHERE WorksheetID = ?
+            ORDER BY ListingOrder, ID;"""
+        scidb.curD.execute(stSQL, (sheetID,))
+        recs = scidb.curD.fetchall()
+        for rec in recs:
+            # some headings may overwrite each other, that's what the preview is for
+            self.pvwGrid.SetCellValue(0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
         
 
     def dsTreeRightClick(self, event):
