@@ -1422,11 +1422,26 @@ class SetupDatasetsPanel(wx.Panel):
         self.dsInfoPnl.correspondingTreeItem = item
         self.detailsPanel.Layout()
 
-        # test the grid
+        # set up the grid
+        # first, erase it
+        nR = self.pvwGrid.GetNumberRows()
+        nC = self.pvwGrid.GetNumberCols()
+        if nR > 0:
+            self.pvwGrid.DeleteRows(numRows=nR)
+        if nC > 0:
+            self.pvwGrid.DeleteCols(numCols=nC)
 
-        self.pvwGrid.AppendCols()
-        self.pvwGrid.AppendRows()
-        self.pvwGrid.SetCellValue(0, 0, 'Header')
+        if ckPyData[1] == 0: # 'DataSets' root of the tree
+            self.pvwGrid.AppendRows()
+            self.pvwGrid.AppendCols()
+            self.pvwGrid.SetCellValue(0, 0, 'Preview will appear here when you click on a tree item above')
+
+        else:
+            self.pvwGrid.AppendRows()
+            self.pvwGrid.AppendCols()
+            self.pvwGrid.SetCellValue(0, 0, '(still being implemented)')
+
+        self.pvwGrid.AutoSize()
         self.previewPanel.SetupScrolling()
         
 
