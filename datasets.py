@@ -1431,14 +1431,11 @@ class SetupDatasetsPanel(wx.Panel):
             self.pvwGrid.DeleteRows(numRows=nR)
         if nC > 0:
             self.pvwGrid.DeleteCols(numCols=nC)
-        # build grid based on what is selected in the tree
-#        self.pvwGrid.AppendRows() # always at least one row
 
+        # build grid based on what is selected in the tree
+        stPvwTopMsg = 'preview unavailable'
         if ckPyData[1] == 0: # 'DataSets' root of the tree
-#            self.pvwGrid.AppendCols()
-            st = 'Preview will appear below when you click on a tree item above'
-#            self.pvwGrid.SetCellValue(0, 0, st)
-            self.pvwLabel.SetLabel(st)
+            stPvwTopMsg = 'Preview will appear below when you click on a tree item above'
         if ckPyData[0] == "OutputBooks":
             # look for the first sheet in this book
             stSQL = """SELECT ID as SheetID, WorksheetName, ListingOrder
@@ -1448,20 +1445,11 @@ class SetupDatasetsPanel(wx.Panel):
             scidb.curD.execute(stSQL, (ckPyData[1],))
             rec = scidb.curD.fetchone()
             if rec == None:
-                self.pvwLabel.SetLabel('No sheets in this book yet')
-#                self.pvwGrid.AppendCols()
-#                self.pvwGrid.SetCellValue(0, 0, 'No sheets in this book yet')
+                stPvwTopMsg = 'No sheets in this book yet'
             else:
+                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
                 self.sheetID = rec['SheetID']
-#                st = 'Preview of sheet %d' % rec['ListingOrder']
-#                st = 'Preview of sheet "%s"' % rec['WorksheetName']
-#                st = 'Preview of sheet %d, "%s"' % rec['ListingOrder'], rec['WorksheetName']
-                st = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-                self.pvwLabel.SetLabel(st)
                 self.insertPreviewGridHeaders(self.sheetID)
-#                self.pvwGrid.AppendRows() #1st row for headers
-#                self.pvwGrid.AppendCols() # one now for testing
-#                self.pvwGrid.SetCellValue(0, 0, "(headers will go here)")
 
         if ckPyData[0] == "OutputSheets":
             # get this sheet
@@ -1472,18 +1460,26 @@ class SetupDatasetsPanel(wx.Panel):
                 ORDER BY ListingOrder, ID;"""
             scidb.curD.execute(stSQL, (self.sheetID,))
             rec = scidb.curD.fetchone()
-            st = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-            self.pvwLabel.SetLabel(st)
+            stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
             self.insertPreviewGridHeaders(self.sheetID)
-#            self.pvwGrid.AppendRows() #1st row for headers
-#            self.pvwGrid.AppendCols() # one now for testing
-#            self.pvwGrid.SetCellValue(0, 0, "(headers will go here)")
-            
+        if ckPyData[0] == "OutputColumns":
+            # get this column's sheet
+            stSQL = """SELECT OutputSheets.ID AS SheetID,
+                OutputSheets.WorksheetName,
+                OutputSheets.ListingOrder
+                FROM OutputSheets
+                WHERE (((OutputSheets.ID) In
+                (SELECT OutputColumns.WorksheetID
+                FROM OutputColumns
+                WHERE (((OutputColumns.ID)=?)))))
+                ORDER BY OutputSheets.ListingOrder, OutputSheets.ID;"""
+            scidb.curD.execute(stSQL, (ckPyData[1],))
+            rec = scidb.curD.fetchone()
+            stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
+            self.sheetID = rec['SheetID']
+            self.insertPreviewGridHeaders(self.sheetID)
 
-#        else:
-#            self.pvwGrid.AppendCols()
-#            self.pvwGrid.SetCellValue(0, 0, '(still being implemented)')
-
+        self.pvwLabel.SetLabel(stPvwTopMsg)
         self.pvwGrid.AutoSize()
         self.previewPanel.SetupScrolling()
 
