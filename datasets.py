@@ -1430,16 +1430,34 @@ class SetupDatasetsPanel(wx.Panel):
             self.pvwGrid.DeleteRows(numRows=nR)
         if nC > 0:
             self.pvwGrid.DeleteCols(numCols=nC)
+        # build grid based on what is selected in the tree
+        self.pvwGrid.AppendRows() # always at least one row
 
         if ckPyData[1] == 0: # 'DataSets' root of the tree
-            self.pvwGrid.AppendRows()
             self.pvwGrid.AppendCols()
             self.pvwGrid.SetCellValue(0, 0, 'Preview will appear here when you click on a tree item above')
+        if ckPyData[0] == "OutputBooks":
+            # look for the first sheet in this book
+            stSQL = """SELECT ID as SheetID, WorksheetName, ListingOrder
+                FROM OutputSheets
+                WHERE BookID = ?
+                ORDER BY ListingOrder, ID;"""
+            scidb.curD.execute(stSQL, (ckPyData[1],))
+            rec = scidb.curD.fetchone()
+            if rec == None:
+                self.pvwGrid.AppendCols()
+                self.pvwGrid.SetCellValue(0, 0, 'No sheets in this book yet')
+            else:
+                self.pvwGrid.AppendCols()
+#                st = 'Preview of sheet %d' % rec['ListingOrder']
+#                st = 'Preview of sheet "%s"' % rec['WorksheetName']
+#                st = 'Preview of sheet %d, "%s"' % rec['ListingOrder'], rec['WorksheetName']
+                st = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
+                self.pvwGrid.SetCellValue(0, 0, st)
 
-        else:
-            self.pvwGrid.AppendRows()
-            self.pvwGrid.AppendCols()
-            self.pvwGrid.SetCellValue(0, 0, '(still being implemented)')
+#        else:
+#            self.pvwGrid.AppendCols()
+#            self.pvwGrid.SetCellValue(0, 0, '(still being implemented)')
 
         self.pvwGrid.AutoSize()
         self.previewPanel.SetupScrolling()
