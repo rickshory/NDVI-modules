@@ -2,6 +2,7 @@ import wx, sqlite3, datetime, copy
 import os, sys, re, cPickle, datetime
 import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
+import multiprocessing
 
 ID_ADD_BOOK = 101
 ID_ADD_SHEET = 201
@@ -1647,4 +1648,18 @@ def main():
     app.MainLoop() 
 
 if __name__ == '__main__':
+
+    #Add support for when a program which uses multiprocessing has been frozen to produce a Windows executable
+    # following line must be immediately after 'if __name__ == '__main__':'
+    multiprocessing.freeze_support()
+    # Create the queues
+    taskQueue = multiprocessing.Queue()
+    doneQueue = multiprocessing.Queue()
+
+    Processes = [ ]
+    # start the worker process here
+#    process = multiprocessing.Process(target=MyFrame.worker, args=(taskQueue, doneQueue))
+#    process.start()
+#    Processes.append(process)
+
     main()
