@@ -801,10 +801,12 @@ def generateSheetRows(sheetID):
     for rec in recs:
         lDates.append(rec['Date'])
     # testing
-    print "Book:", bkDict
-    print "Sheet:", shDict
-    print "Cols:", lCols
-    print "Dates:", lDates
+#    print "Book:", bkDict
+#    print "Sheet:", shDict
+#    print "Cols:", lCols
+#    print "Dates:", lDates
+    for sDt in lDates:
+        yield sDt
 """
  ' 
 """    
