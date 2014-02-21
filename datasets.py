@@ -1524,12 +1524,14 @@ class SetupDatasetsPanel(wx.Panel):
         iRwCt = 0
         iNumRowsToPreview = 10
         for dataRow in sheetRows:
+            # yielded object is list with as many members as there grid columns
             iRwCt += 1
             if iRwCt > iNumRowsToPreview:
                 break
             self.pvwGrid.AppendRows()
-            iLastRow = self.pvwGrid.GetNumberRows() - 1
-            self.pvwGrid.SetCellValue(iLastRow, 0, dataRow)
+            iRow = self.pvwGrid.GetNumberRows() - 1 # the new row to fill in is the last row
+            for iCol in range(len(dataRow)):
+                self.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
             print iRwCt, dataRow
         
 

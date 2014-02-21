@@ -800,13 +800,23 @@ def generateSheetRows(sheetID):
     lDates = []
     for rec in recs:
         lDates.append(rec['Date'])
+    # get the number of columns (even if some are blank) to make a standard list with this many members
+    stSQL = 'SELECT Max(ListingOrder) AS MaxCol FROM OutputColumns WHERE WorksheetID = ?;'
+    curD.execute(stSQL, (sheetID,))
+    rec = curD.fetchone()
+    iDataListLen = rec['MaxCol']
+
     # testing
 #    print "Book:", bkDict
 #    print "Sheet:", shDict
 #    print "Cols:", lCols
 #    print "Dates:", lDates
     for sDt in lDates:
-        yield sDt
+        # make a standard list of this many empty string; some may remain empty
+        lData = ['' for i in range(iDataListLen)]
+        # 1st test, assign data to left column
+        lData[0] = sDt
+        yield lData
 """
  ' 
 """    
