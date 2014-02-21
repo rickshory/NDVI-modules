@@ -1521,12 +1521,16 @@ class SetupDatasetsPanel(wx.Panel):
         # following is still in testing
         # first test as a generator
         sheetRows = scidb.generateSheetRows(self.sheetID)
-        a=0
+        iRwCt = 0
+        iNumRowsToPreview = 10
         for dataRow in sheetRows:
-            a+=1
-            print a, dataRow
-            if a>10:
+            iRwCt += 1
+            if iRwCt > iNumRowsToPreview:
                 break
+            self.pvwGrid.AppendRows()
+            iLastRow = self.pvwGrid.GetNumberRows() - 1
+            self.pvwGrid.SetCellValue(iLastRow, 0, dataRow)
+            print iRwCt, dataRow
         
 
     def dsTreeRightClick(self, event):
