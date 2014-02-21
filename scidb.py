@@ -1,4 +1,4 @@
-import sqlite3, datetime
+import sqlite3, datetime, copy
 import sys, re
 datConn = None
 tmpConn = None
@@ -755,7 +755,8 @@ def generateSheetRows(sheetID):
     rec = curD.fetchone()
     shDict = {}
     for recName in rec.keys():
-                shDict[recName] = rec[recName]
+        shDict[recName] = rec[recName]
+        
     # get values from the parent Book
     # fields: ID BookName, Longitude, HourOffset, NumberOfTimeSlicesPerDay,
     #   OutputDataStart, OutputDataEnd, PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks
@@ -764,8 +765,49 @@ def generateSheetRows(sheetID):
     bkDict = {}
     for recName in rec.keys():
                 bkDict[recName] = rec[recName]
+                
+    # get data for column heads and formats
+    stSQL = "SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.ColumnHeading,\n" \
+        "OutputColumns.ContentsFormat, OutputColumns.ListingOrder\n" \
+        "FROM OutputColumns GROUP BY OutputColumns.WorksheetID, OutputColumns.ColumnHeading,\n" \
+        "OutputColumns.ContentsFormat, OutputColumns.ListingOrder\n" \
+        "HAVING (((OutputColumns.WorksheetID) = ?))\n" \
+        "ORDER BY OutputColumns.ListingOrder;"
+    curD.execute(stSQL, (sheetID,))
+    recs = curD.fetchall()
+    # store as a list of dictionaries
+    clDict = {}
+    lCols = []
+    for rec in recs:
+        clDict = {}
+        for recName in rec.keys():
+            clDict[recName] = rec[recName]
+        lCols.append(copy.copy(clDict))        
+
     # get the list of dates to pull data for
-    
+    lDtLimits = [] # check for any start or end limits
+    if bkDict['OutputDataStart'] != None: # any start criteria
+        lDtLimits.append(" DataDates.Date >= '" + bkDict['OutputDataStart'] + "' ")
+    if bkDict['OutputDataEnd'] != None: # any end criteria
+        if len(lDtLimits) > 0:
+            lDtLimits.append("AND")
+        lDtLimits.append(" DataDates.Date <= '" + bkDict['OutputDataEnd'] + "' ")
+    if len(lDtLimits) > 0: # complete any WHERE clause
+        lDtLimits.insert(0, "\nWHERE ")
+    stSQL = "SELECT DataDates.Date FROM DataDates" + "".join(lDtLimits) + "\nORDER BY DataDates.Date;"
+    curD.execute(stSQL)
+    recs = curD.fetchall()
+    lDates = []
+    for rec in recs:
+        lDates.append(rec['Date'])
+    # testing
+    print "Book:", bkDict
+    print "Sheet:", shDict
+    print "Cols:", lCols
+    print "Dates:", lDates
+"""
+ ' 
+"""    
 
     # get the data for the columns
     # fields:  ID, WorksheetID, ColumnHeading, ColType, TimeSystem, TimeIsInterval, IntervalIsFrom,

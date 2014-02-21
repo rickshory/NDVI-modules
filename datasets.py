@@ -1517,6 +1517,10 @@ class SetupDatasetsPanel(wx.Panel):
         for rec in recs:
             # some headings may overwrite each other, that's what the preview is for
             self.pvwGrid.SetCellValue(0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
+            
+        # following is still in testing
+        # now a regular fn, will be a generator
+        scidb.generateSheetRows(self.sheetID)
         
 
     def dsTreeRightClick(self, event):
