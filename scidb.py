@@ -675,9 +675,25 @@ def ckDupOutputColumnsNotAggregate():
     if rec == None:
         return None
     else:
-        sB = ' You cannot have multiple records generating the same column (unless ' \
-            'they are all "Aggregate" and match on Column Heading, Type ' \
-            'of Aggregation, and Format).\n\n The first problem is in Book "%(bkName)s",' \
+        sB = ' Columns of the same numerical order will overwrite in unpredictable ways (unless ' \
+            'they are all "Aggregate" and match on Column Heading, type ' \
+            'of Aggregation, and Format).\n\n The first problem is in Book "%(bkName)s", ' \
+            'Worksheet "%(shName)s", Column %(shNum)d. There may be others.'
+        dF = {"bkName": rec['BookName'], "shName": rec['WorksheetName'], "shNum": rec['ListingOrder']}
+        stErr = sB % dF
+        stWndHeader = 'Duplicate Column'
+        return (stErr, stWndHeader)
+
+def ckDupOutputColumnsMismatch():
+    curD.execute('SELECT * FROM DupOutputColumnsMismatch;')
+    # fields: BookName, WorksheetName, ListingOrder
+    rec = curD.fetchone()
+    if rec == None:
+        return None
+    else:
+        sB = ' Multiple sources can Aggregate into the same numerical column, but only if they ' \
+            'have exactly the same Column Heading, ' \
+            'type of Aggregation, and Format.\n\n The first mismatch is in Book "%(bkName)s", ' \
             'Worksheet "%(shName)s", Column %(shNum)d. There may be others.'
         dF = {"bkName": rec['BookName'], "shName": rec['WorksheetName'], "shNum": rec['ListingOrder']}
         stErr = sB % dF

@@ -1408,6 +1408,16 @@ class SetupDatasetsPanel(wx.Panel):
             pass
 #        self.detailsLabel.SetLabel(self.dsTree.GetItemText(item))
 #        print "ItemData:", self.dsTree.GetItemData(item)
+        # check for invalid column overlap
+        errCk = scidb.ckDupOutputColumnsNotAggregate()
+        if errCk != None:
+            wx.MessageBox(errCk[0], errCk[1],
+                wx.OK | wx.ICON_INFORMATION)
+        # check for mismatches in otherwise valid column overlap
+        errCk = scidb.ckDupOutputColumnsMismatch()
+        if errCk != None:
+            wx.MessageBox(errCk[0], errCk[1],
+                wx.OK | wx.ICON_INFORMATION)
         ckPyData = self.dsTree.GetPyData(item)
         print "PyData:", ckPyData
         self.detailsPanel.DestroyChildren()
