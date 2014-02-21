@@ -1448,7 +1448,12 @@ class SetupDatasetsPanel(wx.Panel):
             if rec == None:
                 stPvwTopMsg = 'No sheets in this book yet'
             else:
-                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
+#                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
+                sB = 'Preview of sheet' \
+                    ' %(shNum)d, "%(shName)s".'
+                dFm = {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
+#                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % dFm
+                stPvwTopMsg = sB % dFm
                 self.sheetID = rec['SheetID']
                 self.insertPreviewGridHeaders(self.sheetID)
 

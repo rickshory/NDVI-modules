@@ -269,6 +269,56 @@ try:
         FOREIGN KEY("AggStationID") REFERENCES Stations ("ID")
         FOREIGN KEY("AggDataSeriesID") REFERENCES DataSeries ("ID")
         );
+
+        CREATE VIEW IF NOT EXISTS "DupOutputColumnsOnSheetCol"
+        AS SELECT OutputColumns.WorksheetID, OutputColumns.ListingOrder,
+        OutputColumns.ID, OutputColumns.ColumnHeading, OutputColumns.ColType,
+        OutputColumns.Constant, OutputColumns.AggStationID, OutputColumns.AggDataSeriesID,
+        OutputColumns.AggType, OutputColumns.ContentsFormat
+        FROM OutputColumns
+        WHERE (((OutputColumns.WorksheetID) In
+        (SELECT WorksheetID FROM OutputColumns As Tmp
+        GROUP BY WorksheetID, ListingOrder
+        HAVING Count(*)>1  And ListingOrder = OutputColumns.ListingOrder)))
+        ORDER BY OutputColumns.WorksheetID, OutputColumns.ListingOrder;
+        
+        CREATE VIEW IF NOT EXISTS "DupOutputColumnsNotAggregate"
+        AS SELECT OutputBooks.BookName, OutputSheets.WorksheetName,
+        DupOutputColumnsOnSheetCol.ListingOrder
+        FROM (DupOutputColumnsOnSheetCol
+        LEFT JOIN OutputSheets ON DupOutputColumnsOnSheetCol.WorksheetID = OutputSheets.ID)
+        LEFT JOIN OutputBooks ON OutputSheets.BookID = OutputBooks.ID
+        WHERE (((DupOutputColumnsOnSheetCol.ColType)<>"Aggregate"))
+        GROUP BY OutputBooks.BookName, OutputSheets.WorksheetName,
+        DupOutputColumnsOnSheetCol.ListingOrder;
+
+        CREATE VIEW IF NOT EXISTS "GrpOutputColumnsOnSheetCol"
+        AS SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.WorksheetID, OutputColumns.ListingOrder
+        FROM OutputColumns
+        GROUP BY OutputColumns.WorksheetID, OutputColumns.ListingOrder
+        HAVING (((Count(OutputColumns.ID))>1))
+        ORDER BY Count(OutputColumns.ID) DESC;
+
+        CREATE VIEW IF NOT EXISTS "GrpDupOutputColumns"
+        AS SELECT Count(DupOutputColumnsOnSheetCol.ID) AS ReCountOfID,
+        DupOutputColumnsOnSheetCol.WorksheetID, DupOutputColumnsOnSheetCol.ListingOrder,
+        DupOutputColumnsOnSheetCol.ColumnHeading, DupOutputColumnsOnSheetCol.ColType,
+        DupOutputColumnsOnSheetCol.AggType, DupOutputColumnsOnSheetCol.ContentsFormat
+        FROM DupOutputColumnsOnSheetCol
+        GROUP BY DupOutputColumnsOnSheetCol.WorksheetID, DupOutputColumnsOnSheetCol.ListingOrder,
+        DupOutputColumnsOnSheetCol.ColumnHeading, DupOutputColumnsOnSheetCol.ColType,
+        DupOutputColumnsOnSheetCol.AggType, DupOutputColumnsOnSheetCol.ContentsFormat;
+
+        CREATE VIEW IF NOT EXISTS "DupOutputColumnsMismatch"
+        AS SELECT OutputBooks.BookName, OutputSheets.WorksheetName,
+        GrpDupOutputColumns.ListingOrder
+        FROM ((GrpOutputColumnsOnSheetCol
+        LEFT JOIN GrpDupOutputColumns
+        ON (GrpOutputColumnsOnSheetCol.ListingOrder = GrpDupOutputColumns.ListingOrder)
+        AND (GrpOutputColumnsOnSheetCol.WorksheetID = GrpDupOutputColumns.WorksheetID))
+        LEFT JOIN OutputSheets ON GrpDupOutputColumns.WorksheetID = OutputSheets.ID)
+        LEFT JOIN OutputBooks ON OutputSheets.BookID = OutputBooks.ID
+        WHERE (((GrpOutputColumnsOnSheetCol.CountOfID)<>[ReCountOfID]));
         
         """)
 
@@ -617,6 +667,95 @@ def getComboboxIndex(objComboBox):
     returns the key value of the selected item, if any
     """
     return objComboBox.GetClientData(objComboBox.GetSelection())
+
+def ckDupOutputColumnsNotAggregate():
+    curD.execute('SELECT * FROM DupOutputColumnsNotAggregate;')
+    # fields: BookName, WorksheetName, ListingOrder
+    rec = curD.fetchone()
+    if rec == None:
+        return None
+    else:
+        sB = ' You cannot have multiple records generating the same column (unless ' \
+            'they are all "Aggregate" and match on Column Heading, Type ' \
+            'of Aggregation, and Format).\n\n The first problem is in Book "%(bkName)s",' \
+            'Worksheet "%(shName)s", Column %(shNum)d. There may be others.'
+        dF = {"bkName": rec['BookName'], "shName": rec['WorksheetName'], "shNum": rec['ListingOrder']}
+        stErr = sB % dF
+        stWndHeader = 'Duplicate Column'
+        return (stErr, stWndHeader)
+
+def ordinalDayOfYear(stDate):
+    try:
+        dtGiven = datetime.datetime.strptime(stDate, "%Y-%m-%d").date()
+        dt1stOfYr = datetime.date(dtGiven.year, 1, 1)
+        td = dtGiven - dt1stOfYr
+        return td.days + 1   
+    except:
+        return None
+
+def equationOfTime(stDate):
+    """
+    given a date
+    returns the number of minutes solar time will be ahead or behind clock time
+    """
+    try:
+        iOrdDayOfYr = ordinalDayOfYear(stDate)
+        stSQL = "SELECT MinutesCorrection FROM EqnOfTime WHERE DayOfYear = ?;"
+        curD.execute(stSQL, (iOrdDayOfYr,))
+        rec = curD.fetchone()
+        return rec['MinutesCorrection']
+    except:
+        return 0
+
+def minutesCorrection(stDate, fLongitude):
+    """
+    Given a date and a longitude, returns a correction from Universal Time
+        (UT, same as Greenwich Mean Time) to solar time at that longitude
+    Longitude "rotates" the UT time to the correct position around the globe
+        This is usually the major correction
+    Day-of-year is used to look up an orbital correction factor known as the
+        "equation of time".  This is usually a smaller correction factor
+    """
+    try:
+        fpLn = float(fLongitude)
+    except: # no valid longitude, use zero
+        fpLn = 0
+    else: #Correct for longitude
+        fCorr = 60 * ((-fpLn / 15))
+    # even if no valid longitude, at least correct for astonomical "equation of time"
+    fCorr = fCorr + equationOfTime(stDate)
+    return fCorr
+
+def generateSheetRows(sheetID):
+    """
+    Given a record ID in the table 'OutputSheets',
+    Generates the rows of the dataset
+    Everything else is determininstic based on values in the database tables
+    Each row is returned as a list of strings, including formatted dates, times, and numbers
+    """
+    # get values for this sheet
+    # fields: ID, BookID, WorksheetName, DataSetNickname, ListingOrder
+    curD.execute('SELECT * FROM OutputSheets WHERE ID = ?;', (sheetID,))
+    rec = curD.fetchone()
+    shDict = {}
+    for recName in rec.keys():
+                shDict[recName] = rec[recName]
+    # get values from the parent Book
+    # fields: ID BookName, Longitude, HourOffset, NumberOfTimeSlicesPerDay,
+    #   OutputDataStart, OutputDataEnd, PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks
+    curD.execute('SELECT * FROM OutputBooks WHERE ID = ?;', (shDict['BookID'],))
+    rec = curD.fetchone()
+    bkDict = {}
+    for recName in rec.keys():
+                bkDict[recName] = rec[recName]
+    # get the list of dates to pull data for
+    
+
+    # get the data for the columns
+    # fields:  ID, WorksheetID, ColumnHeading, ColType, TimeSystem, TimeIsInterval, IntervalIsFrom,
+    #  Constant, Formula, AggType, AggStationID, AggDataSeriesID, ContentsFormat, ListingOrder
+    
+    
 
 if __name__ == "__main__":
     pass # nothing yet
