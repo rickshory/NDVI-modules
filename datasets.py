@@ -1532,7 +1532,7 @@ class SetupDatasetsPanel(wx.Panel):
             iRow = self.pvwGrid.GetNumberRows() - 1 # the new row to fill in is the last row
             for iCol in range(len(dataRow)):
                 self.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
-            print iRwCt, dataRow
+#            print iRwCt, dataRow
         
 
     def dsTreeRightClick(self, event):

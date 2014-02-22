@@ -742,6 +742,26 @@ def minutesCorrection(stDate, fLongitude):
     fCorr = fCorr + equationOfTime(stDate)
     return fCorr
 
+def solarCorrection(stDate, fLongitude):
+    """
+    Given a date and a longitude, returns a timedelta which is the correction from Universal Time
+        (UT, same as Greenwich Mean Time) to solar time at that longitude
+    Longitude "rotates" the UT time to the correct position around the globe
+        This is usually the major correction
+    Day-of-year is used to look up an orbital correction factor known as the
+        "equation of time".  This is usually a smaller correction factor
+    If no longitude is given, returns the equation-of-time correction only
+    """
+    try:
+        fpLn = float(fLongitude)
+    except: # no valid longitude, use zero
+        fpLn = 0.0
+    else: #Correct for longitude
+        fCorr = 60.0 * ((-fpLn / 15))
+    # even if no valid longitude, at least correct for astonomical "equation of time"
+    fCorr = fCorr + equationOfTime(stDate)
+    return datetime.timedelta(minutes = fCorr)
+
 def generateSheetRows(sheetID):
     """
     Given a record ID in the table 'OutputSheets',
@@ -749,6 +769,9 @@ def generateSheetRows(sheetID):
     Everything else is determininstic based on values in the database tables
     Each row is returned as a list of strings, including formatted dates, times, and numbers
     """
+    # a few format string:
+    sFmtFullDateTime = '%Y-%m-%d %H:%M:%S'
+    sFmtDateOnly = '%Y-%m-%d'
     # get values for this sheet
     # fields: ID, BookID, WorksheetName, DataSetNickname, ListingOrder
     curD.execute('SELECT * FROM OutputSheets WHERE ID = ?;', (sheetID,))
@@ -764,7 +787,11 @@ def generateSheetRows(sheetID):
     rec = curD.fetchone()
     bkDict = {}
     for recName in rec.keys():
-                bkDict[recName] = rec[recName]
+        bkDict[recName] = rec[recName]
+    # will use the following two intervals a lot
+    tdHrOffset = datetime.timedelta(hours = bkDict['HourOffset'])
+    iHalfTimeSliceSecs = (24 * 60 * 60) / (2*(bkDict['NumberOfTimeSlicesPerDay']))
+    tdHalfTimeSlice = datetime.timedelta(seconds = iHalfTimeSliceSecs)
                 
     # get data for column heads and formats
     stSQL = "SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.ColumnHeading,\n" \
@@ -804,19 +831,34 @@ def generateSheetRows(sheetID):
     stSQL = 'SELECT Max(ListingOrder) AS MaxCol FROM OutputColumns WHERE WorksheetID = ?;'
     curD.execute(stSQL, (sheetID,))
     rec = curD.fetchone()
-    iDataListLen = rec['MaxCol']
+    iDataListLen = rec['MaxCol'] # the yielded list will have this many members, even if some are empty strings
 
-    # testing
-#    print "Book:", bkDict
-#    print "Sheet:", shDict
-#    print "Cols:", lCols
-#    print "Dates:", lDates
     for sDt in lDates:
-        # make a standard list of this many empty string; some may remain empty
-        lData = ['' for i in range(iDataListLen)]
-        # 1st test, assign data to left column
-        lData[0] = sDt
-        yield lData
+        # get the data for each date
+        # create a date that represents how we are going to label this date. Since all data queries
+        # are by solar time, this is the 'solar time' representation of the day's "solar midnight"
+        dtNominalDay = datetime.datetime.strptime(sDt, "%Y-%m-%d")
+        # create a date which is the UT clock time when solar midnight occurs at this longitude for this nominal date
+        tdSolarCorr = solarCorrection(sDt, bkDict['Longitude'])
+        dtUTSolarMidnight = dtNominalDay + tdSolarCorr
+        for iTimeSliceCt in range(bkDict['NumberOfTimeSlicesPerDay']):
+            # nodes are one half, three halves, 5 halves, ... of a time slice
+            dtSolarTimeNode = dtNominalDay + (((2*iTimeSliceCt)+1) * tdHalfTimeSlice)
+            # generate the UT clock time, corrected for longitude and equation-of-time
+            # can be hours different from nominal (solar) time
+            dtUTTimeNode = dtUTSolarMidnight + (((2*iTimeSliceCt)+1) * tdHalfTimeSlice)
+            dtUTTimeBegin = dtUTTimeNode - tdHalfTimeSlice
+            dtUTTimeEnd = dtUTTimeNode + tdHalfTimeSlice
+            print "dtSolarTimeNode:", dtSolarTimeNode.strftime(sFmtFullDateTime)
+            print "   dtUTTimeNode:", dtUTTimeNode.strftime(sFmtFullDateTime)
+            
+            # make a standard list of this many empty string; some may remain empty
+            lData = ['' for i in range(iDataListLen)]
+            # test that we are getting the correct time nodes
+            lData[0] = dtUTTimeBegin.strftime(sFmtFullDateTime)
+            lData[1] = dtUTTimeNode.strftime(sFmtFullDateTime)
+            lData[2] = dtUTTimeEnd.strftime(sFmtFullDateTime)
+            yield lData
 """
  ' 
 """    
