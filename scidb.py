@@ -827,11 +827,10 @@ def generateSheetRows(sheetID):
     lDates = []
     for rec in recs:
         lDates.append(rec['Date'])
-    # get the number of columns (even if some are blank) to make a standard list with this many members
-    stSQL = 'SELECT Max(ListingOrder) AS MaxCol FROM OutputColumns WHERE WorksheetID = ?;'
-    curD.execute(stSQL, (sheetID,))
-    rec = curD.fetchone()
-    iDataListLen = rec['MaxCol'] # the yielded list will have this many members, even if some are empty strings
+    # define the following here; used many times the same
+    stSQLVisCol = "SELECT * FROM OutputColumns " \
+        "WHERE WorkSheetID=? AND ListingOrder=? " \
+        "ORDER BY ID;"
 
     for sDt in lDates:
         # get the data for each date
@@ -852,17 +851,32 @@ def generateSheetRows(sheetID):
             print "dtSolarTimeNode:", dtSolarTimeNode.strftime(sFmtFullDateTime)
             print "   dtUTTimeNode:", dtUTTimeNode.strftime(sFmtFullDateTime)
             
-            # make a standard list of this many empty string; some may remain empty
-            lData = ['' for i in range(iDataListLen)]
-            # test that we are getting the correct time nodes
-            lData[0] = dtUTTimeBegin.strftime(sFmtFullDateTime)
-            lData[1] = dtUTTimeNode.strftime(sFmtFullDateTime)
-            lData[2] = dtUTTimeEnd.strftime(sFmtFullDateTime)
-            yield lData
-"""
- ' 
-"""    
+            # make a standard list of this many empty strings; some may remain empty
+            lData = ['' for i in range(len(lCols))]
+            for colDict in lCols:
+                iVisColIndex = colDict['ListingOrder'] - 1
+#                print "colDict:", colDict
+                # multiple table records may contribute to the same visible column, if
+                # it is type "Aggregate", and ColHead, AggType and ListingOrder are the same for all recs
+                curD.execute(stSQLVisCol, (sheetID, colDict['ListingOrder']))
+                # in most cases, there will be only one record (if > 1, only use the 1st)
+                # deal with valid multiples under if ColType = "Aggregate"
+                rec = curD.fetchone()
+                if rec['ColType'] == "Timestamp":
+                    lData[iVisColIndex] = dtUTTimeNode.strftime(sFmtFullDateTime)
+                    # dress this up for other formats later
+                if rec['ColType'] == "Constant":
+                    lData[iVisColIndex] = rec['Constant']
+                if rec['ColType'] == "Formula":
+                    lData[iVisColIndex] = rec['Formula']
+                    # figure out how to resolve formulas; for now just write them in
+                if rec['ColType'] == "Aggregate":
+                    lData[iVisColIndex] = rec['AggType']
+                    # write code to do the aggregate; for now just write in the AggType
 
+
+            yield lData
+   
     # get the data for the columns
     # fields:  ID, WorksheetID, ColumnHeading, ColType, TimeSystem, TimeIsInterval, IntervalIsFrom,
     #  Constant, Formula, AggType, AggStationID, AggDataSeriesID, ContentsFormat, ListingOrder
