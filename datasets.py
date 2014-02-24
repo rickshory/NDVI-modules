@@ -771,7 +771,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 TimeSystem = None, TimeIsInterval = 0, IntervalIsFrom = None,
                 Constant = None, Formula = None,
                 AggType = None, AggStationID = None, AggDataSeriesID = None,
-                ContentsFormat = None, ListingOrder = None)
+                Format_Python = None, Format_Excel = None, ListingOrder = None)
 
         else: # an existing record
             stSQL = "SELECT * FROM OutputColumns WHERE ID = ?;"
@@ -982,13 +982,13 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         colDetailSiz.Add(wx.StaticLine(self.colDetailPnl), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
         gRow += 1
-        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format'),
+        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format (Python)'),
                          pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-        self.tcContentsFormat = wx.TextCtrl(self.colDetailPnl)
-        if self.ColDict['ContentsFormat'] != None:
-            self.tcContentsFormat.SetValue('%s' % self.ColDict['ContentsFormat'])
-        colDetailSiz.Add(self.tcContentsFormat, pos=(gRow, 1), span=(1, 1), 
+        self.tcFormat_Python = wx.TextCtrl(self.colDetailPnl)
+        if self.ColDict['Format_Python'] != None:
+            self.tcFormat_Python.SetValue('%s' % self.ColDict['Format_Python'])
+        colDetailSiz.Add(self.tcFormat_Python, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
@@ -1081,7 +1081,8 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                     # offer a reasonable default
                     startOfCurYear = datetime.datetime(datetime.datetime.now().year, 1, 1)
                     self.tcIntervalIsFrom.SetValue(startOfCurYear.strftime(sFmt))
-                    self.tcContentsFormat.SetValue('0.00')
+                    self.tcFormat_Python.SetValue('%.2f')
+                    #self.tcFormat_Excel.SetValue('0.00')
                     wx.MessageBox("""Starting timestamp set to beginning of this year,
                         which will give Julian Day for this year.
                         Adjust as needed, but keep the same format.""", 'Missing',
@@ -1155,23 +1156,23 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                     self.tcFormula.SetFocus()
                     return 0
 
-        self.ColDict['ContentsFormat'] = " ".join(self.tcContentsFormat.GetValue().split())
-        print "Contents Format:", self.ColDict['ContentsFormat']
-        if self.ColDict['ContentsFormat'] == '':
-            self.tcContentsFormat.SetValue(self.ColDict['ContentsFormat'])    
-        maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'ContentsFormat')
+        self.ColDict['Format_Python'] = " ".join(self.tcFormat_Python.GetValue().split())
+        print "Contents Format:", self.ColDict['Format_Python']
+        if self.ColDict['Format_Python'] == '':
+            self.tcFormat_Python.SetValue(self.ColDict['Format_Python'])    
+        maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'Format_Python')
         if maxLen < 1:
-            wx.MessageBox('Error %d getting [OutputColumns].[ContentsFormat] field length.' % maxLen, 'Error',
+            wx.MessageBox('Error %d getting [OutputColumns].[Format_Python] field length.' % maxLen, 'Error',
                 wx.OK | wx.ICON_INFORMATION)
             return 0
-        if len(self.ColDict['ContentsFormat']) > maxLen:
+        if len(self.ColDict['Format_Python']) > maxLen:
             wx.MessageBox('Max length for Contents Format is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
                 wx.OK | wx.ICON_INFORMATION)
-            self.tcContentsFormat.SetValue(self.ColDict['ContentsFormat'][:(maxLen)])
-            self.tcContentsFormat.SetFocus()
+            self.tcFormat_Python.SetValue(self.ColDict['Format_Python'][:(maxLen)])
+            self.tcFormat_Python.SetFocus()
             return 0
-        if self.ColDict['ContentsFormat'] == '':
-            self.ColDict['ContentsFormat'] = None # store Null instead of empty string
+        if self.ColDict['Format_Python'] == '':
+            self.ColDict['Format_Python'] = None # store Null instead of empty string
 
         return 1 # everything validated
    
@@ -1196,7 +1197,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 (WorksheetID, ColumnHeading, ColType,
                 TimeSystem, TimeIsInterval, IntervalIsFrom,
                 Constant, Formula, AggType, AggStationID, AggDataSeriesID,
-                ContentsFormat, ListingOrder)
+                Format_Python, ListingOrder)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);
                 """
             try:
@@ -1205,7 +1206,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                     self.ColDict['TimeSystem'], self.ColDict['TimeIsInterval'], self.ColDict['IntervalIsFrom'], 
                     self.ColDict['Constant'], self.ColDict['Formula'], 
                     self.ColDict['AggType'], self.ColDict['AggStationID'], self.ColDict['AggDataSeriesID'], 
-                    self.ColDict['ContentsFormat'], self.ColDict['ListingOrder']))
+                    self.ColDict['Format_Python'], self.ColDict['ListingOrder']))
                 scidb.datConn.commit()
                 # get record ID of new record
                 self.newRecID = scidb.curD.lastrowid
@@ -1229,7 +1230,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 TimeSystem = ?, TimeIsInterval = ?, IntervalIsFrom = ?,
                 Constant = ?, Formula = ?,
                 AggType = ?, AggStationID = ?, AggDataSeriesID = ?,
-                ContentsFormat = ?, ListingOrder = ?
+                Format_Python = ?, ListingOrder = ?
                 WHERE ID = ?;
             """
             try:
@@ -1237,7 +1238,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                     self.ColDict['TimeSystem'], self.ColDict['TimeIsInterval'], self.ColDict['IntervalIsFrom'], 
                     self.ColDict['Constant'], self.ColDict['Formula'], 
                     self.ColDict['AggType'], self.ColDict['AggStationID'], self.ColDict['AggDataSeriesID'], 
-                    self.ColDict['ContentsFormat'], self.ColDict['ListingOrder'], self.recID))
+                    self.ColDict['Format_Python'], self.ColDict['ListingOrder'], self.recID))
                 scidb.datConn.commit()
                 self.updateRecOK = 1
                 # update the label on the tree branch
@@ -1534,7 +1535,6 @@ class SetupDatasetsPanel(wx.Panel):
                 self.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
             self.Update()
             self.pvwGrid.ForceRefresh
-            self.Update()
 #            self.Refresh()
 #            print iRwCt, dataRow
         

@@ -254,7 +254,8 @@ try:
         "AggType" VARCHAR(5),
         "AggStationID" INTEGER,
         "AggDataSeriesID" INTEGER,
-        "ContentsFormat" VARCHAR(20),
+        "Format_Python" VARCHAR(20),
+        "Format_Excel" VARCHAR(20),
         "ListingOrder" INTEGER NOT NULL,
         CHECK ("ColType" IN ('Timestamp', 'Constant', 'Aggregate', 'Formula'))
         CHECK ("TimeSystem" IN ('Clock Time', 'Solar Time'))
@@ -274,7 +275,7 @@ try:
         AS SELECT OutputColumns.WorksheetID, OutputColumns.ListingOrder,
         OutputColumns.ID, OutputColumns.ColumnHeading, OutputColumns.ColType,
         OutputColumns.Constant, OutputColumns.AggStationID, OutputColumns.AggDataSeriesID,
-        OutputColumns.AggType, OutputColumns.ContentsFormat
+        OutputColumns.AggType, OutputColumns.Format_Python, OutputColumns.Format_Excel 
         FROM OutputColumns
         WHERE (((OutputColumns.WorksheetID) In
         (SELECT WorksheetID FROM OutputColumns As Tmp
@@ -303,11 +304,13 @@ try:
         AS SELECT Count(DupOutputColumnsOnSheetCol.ID) AS ReCountOfID,
         DupOutputColumnsOnSheetCol.WorksheetID, DupOutputColumnsOnSheetCol.ListingOrder,
         DupOutputColumnsOnSheetCol.ColumnHeading, DupOutputColumnsOnSheetCol.ColType,
-        DupOutputColumnsOnSheetCol.AggType, DupOutputColumnsOnSheetCol.ContentsFormat
+        DupOutputColumnsOnSheetCol.AggType,
+        DupOutputColumnsOnSheetCol.Format_Python, DupOutputColumnsOnSheetCol.Format_Excel
         FROM DupOutputColumnsOnSheetCol
         GROUP BY DupOutputColumnsOnSheetCol.WorksheetID, DupOutputColumnsOnSheetCol.ListingOrder,
         DupOutputColumnsOnSheetCol.ColumnHeading, DupOutputColumnsOnSheetCol.ColType,
-        DupOutputColumnsOnSheetCol.AggType, DupOutputColumnsOnSheetCol.ContentsFormat;
+        DupOutputColumnsOnSheetCol.AggType,
+        DupOutputColumnsOnSheetCol.Format_Python, DupOutputColumnsOnSheetCol.Format_Excel;
 
         CREATE VIEW IF NOT EXISTS "DupOutputColumnsMismatch"
         AS SELECT OutputBooks.BookName, OutputSheets.WorksheetName,
@@ -795,9 +798,11 @@ def generateSheetRows(sheetID):
                 
     # get data for column heads and formats
     stSQL = "SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.ColumnHeading,\n" \
-        "OutputColumns.AggType, OutputColumns.ContentsFormat, OutputColumns.ListingOrder\n" \
+        "OutputColumns.AggType, \n" \
+        "OutputColumns.Format_Python, OutputColumns.Format_Excel, OutputColumns.ListingOrder\n" \
         "FROM OutputColumns GROUP BY OutputColumns.WorksheetID, OutputColumns.ColumnHeading,\n" \
-        "OutputColumns.AggType, OutputColumns.ContentsFormat, OutputColumns.ListingOrder\n" \
+        "OutputColumns.AggType, \n" \
+        "OutputColumns.Format_Python, OutputColumns.Format_Excel, OutputColumns.ListingOrder\n" \
         "HAVING (((OutputColumns.WorksheetID) = ?))\n" \
         "ORDER BY OutputColumns.ListingOrder;"
     curD.execute(stSQL, (sheetID,))
@@ -913,7 +918,7 @@ def generateSheetRows(sheetID):
    
     # get the data for the columns
     # fields:  ID, WorksheetID, ColumnHeading, ColType, TimeSystem, TimeIsInterval, IntervalIsFrom,
-    #  Constant, Formula,AggType, AggStationID, AggDataSeriesID, ContentsFormat, ListingOrder
+    #  Constant, Formula,AggType, AggStationID, AggDataSeriesID, Format_Python, Format_Excel, ListingOrder
     
     
 
