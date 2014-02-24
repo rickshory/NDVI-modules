@@ -881,25 +881,29 @@ def generateSheetRows(sheetID):
                     #  ListingOrder, Column Heading, Aggregation Type, and Format
                     #  in this case, aggregate over all of them to produce cell contents.
                     #  Do this by collecting all items before performing aggregation
-                    lSql = ['SELECT ']
-                    lSql.append(colDict['AggType'])
-                    lSql.append('(Data.Value) AS Agg ' \
-                            'FROM (OutputColumns LEFT JOIN ChannelSegments ' \
-                            'ON (OutputColumns.AggDataSeriesID = ChannelSegments.SeriesID) ' \
-                            'AND (OutputColumns.AggStationID = ChannelSegments.StationID)) ' \
-                            'LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID ' \
-                            'WHERE OutputColumns.WorksheetID=? ' \
-                            'AND OutputColumns.ListingOrder=? ' \
-                            'AND Data.UTTimestamp>=ChannelSegments.SegmentBegin ' \
-                            'AND Data.UTTimestamp<COALESCE(ChannelSegments.SegmentEnd, datetime("now")) ' \
-                            'AND Data.UTTimestamp>=? ' \
-                            'AND Data.UTTimestamp<? ' \
-                            'AND Data.Use=1;')
-                    stSQL = ''.join(lSql)
-                    print "stSQL:", stSQL
-                    curD.execute(stSQL, (sheetID, colDict['ListingOrder'] ,dtUTTimeBegin, dtUTTimeEnd))
-                    rec = curD.fetchone()
-                    lData[iVisColIndex] = str(rec['Agg'])
+                    if colDict['AggType'] == 'StDev': # not implemented yet
+                        lData[iVisColIndex] = rec['AggType']
+                    else:
+                        lSql = ['SELECT ']
+                        lSql.append(colDict['AggType'])
+                        lSql.append('(Data.Value) AS Agg ' \
+                                'FROM (OutputColumns LEFT JOIN ChannelSegments ' \
+                                'ON (OutputColumns.AggDataSeriesID = ChannelSegments.SeriesID) ' \
+                                'AND (OutputColumns.AggStationID = ChannelSegments.StationID)) ' \
+                                'LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID ' \
+                                'WHERE OutputColumns.WorksheetID=? ' \
+                                'AND OutputColumns.ListingOrder=? ' \
+                                'AND Data.UTTimestamp>=ChannelSegments.SegmentBegin ' \
+                                'AND Data.UTTimestamp<COALESCE(ChannelSegments.SegmentEnd, datetime("now")) ' \
+                                'AND Data.UTTimestamp>=? ' \
+                                'AND Data.UTTimestamp<? ' \
+                                'AND Data.Use=1;')
+                        stSQL = ''.join(lSql)
+#                        print "stSQL:", stSQL
+                        curD.execute(stSQL, (sheetID, colDict['ListingOrder'] ,dtUTTimeBegin, dtUTTimeEnd))
+                        rec = curD.fetchone()
+                        if rec['Agg'] != None:
+                            lData[iVisColIndex] = str(rec['Agg'])
 
                     # write code to do the aggregate; for now just write in the AggType
 #                    lData[iVisColIndex] = rec['AggType']

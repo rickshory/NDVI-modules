@@ -1532,6 +1532,10 @@ class SetupDatasetsPanel(wx.Panel):
             iRow = self.pvwGrid.GetNumberRows() - 1 # the new row to fill in is the last row
             for iCol in range(len(dataRow)):
                 self.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
+            self.Update()
+            self.pvwGrid.ForceRefresh
+            self.Update()
+#            self.Refresh()
 #            print iRwCt, dataRow
         
 
