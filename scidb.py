@@ -795,9 +795,9 @@ def generateSheetRows(sheetID):
                 
     # get data for column heads and formats
     stSQL = "SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.ColumnHeading,\n" \
-        "OutputColumns.ContentsFormat, OutputColumns.ListingOrder\n" \
+        "OutputColumns.AggType, OutputColumns.ContentsFormat, OutputColumns.ListingOrder\n" \
         "FROM OutputColumns GROUP BY OutputColumns.WorksheetID, OutputColumns.ColumnHeading,\n" \
-        "OutputColumns.ContentsFormat, OutputColumns.ListingOrder\n" \
+        "OutputColumns.AggType, OutputColumns.ContentsFormat, OutputColumns.ListingOrder\n" \
         "HAVING (((OutputColumns.WorksheetID) = ?))\n" \
         "ORDER BY OutputColumns.ListingOrder;"
     curD.execute(stSQL, (sheetID,))
@@ -814,11 +814,11 @@ def generateSheetRows(sheetID):
     # get the list of dates to pull data for
     lDtLimits = [] # check for any start or end limits
     if bkDict['OutputDataStart'] != None: # any start criteria
-        lDtLimits.append(" DataDates.Date >= '" + bkDict['OutputDataStart'] + "' ")
+        lDtLimits.append(" DataDates.Date >= '" + bkDict['OutputDataStart'].strftime(sFmtDateOnly) + "' ")
     if bkDict['OutputDataEnd'] != None: # any end criteria
         if len(lDtLimits) > 0:
             lDtLimits.append("AND")
-        lDtLimits.append(" DataDates.Date <= '" + bkDict['OutputDataEnd'] + "' ")
+        lDtLimits.append(" DataDates.Date <= '" + bkDict['OutputDataEnd'].strftime(sFmtDateOnly) + "' ")
     if len(lDtLimits) > 0: # complete any WHERE clause
         lDtLimits.insert(0, "\nWHERE ")
     stSQL = "SELECT DataDates.Date FROM DataDates" + "".join(lDtLimits) + "\nORDER BY DataDates.Date;"
@@ -871,15 +871,45 @@ def generateSheetRows(sheetID):
                     lData[iVisColIndex] = rec['Formula']
                     # figure out how to resolve formulas; for now just write them in
                 if rec['ColType'] == "Aggregate":
-                    lData[iVisColIndex] = rec['AggType']
+#                    print "colDict:", colDict
+#                    curD.execute('DROP TABLE IF EXISTS _tmp_Values;')
+#                    stSQL = 'CREATE TABLE _tmp_Values ( ' \
+#                            'Timestamp timestamp, ' \
+#                            'Val FLOAT NOT NULL );'
+#                    curD.execute(stSQL)
+                    # There may be multiple OutputColumns records that match on
+                    #  ListingOrder, Column Heading, Aggregation Type, and Format
+                    #  in this case, aggregate over all of them to produce cell contents.
+                    #  Do this by collecting all items before performing aggregation
+                    lSql = ['SELECT ']
+                    lSql.append(colDict['AggType'])
+                    lSql.append('(Data.Value) AS Agg ' \
+                            'FROM (OutputColumns LEFT JOIN ChannelSegments ' \
+                            'ON (OutputColumns.AggDataSeriesID = ChannelSegments.SeriesID) ' \
+                            'AND (OutputColumns.AggStationID = ChannelSegments.StationID)) ' \
+                            'LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID ' \
+                            'WHERE OutputColumns.WorksheetID=? ' \
+                            'AND OutputColumns.ListingOrder=? ' \
+                            'AND Data.UTTimestamp>=ChannelSegments.SegmentBegin ' \
+                            'AND Data.UTTimestamp<COALESCE(ChannelSegments.SegmentEnd, datetime("now")) ' \
+                            'AND Data.UTTimestamp>=? ' \
+                            'AND Data.UTTimestamp<? ' \
+                            'AND Data.Use=1;')
+                    stSQL = ''.join(lSql)
+                    print "stSQL:", stSQL
+                    curD.execute(stSQL, (sheetID, colDict['ListingOrder'] ,dtUTTimeBegin, dtUTTimeEnd))
+                    rec = curD.fetchone()
+                    lData[iVisColIndex] = str(rec['Agg'])
+
                     # write code to do the aggregate; for now just write in the AggType
+#                    lData[iVisColIndex] = rec['AggType']
 
 
             yield lData
    
     # get the data for the columns
     # fields:  ID, WorksheetID, ColumnHeading, ColType, TimeSystem, TimeIsInterval, IntervalIsFrom,
-    #  Constant, Formula, AggType, AggStationID, AggDataSeriesID, ContentsFormat, ListingOrder
+    #  Constant, Formula,AggType, AggStationID, AggDataSeriesID, ContentsFormat, ListingOrder
     
     
 
