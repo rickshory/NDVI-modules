@@ -481,6 +481,23 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
             # provides foreign key for completing a new record in the current table
             self.sourceTable = 'OutputSheets'
             self.recID = 0 # no record yet
+            # set up new record
+            self.ShDict = dict(ID = None, BookID = self.parentRecID,
+                WorksheetName = None, DataSetNickname = None,
+                ListingOrder = None)
+            # set up some guesses to help the user
+            # if this will be the 1st Sheet in this Book
+            stSQL = "SELECT MAX(ListingOrder) AS MaxLstOrd " \
+                "FROM OutputSheets WHERE BookID = ?;"
+            scidb.curD.execute(stSQL, (self.parentRecID,))
+            rec = scidb.curD.fetchone()
+            if rec['MaxLstOrd'] == None: # no other Sheets yet, offer defaults
+                self.ShDict['ListingOrder'] = 1
+            else: # already some Sheets
+                self.ShDict['ListingOrder'] = rec['MaxLstOrd'] + 1
+            self.ShDict['WorksheetName'] = 'Sheet' + str(self.ShDict['ListingOrder'])
+            self.ShDict['DataSetNickname'] = self.ShDict['WorksheetName']
+            
         else: # in the details panel to view/edit the information for an existing record
             # selected tree item is the node to view/edit
             self.sourceTable = treePyData[0] # should be 'OutputSheets'
@@ -490,7 +507,17 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
             scidb.curD.execute(stSQL, (self.recID,))
             rec = scidb.curD.fetchone()
             self.parentRecID = rec['BookID'] # the foreign key ID in the parent table
+##
+            # get existing record
+            stSQL = "SELECT * FROM OutputSheets WHERE ID = ?;"
+            scidb.curD.execute(stSQL, (self.recID,))
+            rec = scidb.curD.fetchone()
+#            ShDict = copy.copy(rec) # this crashes
+            self.ShDict = {}
+            for recName in rec.keys():
+                self.ShDict[recName] = rec[recName]
 
+##
         print "Initializing InfoPanel_Sheet ->>>>"
         print "treePyData:", treePyData
         print "self.sourceTable:", self.sourceTable
@@ -516,6 +543,8 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
         sheetNameLabel.SetFont(bolded)
         shPnlSiz.Add(sheetNameLabel, pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcSheetName = wx.TextCtrl(self)
+        self.tcSheetName.SetValue(self.ShDict['WorksheetName'])
+
         shPnlSiz.Add(self.tcSheetName, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -530,6 +559,7 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
         shPnlSiz.Add(wx.StaticText(self, -1, 'Dataset nickname'),
                      pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcNickname = wx.TextCtrl(self)
+        self.tcNickname.SetValue(self.ShDict['DataSetNickname'])
         shPnlSiz.Add(self.tcNickname, pos=(gRow, 1), span=(1, 2), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -544,6 +574,7 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
         shPnlSiz.Add(wx.StaticText(self, -1, 'Listing order'),
                      pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcListingOrder = wx.TextCtrl(self)
+        self.tcListingOrder.SetValue('%d' % self.ShDict['ListingOrder'])
         shPnlSiz.Add(self.tcListingOrder, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -562,32 +593,9 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
         self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
         shPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
 
-#        parObjClass = self.GetParent().GetClassName()
-#        print "Parent object class:", parObjClass
-#        if parObjClass == 'wxDialog':
-#            print "in the Dialog, don't try to set up values"
-#        else:
-        if self.recID:
-            print "Source Table:", self.sourceTable, ", Record ID:", self.recID
-            self.fillSheetPanelControls()
-        else:
-            print "no recID in Sheet panel, will not initialize values"
         self.SetSizer(shPnlSiz)
         self.SetAutoLayout(1)
         self.SetupScrolling()
-
-    def fillSheetPanelControls(self):
-#        stSQL = """
-#        SELECT BookID,
-#        WorksheetName, DataSetNickname, ListingOrder
-#        FROM OutputSheets WHERE ID = ?
-#        """
-        stSQL = "SELECT * FROM OutputSheets WHERE ID=?"
-        scidb.curD.execute(stSQL, (self.recID,))
-        rec = scidb.curD.fetchone()
-        self.tcSheetName.SetValue(rec['WorksheetName'])
-        self.tcNickname.SetValue(rec['DataSetNickname'])
-        self.tcListingOrder.SetValue('%d' % rec['ListingOrder'])
 
     def onClick_BtnSave(self, event):
         """
@@ -726,9 +734,8 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
             parObject.EndModal(0) # if in the creation dialog, exit with no changes to the DB
 #            parObject.Destroy() 
         else: # in the main form
-            wx.MessageBox('Undoing any edits', 'Undo', 
+            wx.MessageBox('Ignoring any edits', 'Undo', 
                 wx.OK | wx.ICON_INFORMATION)
-            self.fillSheetPanelControls()
         return
 
 class InfoPanel_Column(scrolled.ScrolledPanel):
@@ -880,16 +887,6 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
         colPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
 
-#        parObjClass = self.GetParent().GetClassName()
-#        print "Parent object class:", parObjClass
-#        if parObjClass == 'wxDialog':
-#            print "in the Dialog, don't try to set up values"
-#        else:
-        if self.recID:
-            print "Source Table:", self.sourceTable, ", Record ID:", self.recID
-#            self.fillSheetPanelControls()
-        else:
-            print "no recID in Sheet panel, will not initialize values"
         self.SetSizer(colPnlSiz)
         self.SetAutoLayout(1)
         self.SetupScrolling()
