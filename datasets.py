@@ -487,7 +487,7 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
                 ListingOrder = None)
             # set up some guesses to help the user
             # if this will be the 1st Sheet in this Book
-            stSQL = "SELECT MAX(ListingOrder) AS MaxLstOrd " \
+            stSQL = "SELECT MAX(CAST ListingOrder AS INTEGER) AS MaxLstOrd " \
                 "FROM OutputSheets WHERE BookID = ?;"
             scidb.curD.execute(stSQL, (self.parentRecID,))
             rec = scidb.curD.fetchone()
@@ -647,7 +647,8 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
         except:
             # autocreate, 1 higher than previously existing
             print "self.parentRecID, to use in ListingOrder query:",  self.parentRecID
-            stSQL = "SELECT MAX(OutputSheets.ListingOrder) AS MaxLstOrd FROM OutputSheets WHERE BookID = ?;"
+            stSQL = "SELECT MAX(CAST(OutputSheets.ListingOrder) AS INTEGER) AS MaxLstOrd " \
+                "FROM OutputSheets WHERE BookID = ?;"
             scidb.curD.execute(stSQL, (self.parentRecID,))
             rec = scidb.curD.fetchone()
             print "Max Listing order fetched:", rec
@@ -765,7 +766,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                 Format_Python = None, Format_Excel = None, ListingOrder = None)
             # set up some guesses to help the user
             # if this will be the 1st column in this sheet, offer a Timestamp
-            stSQL = "SELECT MAX(OutputColumns.ListingOrder) AS MaxLstOrd " \
+            stSQL = "SELECT MAX(CAST(OutputColumns.ListingOrder AS INTEGER)) AS MaxLstOrd " \
                 "FROM OutputColumns WHERE WorksheetID = ?;"
             scidb.curD.execute(stSQL, (self.parentRecID,))
             rec = scidb.curD.fetchone()
@@ -1072,7 +1073,8 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         except:
             # autocreate, 1 higher than previously existing
             print "self.parentRecID, to use in ListingOrder query:",  self.parentRecID
-            stSQL = "SELECT MAX(OutputColumns.ListingOrder) AS MaxLstOrd FROM OutputColumns WHERE WorksheetID = ?;"
+            stSQL = "SELECT MAX(CAST OutputColumns.ListingOrder AS INTEGER)) AS MaxLstOrd " \
+                    "FROM OutputColumns WHERE WorksheetID = ?;"
             scidb.curD.execute(stSQL, (self.parentRecID,))
             rec = scidb.curD.fetchone()
             print "Max Listing order fetched:", rec
@@ -1556,9 +1558,9 @@ class SetupDatasetsPanel(wx.Panel):
         self.previewPanel.SetupScrolling()
 
     def insertPreviewGridHeaders(self, sheetID):
-        stSQL = """SELECT Max(ListingOrder) AS MaxCol
-            FROM OutputColumns
-            WHERE WorksheetID = ?;"""
+        stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
+            "FROM OutputColumns " \
+            "WHERE WorksheetID = ?;"
         scidb.curD.execute(stSQL, (sheetID,))
         rec = scidb.curD.fetchone()
         self.pvwGrid.AppendRows() #1st row for headers

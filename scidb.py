@@ -816,6 +816,14 @@ def generateSheetRows(sheetID):
             clDict[recName] = rec[recName]
         lCols.append(copy.copy(clDict))        
 
+    # get the length of list needed; may be more than the number of records if there are blank columns
+    stSQL = "SELECT MAX(CAST(ListingOrder AS INTEGER)) AS MaxLstOrd " \
+        "FROM OutputColumns " \
+        "WHERE WorksheetID = ?;"
+    curD.execute(stSQL, (sheetID,))
+    rec = curD.fetchone()
+    iRowLen = rec['MaxLstOrd']
+
     # get the list of dates to pull data for
     lDtLimits = [] # check for any start or end limits
     if bkDict['OutputDataStart'] != None: # any start criteria
@@ -836,7 +844,7 @@ def generateSheetRows(sheetID):
     stSQLVisCol = "SELECT * FROM OutputColumns " \
         "WHERE WorkSheetID=? AND ListingOrder=? " \
         "ORDER BY ID;"
-
+    
     for sDt in lDates:
         # get the data for each date
         # create a date that represents how we are going to label this date. Since all data queries
@@ -846,7 +854,7 @@ def generateSheetRows(sheetID):
         tdSolarCorr = solarCorrection(sDt, bkDict['Longitude'])
         dtUTSolarMidnight = dtNominalDay + tdSolarCorr
         for iTimeSliceCt in range(bkDict['NumberOfTimeSlicesPerDay']):
-            # nodes are one half, three halves, 5 halves, ... of a time slice
+            # nodes are at one half, three halves, 5 halves, ... of a time slice
             dtSolarTimeNode = dtNominalDay + (((2*iTimeSliceCt)+1) * tdHalfTimeSlice)
             # generate the UT clock time, corrected for longitude and equation-of-time
             # can be hours different from nominal (solar) time
@@ -857,7 +865,7 @@ def generateSheetRows(sheetID):
             print "   dtUTTimeNode:", dtUTTimeNode.strftime(sFmtFullDateTime)
             
             # make a standard list of this many empty strings; some may remain empty
-            lData = ['' for i in range(len(lCols))]
+            lData = ['' for i in range(iRowLen)]
             for colDict in lCols:
                 iVisColIndex = colDict['ListingOrder'] - 1
 #                print "colDict:", colDict
@@ -891,7 +899,7 @@ def generateSheetRows(sheetID):
                     else:
                         lSql = ['SELECT ']
                         lSql.append(colDict['AggType'])
-                        lSql.append('(Data.Value) AS Agg ' \
+                        lSql.append('(CAST(Data.Value AS REAL)) AS Agg ' \
                                 'FROM (OutputColumns LEFT JOIN ChannelSegments ' \
                                 'ON (OutputColumns.AggDataSeriesID = ChannelSegments.SeriesID) ' \
                                 'AND (OutputColumns.AggStationID = ChannelSegments.StationID)) ' \
@@ -908,6 +916,10 @@ def generateSheetRows(sheetID):
                         curD.execute(stSQL, (sheetID, colDict['ListingOrder'] ,dtUTTimeBegin, dtUTTimeEnd))
                         rec = curD.fetchone()
                         if rec['Agg'] != None:
+#                            print "colDict['ListingOrder']:", colDict['ListingOrder']
+#                            print "iVisColIndex:", iVisColIndex
+#                            print "rec['Agg']:", rec['Agg']
+#                            print "len(lData):", len(lData)
                             lData[iVisColIndex] = str(rec['Agg'])
 
                     # write code to do the aggregate; for now just write in the AggType
