@@ -875,8 +875,13 @@ def generateSheetRows(sheetID):
                 # in most cases, there will be only one record (if > 1, only use the 1st)
                 # deal with valid multiples under if ColType = "Aggregate"
                 rec = curD.fetchone()
+                stFmtPy = rec['Format_Python']
+                stFmtXl = rec['Format_Excel']
                 if rec['ColType'] == "Timestamp":
-                    lData[iVisColIndex] = dtUTTimeNode.strftime(sFmtFullDateTime)
+                    if stFmtPy == None:
+                        lData[iVisColIndex] = dtUTTimeNode.strftime(sFmtFullDateTime) #default
+                    else:
+                        lData[iVisColIndex] = dtUTTimeNode.strftime(stFmtPy)
                     # dress this up for other formats later
                 if rec['ColType'] == "Constant":
                     lData[iVisColIndex] = rec['Constant']
@@ -916,15 +921,10 @@ def generateSheetRows(sheetID):
                         curD.execute(stSQL, (sheetID, colDict['ListingOrder'] ,dtUTTimeBegin, dtUTTimeEnd))
                         rec = curD.fetchone()
                         if rec['Agg'] != None:
-#                            print "colDict['ListingOrder']:", colDict['ListingOrder']
-#                            print "iVisColIndex:", iVisColIndex
-#                            print "rec['Agg']:", rec['Agg']
-#                            print "len(lData):", len(lData)
-                            lData[iVisColIndex] = str(rec['Agg'])
-
-                    # write code to do the aggregate; for now just write in the AggType
-#                    lData[iVisColIndex] = rec['AggType']
-
+                            if stFmtPy == None:
+                                lData[iVisColIndex] = str(rec['Agg'])
+                            else:
+                                lData[iVisColIndex] = stFmtPy % rec['Agg']
 
             yield lData
    

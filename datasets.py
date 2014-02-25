@@ -1563,6 +1563,11 @@ class SetupDatasetsPanel(wx.Panel):
             "WHERE WorksheetID = ?;"
         scidb.curD.execute(stSQL, (sheetID,))
         rec = scidb.curD.fetchone()
+        if rec['MaxCol'] == None:
+            self.pvwGrid.AppendRows() # 1 row 
+            self.pvwGrid.AppendCols() # 1 column
+            self.pvwGrid.SetCellValue(0, 0, '(no columns yet)')
+            return
         self.pvwGrid.AppendRows() #1st row for headers
         self.pvwGrid.AppendCols(rec['MaxCol']) # make enough columns
         
