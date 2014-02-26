@@ -1379,15 +1379,32 @@ class Dialog_MakeDataset(wx.Dialog):
                      pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
         gRow += 1
-        mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+        mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+
+
+
+        gRow += 1
+        mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        gRow += 1
+        mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+
+        gRow += 1
+        sheetNoteBlocking = wx.StaticText(self, -1, 'NOTE: Making the full dataset will block this application until completed')
+        sheetNoteBlocking.SetFont(bolded)
+        mkDtSetSiz.Add(sheetNoteBlocking, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        gRow += 1
+        mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
         gRow += 1
         self.btnMake = wx.Button(self, label="Make", size=(90, 28))
         self.btnMake.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnMake(evt))
-        mkDtSetSiz.Add(self.btnMake, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
+        mkDtSetSiz.Add(self.btnMake, pos=(gRow, 3), flag=wx.LEFT|wx.BOTTOM, border=5)
         self.btnCancel = wx.Button(self, label="Cancel", size=(90, 28))
         self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
-        mkDtSetSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+        mkDtSetSiz.Add(self.btnCancel, pos=(gRow, 4), flag=wx.LEFT|wx.BOTTOM, border=5)
         
         self.SetSizer(mkDtSetSiz)
         self.SetAutoLayout(1)
@@ -1403,8 +1420,9 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         Cancel making the dataset
         """
-        wx.MessageBox('Not implemented yet', 'Missing',
-            wx.OK | wx.ICON_INFORMATION)
+        self.EndModal(0)
+#        wx.MessageBox('Not implemented yet', 'Missing',
+#            wx.OK | wx.ICON_INFORMATION)
         
     def OnClose(self, event):
         self.Destroy()
