@@ -1381,7 +1381,30 @@ class Dialog_MakeDataset(wx.Dialog):
         gRow += 1
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
+        gRow += 1
+        mkDtSetSiz.Add(wx.StaticText(self, -1, 'Output As:'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
+##
+        iRBLeftBorderWd = 30
+        gRow += 1
+        self.rbExcel = wx.RadioButton(self, label='Excel workbook', style=wx.RB_GROUP)
+        mkDtSetSiz.Add(self.rbExcel, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+
+        gRow += 1
+        self.rbTabDelim = wx.RadioButton(self, label='Tab-delimited text')
+        mkDtSetSiz.Add(self.rbTabDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        
+        gRow += 1
+        self.rbCommaDelim = wx.RadioButton(self, label='Comma-seperated values ("CSV")')
+        mkDtSetSiz.Add(self.rbCommaDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+
+        gRow += 1
+        mkDtSetSiz.Add((0, 10), pos=(gRow, 0), span=(1, 3))
+        
+        gRow += 1
+        mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+##
 
         gRow += 1
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
@@ -1389,7 +1412,7 @@ class Dialog_MakeDataset(wx.Dialog):
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
         gRow += 1
-        sheetNoteBlocking = wx.StaticText(self, -1, 'NOTE: Making the full dataset will block this application until completed')
+        sheetNoteBlocking = wx.StaticText(self, -1, 'NOTE: Making the full dataset will block this application until complete')
         sheetNoteBlocking.SetFont(bolded)
         mkDtSetSiz.Add(sheetNoteBlocking, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
