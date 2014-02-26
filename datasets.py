@@ -1343,6 +1343,72 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             
         return   
 
+class Dialog_MakeDataset(wx.Dialog):
+    def __init__(self, parent, id, title = "Create Dataset", parentTableRec = None):
+        wx.Dialog.__init__(self, parent, id)
+        self.InitUI(parentTableRec)
+        self.SetSize((450, 400))
+        self.SetTitle(title) # overrides title passed above
+
+    def InitUI(self, parentTableRec):
+        print "Initializing Dialog_MakeDataset; parentTableRec:", parentTableRec
+        self.sourceTable = parentTableRec[0] # 'OutputSheets' or 'OutputBooks'
+        self.recID = parentTableRec[1] # the record ID in that table
+#        self.parentTable = 'OutputBooks' # the parent table
+#        stSQL = "SELECT BookID FROM OutputSheets WHERE ID = ?;"
+#        scidb.curD.execute(stSQL, (self.recID,))
+#        rec = scidb.curD.fetchone()
+#        self.parentRecID = rec['BookID'] # the foreign key ID in the parent table
+        # get existing record
+#        stSQL = "SELECT * FROM OutputSheets WHERE ID = ?;"
+#        scidb.curD.execute(stSQL, (self.recID,))
+#        rec = scidb.curD.fetchone()
+#            ShDict = copy.copy(rec) # this crashes
+#        self.ShDict = {}
+#        for recName in rec.keys():
+#            self.ShDict[recName] = rec[recName]
+        self.SetBackgroundColour(wx.WHITE)
+        mkDtSetSiz = wx.GridBagSizer(1, 1)
+        note1 = wx.StaticText(self, -1, 'Make Dataset For: ')
+        bolded = note1.GetFont() 
+        bolded.SetWeight(wx.BOLD) 
+        note1.SetFont(bolded)
+        gRow = 0
+        mkDtSetSiz.Add(note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        mkDtSetSiz.Add(wx.StaticText(self, -1, 'this item'),
+                     pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+
+        gRow += 1
+        self.btnMake = wx.Button(self, label="Make", size=(90, 28))
+        self.btnMake.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnMake(evt))
+        mkDtSetSiz.Add(self.btnMake, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
+        self.btnCancel = wx.Button(self, label="Cancel", size=(90, 28))
+        self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
+        mkDtSetSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+        
+        self.SetSizer(mkDtSetSiz)
+        self.SetAutoLayout(1)
+
+    def onClick_BtnMake(self, event):
+        """
+        Make the dataset
+        """
+        wx.MessageBox('Not implemented yet', 'Missing',
+            wx.OK | wx.ICON_INFORMATION)
+
+    def onClick_BtnCancel(self, event):
+        """
+        Cancel making the dataset
+        """
+        wx.MessageBox('Not implemented yet', 'Missing',
+            wx.OK | wx.ICON_INFORMATION)
+        
+    def OnClose(self, event):
+        self.Destroy()
+
 class SetupDatasetsPanel(wx.Panel):
     def __init__(self, parent, id):
         wx.Panel.__init__(self, parent, id)
@@ -1720,6 +1786,31 @@ class SetupDatasetsPanel(wx.Panel):
                 #generates wxEVT_TREE_SEL_CHANGING and wxEVT_TREE_SEL_CHANGED events
                 # wxEVT_TREE_SEL_CHANGED displays the information in the details panel
             return
+
+##
+        if opID == ID_MAKE_SHEET:
+            print "operation is to make the dataset"
+            dia = Dialog_MakeDataset(self, wx.ID_ANY, parentTableRec = treeItemPyData)
+            result = dia.ShowModal()
+            # dialog is exited using EndModal, and comes back here
+            print "Modal dialog result:", result
+            # test of pulling things out of the modal dialog
+#            self.newSheetName = dia.pnl.tcSheetName.GetValue()
+#            print "Name of new sheet, from the Modal:", self.newSheetName
+#            self.newRecID = dia.pnl.newRecID
+#            print "record ID from the Modal:", self.newRecID
+            dia.Destroy()
+#            if result == 1: # new record successfully created
+#                # create a new branch on the tree
+#                self.sheetBranchID = self.dsTree.AppendItem(self.tree_item_clicked, self.newSheetName)
+#                self.dsTree.SetPyData(self.sheetBranchID, ('OutputSheets', self.newRecID))
+#                # select it
+#                self.dsTree.SelectItem(self.sheetBranchID)
+#                #generates wxEVT_TREE_SEL_CHANGING and wxEVT_TREE_SEL_CHANGED events
+                # wxEVT_TREE_SEL_CHANGED displays the information in the details panel
+            return
+
+##
         
         wx.MessageBox('Not implemented yet', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
