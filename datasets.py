@@ -1407,6 +1407,13 @@ class Dialog_MakeDataset(wx.Dialog):
         gRow += 1
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
+        gRow += 1
+        self.tcOutputOptInfo = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE|wx.TE_READONLY)
+        mkDtSetSiz.Add(self.tcOutputOptInfo, pos=(gRow, 0), span=(3, 5),
+            flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        gRow += 1 # space for the three grid rows for tcOutputOptInfo
+        gRow += 1
+
         self.giveRBInfo(-1) # have to explictly call this 1st time; -1 is dummy value for event
         
         gRow += 1
@@ -1439,16 +1446,18 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         Give the user some information about this output option
         """
-        stMsg = 'Default'
+        stMsg = ''
         if self.rbExcel.GetValue():
-            stMsg = 'Excel'
+            stMsg = 'Excel output is only available on Windows systems, and only ' \
+                'if you have Excel installed. Only Excel allows making a whole Book. ' \
+                'With other options, you can make only one Sheet at a time.'
         if self.rbTabDelim.GetValue():
-            stMsg = 'Tab delimited'
+            stMsg = 'Tab delimited output allows making only one Sheet at a time.'
         if self.rbCommaDelim.GetValue():
-            stMsg = 'CSV'
-            
-        wx.MessageBox(stMsg, 'Info',
-            wx.OK | wx.ICON_INFORMATION)
+            stMsg = 'CSV output allows making only one Sheet at a time. If you have ' \
+                'a comma within any data item, it will break that row into a new ' \
+                'column at that point.'
+        self.tcOutputOptInfo.SetValue(stMsg)
         
 
     def onClick_BtnMake(self, event):
