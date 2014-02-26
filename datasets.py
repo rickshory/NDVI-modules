@@ -1354,6 +1354,18 @@ class Dialog_MakeDataset(wx.Dialog):
         print "Initializing Dialog_MakeDataset; parentTableRec:", parentTableRec
         self.sourceTable = parentTableRec[0] # 'OutputSheets' or 'OutputBooks'
         self.recID = parentTableRec[1] # the record ID in that table
+        if self.sourceTable == 'OutputBooks':
+            stItem = 'Book'
+            stSQL = 'SELECT BookName AS ItmName FROM OutputBooks WHERE ID = ?;'
+        else:
+            stItem = 'Sheet'
+            stSQL = 'SELECT WorksheetName AS ItmName FROM OutputSheets WHERE ID = ?;'
+        scidb.curD.execute(stSQL, (self.recID,))
+        rec = scidb.curD.fetchone()
+        if rec['ItmName'] == None:
+            self.stItemName = '(unavailable)'
+        else:
+            self.stItemName = rec['ItmName']
 #        self.parentTable = 'OutputBooks' # the parent table
 #        stSQL = "SELECT BookID FROM OutputSheets WHERE ID = ?;"
 #        scidb.curD.execute(stSQL, (self.recID,))
@@ -1375,7 +1387,7 @@ class Dialog_MakeDataset(wx.Dialog):
         note1.SetFont(bolded)
         gRow = 0
         mkDtSetSiz.Add(note1, pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        mkDtSetSiz.Add(wx.StaticText(self, -1, 'this item'),
+        mkDtSetSiz.Add(wx.StaticText(self, -1, stItem + ' "' + self.stItemName + '"'),
                      pos=(gRow, 1), flag=wx.TOP|wx.RIGHT|wx.BOTTOM, border=5)
 
         gRow += 1
@@ -1422,9 +1434,13 @@ class Dialog_MakeDataset(wx.Dialog):
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
         gRow += 1
-        sheetNoteBlocking = wx.StaticText(self, -1, 'NOTE: Making the full dataset will block this application until complete')
-        sheetNoteBlocking.SetFont(bolded)
-        mkDtSetSiz.Add(sheetNoteBlocking, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        sheetNoteBlocking1 = wx.StaticText(self, -1, 'NOTE: Making a dataset will block this application until complete.')
+        sheetNoteBlocking1.SetFont(bolded)
+        mkDtSetSiz.Add(sheetNoteBlocking1, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        gRow += 1
+        sheetNoteBlocking2 = wx.StaticText(self, -1, ' Making a full dataset can take a long time.')
+        sheetNoteBlocking2.SetFont(bolded)
+        mkDtSetSiz.Add(sheetNoteBlocking2, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
@@ -1432,6 +1448,12 @@ class Dialog_MakeDataset(wx.Dialog):
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
         gRow += 1
+##
+        self.ckPreview = wx.CheckBox(self, label="Preview only")
+        mkDtSetSiz.Add(self.ckPreview, pos=(gRow, 0), span=(1, 2),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+        self.ckPreview.SetValue(True)
+##
         self.btnMake = wx.Button(self, label="Make", size=(90, 28))
         self.btnMake.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnMake(evt))
         mkDtSetSiz.Add(self.btnMake, pos=(gRow, 3), flag=wx.LEFT|wx.BOTTOM, border=5)
@@ -1857,7 +1879,7 @@ class SetupDatasetsPanel(wx.Panel):
             return
 
 ##
-        if opID == ID_MAKE_SHEET:
+        if opID == ID_MAKE_BOOK or opID == ID_MAKE_SHEET:
             print "operation is to make the dataset"
             dia = Dialog_MakeDataset(self, wx.ID_ANY, parentTableRec = treeItemPyData)
             result = dia.ShowModal()
