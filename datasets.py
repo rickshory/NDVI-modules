@@ -1385,27 +1385,30 @@ class Dialog_MakeDataset(wx.Dialog):
         mkDtSetSiz.Add(wx.StaticText(self, -1, 'Output As:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
-##
         iRBLeftBorderWd = 30
         gRow += 1
         self.rbExcel = wx.RadioButton(self, label='Excel workbook', style=wx.RB_GROUP)
         mkDtSetSiz.Add(self.rbExcel, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbExcel.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
         self.rbTabDelim = wx.RadioButton(self, label='Tab-delimited text')
         mkDtSetSiz.Add(self.rbTabDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbTabDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
         
         gRow += 1
         self.rbCommaDelim = wx.RadioButton(self, label='Comma-seperated values ("CSV")')
         mkDtSetSiz.Add(self.rbCommaDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbCommaDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
         mkDtSetSiz.Add((0, 10), pos=(gRow, 0), span=(1, 3))
         
         gRow += 1
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
-##
 
+        self.giveRBInfo(-1) # have to explictly call this 1st time; -1 is dummy value for event
+        
         gRow += 1
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
         gRow += 1
@@ -1432,11 +1435,27 @@ class Dialog_MakeDataset(wx.Dialog):
         self.SetSizer(mkDtSetSiz)
         self.SetAutoLayout(1)
 
+    def giveRBInfo(self, event):
+        """
+        Give the user some information about this output option
+        """
+        stMsg = 'Default'
+        if self.rbExcel.GetValue():
+            stMsg = 'Excel'
+        if self.rbTabDelim.GetValue():
+            stMsg = 'Tab delimited'
+        if self.rbCommaDelim.GetValue():
+            stMsg = 'CSV'
+            
+        wx.MessageBox(stMsg, 'Info',
+            wx.OK | wx.ICON_INFORMATION)
+        
+
     def onClick_BtnMake(self, event):
         """
         Make the dataset
         """
-        wx.MessageBox('Not implemented yet', 'Missing',
+        wx.MessageBox('Not implemented yet', 'Info',
             wx.OK | wx.ICON_INFORMATION)
 
     def onClick_BtnCancel(self, event):
@@ -1444,7 +1463,7 @@ class Dialog_MakeDataset(wx.Dialog):
         Cancel making the dataset
         """
         self.EndModal(0)
-#        wx.MessageBox('Not implemented yet', 'Missing',
+#        wx.MessageBox('Not implemented yet', 'Info',
 #            wx.OK | wx.ICON_INFORMATION)
         
     def OnClose(self, event):
