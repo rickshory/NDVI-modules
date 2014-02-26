@@ -7,14 +7,18 @@ import multiprocessing
 ID_ADD_BOOK = 101
 ID_ADD_SHEET = 201
 ID_DEL_BOOK = 202
+ID_MAKE_BOOK = 203
 ID_ADD_COL = 301
 ID_DEL_SHEET = 302
+ID_MAKE_SHEET = 303
 ID_DEL_COL = 402
 
 treePopMenuItems = {ID_ADD_BOOK:'Add a Book',
-                    ID_ADD_SHEET:'Add a Sheet to this Book', ID_DEL_BOOK:'Delete this Book',
-                    ID_ADD_COL:'Add a Column to this Sheet', ID_DEL_SHEET:'Delete this Sheet',
-                    ID_DEL_COL:'Delete this Column'}
+    ID_ADD_SHEET:'Add a Sheet to this Book', ID_DEL_BOOK:'Delete this Book',
+    ID_MAKE_BOOK:'Create this Book dataset',                
+    ID_ADD_COL:'Add a Column to this Sheet', ID_DEL_SHEET:'Delete this Sheet',
+    ID_MAKE_SHEET:'Create this Sheet dataset',                
+    ID_DEL_COL:'Delete this Column'}
 
 class Dialog_Book(wx.Dialog):
     def __init__(self, parent, id, title = "Add a new Book"):
@@ -507,7 +511,6 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
             scidb.curD.execute(stSQL, (self.recID,))
             rec = scidb.curD.fetchone()
             self.parentRecID = rec['BookID'] # the foreign key ID in the parent table
-##
             # get existing record
             stSQL = "SELECT * FROM OutputSheets WHERE ID = ?;"
             scidb.curD.execute(stSQL, (self.recID,))
@@ -517,7 +520,6 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
             for recName in rec.keys():
                 self.ShDict[recName] = rec[recName]
 
-##
         print "Initializing InfoPanel_Sheet ->>>>"
         print "treePyData:", treePyData
         print "self.sourceTable:", self.sourceTable
@@ -995,41 +997,42 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
             colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Only used for Excel output'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
-        # show the Contents Format textboxes for any Column Type
-        gRow += 1
-        colDetailSiz.Add(wx.StaticLine(self.colDetailPnl), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
+        # show the Contents Format textboxes for any Column Type except Constant
+        if colTyp == 'Timestamp' or colTyp == 'Aggregate' or colTyp == 'Formula':
+            gRow += 1
+            colDetailSiz.Add(wx.StaticLine(self.colDetailPnl), pos=(gRow, 0), span=(1, 2), flag=wx.EXPAND)
 
-        gRow += 1
-        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format depends on Column Type'),
-                 pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+            gRow += 1
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format depends on Column Type'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
-        gRow += 1
-        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format (Python)'),
-                         pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            gRow += 1
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format (Python)'),
+                             pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-        self.tcFormat_Python = wx.TextCtrl(self.colDetailPnl)
-        if self.ColDict['Format_Python'] != None:
-            self.tcFormat_Python.SetValue('%s' % self.ColDict['Format_Python'])
-        colDetailSiz.Add(self.tcFormat_Python, pos=(gRow, 1), span=(1, 1), 
-            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+            self.tcFormat_Python = wx.TextCtrl(self.colDetailPnl)
+            if self.ColDict['Format_Python'] != None:
+                self.tcFormat_Python.SetValue('%s' % self.ColDict['Format_Python'])
+            colDetailSiz.Add(self.tcFormat_Python, pos=(gRow, 1), span=(1, 1), 
+                flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
-        gRow += 1
-        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Will be applied to text output'),
-                 pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+            gRow += 1
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Will be applied to text output'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
-        gRow += 1
-        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format (Excel)'),
-                         pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            gRow += 1
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Format (Excel)'),
+                             pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-        self.tcFormat_Excel = wx.TextCtrl(self.colDetailPnl)
-        if self.ColDict['Format_Excel'] != None:
-            self.tcFormat_Excel.SetValue('%s' % self.ColDict['Format_Excel'])
-        colDetailSiz.Add(self.tcFormat_Excel, pos=(gRow, 1), span=(1, 1), 
-            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+            self.tcFormat_Excel = wx.TextCtrl(self.colDetailPnl)
+            if self.ColDict['Format_Excel'] != None:
+                self.tcFormat_Excel.SetValue('%s' % self.ColDict['Format_Excel'])
+            colDetailSiz.Add(self.tcFormat_Excel, pos=(gRow, 1), span=(1, 1), 
+                flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
-        gRow += 1
-        colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Will be applied to Excel output'),
-                 pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+            gRow += 1
+            colDetailSiz.Add(wx.StaticText(self.colDetailPnl, -1, 'Will be applied to Excel output'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         self.colDetailPnl.SetSizer(colDetailSiz)
         self.colDetailPnl.SetAutoLayout(1)
@@ -1192,42 +1195,43 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
                     self.tcFormula.SetValue(self.ColDict['Formula'][:(maxLen)])
                     self.tcFormula.SetFocus()
                     return 0
+        # Contents Format textboxes are there for any Column Type except Constant
+        if self.ColDict['ColType'] == 'Timestamp' or self.ColDict['ColType'] == 'Aggregate' or self.ColDict['ColType'] == 'Formula':
+            self.ColDict['Format_Python'] = " ".join(self.tcFormat_Python.GetValue().split())
+            print "Contents Format:", self.ColDict['Format_Python']
+            if self.ColDict['Format_Python'] == '':
+                self.tcFormat_Python.SetValue(self.ColDict['Format_Python'])    
+            maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'Format_Python')
+            if maxLen < 1:
+                wx.MessageBox('Error %d getting [OutputColumns].[Format_Python] field length.' % maxLen, 'Error',
+                    wx.OK | wx.ICON_INFORMATION)
+                return 0
+            if len(self.ColDict['Format_Python']) > maxLen:
+                wx.MessageBox('Max length for Python Format is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.tcFormat_Python.SetValue(self.ColDict['Format_Python'][:(maxLen)])
+                self.tcFormat_Python.SetFocus()
+                return 0
+            if self.ColDict['Format_Python'] == '':
+                self.ColDict['Format_Python'] = None # store Null instead of empty string
 
-        self.ColDict['Format_Python'] = " ".join(self.tcFormat_Python.GetValue().split())
-        print "Contents Format:", self.ColDict['Format_Python']
-        if self.ColDict['Format_Python'] == '':
-            self.tcFormat_Python.SetValue(self.ColDict['Format_Python'])    
-        maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'Format_Python')
-        if maxLen < 1:
-            wx.MessageBox('Error %d getting [OutputColumns].[Format_Python] field length.' % maxLen, 'Error',
-                wx.OK | wx.ICON_INFORMATION)
-            return 0
-        if len(self.ColDict['Format_Python']) > maxLen:
-            wx.MessageBox('Max length for Python Format is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
-                wx.OK | wx.ICON_INFORMATION)
-            self.tcFormat_Python.SetValue(self.ColDict['Format_Python'][:(maxLen)])
-            self.tcFormat_Python.SetFocus()
-            return 0
-        if self.ColDict['Format_Python'] == '':
-            self.ColDict['Format_Python'] = None # store Null instead of empty string
-
-        self.ColDict['Format_Excel'] = " ".join(self.tcFormat_Excel.GetValue().split())
-        print "Contents Format:", self.ColDict['Format_Excel']
-        if self.ColDict['Format_Excel'] == '':
-            self.tcFormat_Excel.SetValue(self.ColDict['Format_Excel'])    
-        maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'Format_Excel')
-        if maxLen < 1:
-            wx.MessageBox('Error %d getting [OutputColumns].[Format_Excel] field length.' % maxLen, 'Error',
-                wx.OK | wx.ICON_INFORMATION)
-            return 0
-        if len(self.ColDict['Format_Excel']) > maxLen:
-            wx.MessageBox('Max length for Excel Format is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
-                wx.OK | wx.ICON_INFORMATION)
-            self.tcFormat_Excel.SetValue(self.ColDict['Format_Excel'][:(maxLen)])
-            self.tcFormat_Excel.SetFocus()
-            return 0
-        if self.ColDict['Format_Excel'] == '':
-            self.ColDict['Format_Excel'] = None # store Null instead of empty string
+            self.ColDict['Format_Excel'] = " ".join(self.tcFormat_Excel.GetValue().split())
+            print "Contents Format:", self.ColDict['Format_Excel']
+            if self.ColDict['Format_Excel'] == '':
+                self.tcFormat_Excel.SetValue(self.ColDict['Format_Excel'])    
+            maxLen = scidb.lenOfVarcharTableField('OutputColumns', 'Format_Excel')
+            if maxLen < 1:
+                wx.MessageBox('Error %d getting [OutputColumns].[Format_Excel] field length.' % maxLen, 'Error',
+                    wx.OK | wx.ICON_INFORMATION)
+                return 0
+            if len(self.ColDict['Format_Excel']) > maxLen:
+                wx.MessageBox('Max length for Excel Format is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.tcFormat_Excel.SetValue(self.ColDict['Format_Excel'][:(maxLen)])
+                self.tcFormat_Excel.SetFocus()
+                return 0
+            if self.ColDict['Format_Excel'] == '':
+                self.ColDict['Format_Excel'] = None # store Null instead of empty string
 
         return 1 # everything validated
    
