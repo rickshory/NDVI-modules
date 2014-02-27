@@ -1507,15 +1507,27 @@ class Dialog_MakeDataset(wx.Dialog):
                     return
                 iPreviewRows = 10
                 oXL.Workbooks.Add()
+                #remove any extra sheets
+# following doesn't work, apparently because Delete fails to
+#  delete the worksheet, no error or message, so infinte loop
+#                oXL.Application.DisplayAlerts = False
+#                while oXL.ActiveWorkbook.Sheets.Count > 1:
+#                    oXL.ActiveWorkbook.ActiveSheet.Delete
+#                oXL.Application.DisplayAlerts = True
+
                 if self.sourceTable == 'OutputBooks':
                     wx.MessageBox('Making Books is not implemented yet', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
                 if self.sourceTable == 'OutputSheets':
+                    iSheetID = self.recID
                     dsSheet = 1
                     dsRow = 1
                     dsCol = 1
-
+                    print "Excel workbook has this many sheets:", oXL.ActiveWorkbook.Sheets.Count
+                    # name the worksheet
+                    oXL.Sheets(1).Name = self.stItemName
+                    #set up the column headings
                     stSQL = "SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.ColumnHeading,\n" \
                         "OutputColumns.AggType, \n" \
                         "OutputColumns.Format_Excel, OutputColumns.ListingOrder\n" \
@@ -1524,10 +1536,25 @@ class Dialog_MakeDataset(wx.Dialog):
                         "OutputColumns.Format_Excel, OutputColumns.ListingOrder\n" \
                         "HAVING (((OutputColumns.WorksheetID) = ?))\n" \
                         "ORDER BY OutputColumns.ListingOrder;"
-                    scidb.curD.execute(stSQL, (self.recID,))
+                    scidb.curD.execute(stSQL, (iSheetID,))
                     recs = scidb.curD.fetchall()
                     for rec in recs:
                         oXL.Cells(dsRow,rec['ListingOrder']).Value = rec['ColumnHeading']
+                        # set column formats here
+                        
+                    # use the row generator
+                    sheetRows = scidb.generateSheetRows(iSheetID)
+                    iNumRowsToPreview = 10
+                    iPreviewCt = 0
+                    for dataRow in sheetRows:
+                        # yielded object is list with as many members as there grid columns
+                        iPreviewCt += 1
+                        if iPreviewCt > iNumRowsToPreview:
+                            break
+                        dsRow += 1
+                        for dsCol in range(len(dataRow)):
+                            oXL.Cells(dsRow,dsCol+1).Value = dataRow[dsCol]
+                        
 #                oXL.Cells(1,1).Value = "Hello"
             return # end of if Excel
 
