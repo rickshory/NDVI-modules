@@ -3,6 +3,12 @@ import os, sys, re, cPickle, datetime
 import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
+try:
+    import win32com.client
+    hasCom = True
+except ImportError:
+    hasCom = False
+
 
 ID_ADD_BOOK = 101
 ID_ADD_SHEET = 201
@@ -1448,12 +1454,12 @@ class Dialog_MakeDataset(wx.Dialog):
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
         gRow += 1
-##
+
         self.ckPreview = wx.CheckBox(self, label="Preview only")
         mkDtSetSiz.Add(self.ckPreview, pos=(gRow, 0), span=(1, 2),
             flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
         self.ckPreview.SetValue(True)
-##
+
         self.btnMake = wx.Button(self, label="Make", size=(90, 28))
         self.btnMake.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnMake(evt))
         mkDtSetSiz.Add(self.btnMake, pos=(gRow, 3), flag=wx.LEFT|wx.BOTTOM, border=5)
@@ -1471,7 +1477,7 @@ class Dialog_MakeDataset(wx.Dialog):
         stMsg = ''
         if self.rbExcel.GetValue():
             stMsg = 'Excel output is only available on Windows systems, and only ' \
-                'if you have Excel installed. Only Excel allows making a whole Book. ' \
+                'if you have Excel installed. Only Excel allows making a multi-Sheet Book. ' \
                 'With other options, you can make only one Sheet at a time.'
         if self.rbTabDelim.GetValue():
             stMsg = 'Tab delimited output allows making only one Sheet at a time.'
@@ -1486,8 +1492,56 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         Make the dataset
         """
-        wx.MessageBox('Not implemented yet', 'Info',
-            wx.OK | wx.ICON_INFORMATION)
+        if self.rbExcel.GetValue():
+            if hasCom == False: # we tested for this at the top of this module
+                wx.MessageBox('This operating system cannot make Excel files', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            else:
+                try:
+                    oXL = win32com.client.Dispatch("Excel.Application")
+                    oXL.Visible = 1
+                except:
+                    wx.MessageBox('Excel is not on this computer', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+                iPreviewRows = 10
+                oXL.Workbooks.Add()
+                if self.sourceTable == 'OutputBooks':
+                    wx.MessageBox('Making Books is not implemented yet', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+                if self.sourceTable == 'OutputSheets':
+                    dsSheet = 1
+                    dsRow = 1
+                    dsCol = 1
+
+                    stSQL = "SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.ColumnHeading,\n" \
+                        "OutputColumns.AggType, \n" \
+                        "OutputColumns.Format_Excel, OutputColumns.ListingOrder\n" \
+                        "FROM OutputColumns GROUP BY OutputColumns.WorksheetID, OutputColumns.ColumnHeading,\n" \
+                        "OutputColumns.AggType, \n" \
+                        "OutputColumns.Format_Excel, OutputColumns.ListingOrder\n" \
+                        "HAVING (((OutputColumns.WorksheetID) = ?))\n" \
+                        "ORDER BY OutputColumns.ListingOrder;"
+                    scidb.curD.execute(stSQL, (self.recID,))
+                    recs = scidb.curD.fetchall()
+                    for rec in recs:
+                        oXL.Cells(dsRow,rec['ListingOrder']).Value = rec['ColumnHeading']
+#                oXL.Cells(1,1).Value = "Hello"
+            return # end of if Excel
+
+        if self.rbTabDelim.GetValue():
+            wx.MessageBox('Tab delimited output is not implemented yet', 'Info',
+                wx.OK | wx.ICON_INFORMATION)
+            return # end of if Tab delimited
+        if self.rbCommaDelim.GetValue():
+            wx.MessageBox('CSV output is not implemented yet', 'Info',
+                wx.OK | wx.ICON_INFORMATION)
+            return # end of if CSV
+        
+                
+
 
     def onClick_BtnCancel(self, event):
         """
