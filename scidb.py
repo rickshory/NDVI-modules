@@ -765,7 +765,7 @@ def solarCorrection(stDate, fLongitude):
     fCorr = fCorr + equationOfTime(stDate)
     return datetime.timedelta(minutes = fCorr)
 
-def generateSheetRows(sheetID):
+def generateSheetRows(sheetID, formatValues = True):
     """
     Given a record ID in the table 'OutputSheets',
     Generates the rows of the dataset
@@ -878,10 +878,16 @@ def generateSheetRows(sheetID):
                 stFmtPy = rec['Format_Python']
                 stFmtXl = rec['Format_Excel']
                 if rec['ColType'] == "Timestamp":
-                    if stFmtPy == None:
-                        lData[iVisColIndex] = dtUTTimeNode.strftime(sFmtFullDateTime) #default
-                    else:
-                        lData[iVisColIndex] = dtUTTimeNode.strftime(stFmtPy)
+                    if formatValues == True:
+                        if stFmtPy == None:
+                            lData[iVisColIndex] = dtUTTimeNode.strftime(sFmtFullDateTime) #default
+                        else:
+                            try:
+                                lData[iVisColIndex] = dtUTTimeNode.strftime(stFmtPy)
+                            except:
+                                lData[iVisColIndex] = 'format error'
+                    else: # use default format that preserves all date/time information
+                        lData[iVisColIndex] = dtUTTimeNode.strftime(sFmtFullDateTime)
                     # dress this up for other formats later
                 if rec['ColType'] == "Constant":
                     lData[iVisColIndex] = rec['Constant']
@@ -889,16 +895,9 @@ def generateSheetRows(sheetID):
                     lData[iVisColIndex] = rec['Formula']
                     # figure out how to resolve formulas; for now just write them in
                 if rec['ColType'] == "Aggregate":
-#                    print "colDict:", colDict
-#                    curD.execute('DROP TABLE IF EXISTS _tmp_Values;')
-#                    stSQL = 'CREATE TABLE _tmp_Values ( ' \
-#                            'Timestamp timestamp, ' \
-#                            'Val FLOAT NOT NULL );'
-#                    curD.execute(stSQL)
                     # There may be multiple OutputColumns records that match on
                     #  ListingOrder, Column Heading, Aggregation Type, and Format
                     #  in this case, aggregate over all of them to produce cell contents.
-                    #  Do this by collecting all items before performing aggregation
                     if colDict['AggType'] == 'StDev': # not implemented yet
                         lData[iVisColIndex] = rec['AggType']
                     else:
@@ -921,10 +920,13 @@ def generateSheetRows(sheetID):
                         curD.execute(stSQL, (sheetID, colDict['ListingOrder'] ,dtUTTimeBegin, dtUTTimeEnd))
                         rec = curD.fetchone()
                         if rec['Agg'] != None:
-                            if stFmtPy == None:
-                                lData[iVisColIndex] = str(rec['Agg'])
-                            else:
-                                lData[iVisColIndex] = stFmtPy % rec['Agg']
+                            if formatValues == True:
+                                if stFmtPy == None:
+                                    lData[iVisColIndex] = str(rec['Agg'])
+                                else:
+                                    lData[iVisColIndex] = stFmtPy % rec['Agg']
+                            else: # deliver the value as a number
+                                lData[iVisColIndex] = rec['Agg']
 
             yield lData
    

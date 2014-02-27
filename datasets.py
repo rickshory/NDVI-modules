@@ -1521,7 +1521,6 @@ class Dialog_MakeDataset(wx.Dialog):
                     wx.MessageBox('Excel is not on this computer', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
-                iPreviewRows = 10
                 oXL.Workbooks.Add()
                 #remove any extra sheets
 # following doesn't work, apparently because Delete fails to
@@ -1556,7 +1555,12 @@ class Dialog_MakeDataset(wx.Dialog):
                     recs = scidb.curD.fetchall()
                     for rec in recs:
                         oXL.Cells(dsRow,rec['ListingOrder']).Value = rec['ColumnHeading']
-                        # set column formats here
+                        #apply column formats
+                        if rec['Format_Excel'] != None:
+                            try:
+                                oXL.ActiveSheet.Columns(rec['ListingOrder']).NumberFormat = rec['Format_Excel']
+                            except:
+                                print 'Invalid Excel format, column ' + str(rec['ListingOrder'])
 
                     if self.ckPreview.GetValue():
                         iNumRowsToPreview = self.spinPvwRows.GetValue()
@@ -1565,7 +1569,8 @@ class Dialog_MakeDataset(wx.Dialog):
                     iPreviewCt = 0
 
                     # use the row generator
-                    sheetRows = scidb.generateSheetRows(iSheetID)
+                    waitForExcel = wx.BusyInfo("Making Excel output")
+                    sheetRows = scidb.generateSheetRows(iSheetID, formatValues = False)
                     for dataRow in sheetRows:
                         # yielded object is list with as many members as there grid columns
                         iPreviewCt += 1
@@ -1574,7 +1579,7 @@ class Dialog_MakeDataset(wx.Dialog):
                         dsRow += 1
                         for dsCol in range(len(dataRow)):
                             oXL.Cells(dsRow,dsCol+1).Value = dataRow[dsCol]
-                        
+                    del waitForExcel    
 #                oXL.Cells(1,1).Value = "Hello"
             return # end of if Excel
 
