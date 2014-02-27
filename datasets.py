@@ -1455,10 +1455,20 @@ class Dialog_MakeDataset(wx.Dialog):
 
         gRow += 1
 
-        self.ckPreview = wx.CheckBox(self, label="Preview only")
-        mkDtSetSiz.Add(self.ckPreview, pos=(gRow, 0), span=(1, 2),
+        self.ckPreview = wx.CheckBox(self, label="Preview, Rows:")
+        mkDtSetSiz.Add(self.ckPreview, pos=(gRow, 0), span=(1, 1),
             flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
         self.ckPreview.SetValue(True)
+        self.ckPreview.Bind(wx.EVT_CHECKBOX, self.onCkPreview)
+
+        self.spinPvwRows = wx.SpinCtrl(self, -1, '', size=(50,-1))
+        self.spinPvwRows.SetRange(1,100)
+        self.spinPvwRows.SetValue(10)
+        mkDtSetSiz.Add(self.spinPvwRows, pos=(gRow, 1), span=(1, 1),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+
+#        mkDtSetSiz.Add(wx.StaticText(self, -1, ' Rows'),
+#                     pos=(gRow, 2), flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
 
         self.btnMake = wx.Button(self, label="Make", size=(90, 28))
         self.btnMake.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnMake(evt))
@@ -1469,6 +1479,12 @@ class Dialog_MakeDataset(wx.Dialog):
         
         self.SetSizer(mkDtSetSiz)
         self.SetAutoLayout(1)
+
+    def onCkPreview(self, evt):
+        if self.ckPreview.GetValue():
+            self.spinPvwRows.Enable(True)
+        else:
+            self.spinPvwRows.Enable(False)
 
     def giveRBInfo(self, event):
         """
@@ -1541,11 +1557,15 @@ class Dialog_MakeDataset(wx.Dialog):
                     for rec in recs:
                         oXL.Cells(dsRow,rec['ListingOrder']).Value = rec['ColumnHeading']
                         # set column formats here
-                        
+
+                    if self.ckPreview.GetValue():
+                        iNumRowsToPreview = self.spinPvwRows.GetValue()
+                    else:
+                        iNumRowsToPreview = 1000000 # improve this
+                    iPreviewCt = 0
+
                     # use the row generator
                     sheetRows = scidb.generateSheetRows(iSheetID)
-                    iNumRowsToPreview = 10
-                    iPreviewCt = 0
                     for dataRow in sheetRows:
                         # yielded object is list with as many members as there grid columns
                         iPreviewCt += 1
