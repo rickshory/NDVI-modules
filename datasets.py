@@ -1521,15 +1521,11 @@ class Dialog_MakeDataset(wx.Dialog):
                     wx.MessageBox('Excel is not on this computer', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
-                oXL.Workbooks.Add()
+                bXL = oXL.Workbooks.Add()
                 #remove any extra sheets
-# following doesn't work, apparently because Delete fails to
-#  delete the worksheet, no error or message, so infinte loop
-#                oXL.Application.DisplayAlerts = False
-#                while oXL.ActiveWorkbook.Sheets.Count > 1:
-#                    oXL.ActiveWorkbook.ActiveSheet.Delete
-#                oXL.Application.DisplayAlerts = True
-
+                while bXL.Sheets.Count > 1:
+#                    print "Workbook has this many sheets:", bXL.Sheets.Count
+                    bXL.Sheets(1).Delete()
                 if self.sourceTable == 'OutputBooks':
                     wx.MessageBox('Making Books is not implemented yet', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
@@ -1539,9 +1535,10 @@ class Dialog_MakeDataset(wx.Dialog):
                     dsSheet = 1
                     dsRow = 1
                     dsCol = 1
-                    print "Excel workbook has this many sheets:", oXL.ActiveWorkbook.Sheets.Count
                     # name the worksheet
-                    oXL.Sheets(1).Name = self.stItemName
+                    shXL = bXL.Sheets(1)
+                    shXL.Name = self.stItemName
+                    
                     #set up the column headings
                     stSQL = "SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.ColumnHeading,\n" \
                         "OutputColumns.AggType, \n" \
@@ -1554,11 +1551,11 @@ class Dialog_MakeDataset(wx.Dialog):
                     scidb.curD.execute(stSQL, (iSheetID,))
                     recs = scidb.curD.fetchall()
                     for rec in recs:
-                        oXL.Cells(dsRow,rec['ListingOrder']).Value = rec['ColumnHeading']
+                        shXL.Cells(dsRow,rec['ListingOrder']).Value = rec['ColumnHeading']
                         #apply column formats
                         if rec['Format_Excel'] != None:
                             try:
-                                oXL.ActiveSheet.Columns(rec['ListingOrder']).NumberFormat = rec['Format_Excel']
+                                shXL.Columns(rec['ListingOrder']).NumberFormat = rec['Format_Excel']
                             except:
                                 print 'Invalid Excel format, column ' + str(rec['ListingOrder'])
 
@@ -1572,14 +1569,15 @@ class Dialog_MakeDataset(wx.Dialog):
                     waitForExcel = wx.BusyInfo("Making Excel output")
                     sheetRows = scidb.generateSheetRows(iSheetID, formatValues = False)
                     for dataRow in sheetRows:
-                        # yielded object is list with as many members as there grid columns
+                        # yielded object is list with as many members as there are grid columns
                         iPreviewCt += 1
                         if iPreviewCt > iNumRowsToPreview:
                             break
                         dsRow += 1
                         for dsCol in range(len(dataRow)):
-                            oXL.Cells(dsRow,dsCol+1).Value = dataRow[dsCol]
+                            shXL.Cells(dsRow,dsCol+1).Value = dataRow[dsCol]
                     del waitForExcel    
+                shXL.Columns.AutoFit()
 #                oXL.Cells(1,1).Value = "Hello"
             return # end of if Excel
 
