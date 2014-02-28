@@ -1554,6 +1554,35 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         Make the dataset
         """
+        # test if our file save info is valid
+        stDir = self.tcDir.GetValue()
+        if not os.path.exists(stDir):
+            stDir = os.path.expanduser('~') # user doesn't like? next time choose one
+            self.tcDir.SetValue(stDir)
+        stFileName = self.tcFilename.GetValue()
+        if stFileName[0] == '(': # assume '(default filename)' was sitting there
+            stFileName = self.stItemName #default
+        stFileName = "".join(x for x in stFileName if x.isalnum())
+        self.tcFilename.SetValue(stFileName)
+        stSavePath = os.path.join(stDir, stFileName)
+        print "stSavePath:", stSavePath
+        if self.rbExcel.GetValue():
+            stSavePath = stSavePath + '.xlsx'
+        if self.rbTabDelim.GetValue():
+            stSavePath = stSavePath + '.txt'
+        if self.rbCommaDelim.GetValue():
+            stSavePath = stSavePath + '.csv'
+        if os.path.isfile(stSavePath):
+            stMsg = '"' + stSavePath + '" already exists. Overwrite?'
+            dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            print "result of Yes/No dialog:", result
+            if result == wx.ID_YES:
+                os.remove(stSavePath)
+            else:
+                return
+
         if self.rbExcel.GetValue():
             if hasCom == False: # we tested for this at the top of this module
                 wx.MessageBox('This operating system cannot make Excel files', 'Info',
@@ -1576,6 +1605,13 @@ class Dialog_MakeDataset(wx.Dialog):
                     wx.MessageBox('Making Books is not implemented yet', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
+                try: # before we go any further
+                    bXL.SaveAs(stSavePath) # make sure there's nothing invalid about the filename
+                except:
+                    wx.MessageBox('Can not save file "' + stSavePath + '"', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+                    
                 if self.sourceTable == 'OutputSheets':
                     iSheetID = self.recID
                     dsSheet = 1
@@ -1624,6 +1660,7 @@ class Dialog_MakeDataset(wx.Dialog):
                             shXL.Cells(dsRow,dsCol+1).Value = dataRow[dsCol]
                     del waitForExcel    
                 shXL.Columns.AutoFit()
+                bXL.Save() 
 #                oXL.Cells(1,1).Value = "Hello"
             return # end of if Excel
 
