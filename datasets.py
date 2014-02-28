@@ -1513,7 +1513,7 @@ class Dialog_MakeDataset(wx.Dialog):
         sheetNoteBlocking1.SetFont(bolded)
         mkDtSetSiz.Add(sheetNoteBlocking1, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT, border=5)
         gRow += 1
-        sheetNoteBlocking2 = wx.StaticText(self, -1, ' Making a full dataset can take a long time.')
+        sheetNoteBlocking2 = wx.StaticText(self, -1, ' A full dataset can take a long time.')
         sheetNoteBlocking2.SetFont(bolded)
         mkDtSetSiz.Add(sheetNoteBlocking2, pos=(gRow, 0), span=(1, 5), flag=wx.LEFT|wx.BOTTOM, border=5)
 
@@ -1554,6 +1554,23 @@ class Dialog_MakeDataset(wx.Dialog):
         gRow += 1
         gRow += 1
 
+        # offer some estimate diagnostics
+        self.tcProgress.AppendText('Estimate for full dataset: ')
+        fEstSecsPerQuery = 0.2
+        iNumRows = self.bkDict['CtOfDays'] * self.bkDict['NumberOfTimeSlicesPerDay']
+        if self.sourceTable == 'OutputSheets':
+            self.tcProgress.AppendText(str(iNumRows) + ' rows; ')
+            iNumQueries = self.shDict['CtAggCols'] + 1
+            fNumSecsWorking = iNumRows * iNumQueries * fEstSecsPerQuery
+            self.tcProgress.AppendText('working time, %d seconds ' % fNumSecsWorking)
+        else: # book
+            self.tcProgress.AppendText('%d rows in each of %d sheets' % (iNumRows, len(lShs)))
+            self.tcProgress.AppendText(', for a total of %d rows; ' % ((iNumRows * len(lShs)),))
+            iTotQueries = 0
+            for shDict in lShs:
+                iTotQueries += (shDict['CtAggCols'] + 1)
+            fNumSecsWorking = iNumRows * iTotQueries * fEstSecsPerQuery
+            self.tcProgress.AppendText('Estimated working time for whole dataset, %d seconds ' % fNumSecsWorking)
         self.SetSizer(mkDtSetSiz)
         self.SetAutoLayout(1)
 
