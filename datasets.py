@@ -497,7 +497,7 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
                 ListingOrder = None)
             # set up some guesses to help the user
             # if this will be the 1st Sheet in this Book
-            stSQL = "SELECT MAX(CAST ListingOrder AS INTEGER) AS MaxLstOrd " \
+            stSQL = "SELECT MAX(CAST(ListingOrder AS INTEGER)) AS MaxLstOrd " \
                 "FROM OutputSheets WHERE BookID = ?;"
             scidb.curD.execute(stSQL, (self.parentRecID,))
             rec = scidb.curD.fetchone()
@@ -655,7 +655,7 @@ class InfoPanel_Sheet(scrolled.ScrolledPanel):
         except:
             # autocreate, 1 higher than previously existing
             print "self.parentRecID, to use in ListingOrder query:",  self.parentRecID
-            stSQL = "SELECT MAX(CAST(OutputSheets.ListingOrder) AS INTEGER) AS MaxLstOrd " \
+            stSQL = "SELECT MAX(CAST(OutputSheets.ListingOrder AS INTEGER)) AS MaxLstOrd " \
                 "FROM OutputSheets WHERE BookID = ?;"
             scidb.curD.execute(stSQL, (self.parentRecID,))
             rec = scidb.curD.fetchone()
@@ -1082,7 +1082,7 @@ class InfoPanel_Column(scrolled.ScrolledPanel):
         except:
             # autocreate, 1 higher than previously existing
             print "self.parentRecID, to use in ListingOrder query:",  self.parentRecID
-            stSQL = "SELECT MAX(CAST OutputColumns.ListingOrder AS INTEGER)) AS MaxLstOrd " \
+            stSQL = "SELECT MAX(CAST(OutputColumns.ListingOrder AS INTEGER)) AS MaxLstOrd " \
                     "FROM OutputColumns WHERE WorksheetID = ?;"
             scidb.curD.execute(stSQL, (self.parentRecID,))
             rec = scidb.curD.fetchone()
@@ -1538,16 +1538,18 @@ class Dialog_MakeDataset(wx.Dialog):
         if self.rbExcel.GetValue():
             stMsg = 'Excel output is only available on Windows systems, and only ' \
                 'if you have Excel installed. Only Excel allows making a multi-Sheet Book. ' \
-                'With other options, you can make only one Sheet at a time.'
+                'With other options, you can make only one Sheet at a time. \r' \
+                'With Excel, you will see the dataset as it builds. Other options do not show.'
         if self.rbTabDelim.GetValue():
-            stMsg = 'Tab delimited output allows making only one Sheet at a time.'
+            stMsg = 'Tab delimited output allows making only one Sheet at a time.\r' \
+                'You will not see the dataset as it builds. It builds as a file on disk.'
         if self.rbCommaDelim.GetValue():
             stMsg = 'CSV output allows making only one Sheet at a time. If you have ' \
                 'a comma within any data item, it will break that row into a new ' \
-                'column at that point.'
+                'column at that point.\r' \
+                'You will not see the dataset as it builds. It builds as a file on disk.'
         self.tcOutputOptInfo.SetValue(stMsg)
         
-
     def onClick_BtnMake(self, event):
         """
         Make the dataset
@@ -2026,30 +2028,45 @@ class SetupDatasetsPanel(wx.Panel):
                 # wxEVT_TREE_SEL_CHANGED displays the information in the details panel
             return
 
-##
         if opID == ID_MAKE_BOOK or opID == ID_MAKE_SHEET:
             print "operation is to make the dataset"
+##
+            # test if there is nothing to output
+            # Book with no Sheets
+            if treeItemPyData[0] == 'OutputBooks':
+                stSQL = 'SELECT ID FROM OutputSheets WHERE BookID = ?;'
+                scidb.curD.execute(stSQL, (treeItemPyData[1],))
+                recs = scidb.curD.fetchall()
+                if len(recs) == 0:
+                    wx.MessageBox('Book has no Sheets. Nothing to output.', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+                # Book has Sheets but check if they have no columns
+                stSQL = 'SELECT OutputColumns.ID ' \
+                    'FROM OutputColumns LEFT JOIN OutputSheets ' \
+                    'ON OutputColumns.WorksheetID = OutputSheets.ID ' \
+                    'WHERE (((OutputSheets.BookID)=?));'
+                scidb.curD.execute(stSQL, (treeItemPyData[1],))
+                recs = scidb.curD.fetchall()
+                if len(recs) == 0:
+                    wx.MessageBox('Book Sheets have no Columns. Nothing to output.', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return                
+            # Sheet with no Columns
+            if treeItemPyData[0] == 'OutputSheets':
+                stSQL = 'SELECT ID FROM OutputColumns WHERE WorksheetID = ?;'
+                scidb.curD.execute(stSQL, (treeItemPyData[1],))
+                recs = scidb.curD.fetchall()
+                if len(recs) == 0:
+                    wx.MessageBox('Sheet has no Columns. Nothing to output.', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+##
             dia = Dialog_MakeDataset(self, wx.ID_ANY, parentTableRec = treeItemPyData)
             result = dia.ShowModal()
             # dialog is exited using EndModal, and comes back here
             print "Modal dialog result:", result
-            # test of pulling things out of the modal dialog
-#            self.newSheetName = dia.pnl.tcSheetName.GetValue()
-#            print "Name of new sheet, from the Modal:", self.newSheetName
-#            self.newRecID = dia.pnl.newRecID
-#            print "record ID from the Modal:", self.newRecID
-            dia.Destroy()
-#            if result == 1: # new record successfully created
-#                # create a new branch on the tree
-#                self.sheetBranchID = self.dsTree.AppendItem(self.tree_item_clicked, self.newSheetName)
-#                self.dsTree.SetPyData(self.sheetBranchID, ('OutputSheets', self.newRecID))
-#                # select it
-#                self.dsTree.SelectItem(self.sheetBranchID)
-#                #generates wxEVT_TREE_SEL_CHANGING and wxEVT_TREE_SEL_CHANGED events
-                # wxEVT_TREE_SEL_CHANGED displays the information in the details panel
             return
-
-##
         
         wx.MessageBox('Not implemented yet', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
