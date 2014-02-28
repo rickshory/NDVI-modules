@@ -1,4 +1,4 @@
-import wx, sqlite3, datetime, copy
+import wx, sqlite3, datetime, copy, csv
 import os, sys, re, cPickle, datetime
 import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
@@ -1360,31 +1360,78 @@ class Dialog_MakeDataset(wx.Dialog):
         print "Initializing Dialog_MakeDataset; parentTableRec:", parentTableRec
         self.sourceTable = parentTableRec[0] # 'OutputSheets' or 'OutputBooks'
         self.recID = parentTableRec[1] # the record ID in that table
-        if self.sourceTable == 'OutputBooks':
-            stItem = 'Book'
-            stSQL = 'SELECT BookName AS ItmName FROM OutputBooks WHERE ID = ?;'
-        else:
+        stSQL_Bk = """
+            SELECT ID, BookName, Longitude, HourOffset, NumberOfTimeSlicesPerDay,
+            OutputDataStart, OutputDataEnd,
+            PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks,
+             COALESCE(OutputDataStart, (SELECT MIN(Date) FROM DataDates)) AS EffectiveStartDay, 
+             COALESCE(OutputDataEnd, (SELECT MAX(Date) FROM DataDates)) AS EffectiveEndDay,
+             (SELECT COUNT(Date) FROM DataDates 
+            WHERE Date >= (SELECT COALESCE(B1.OutputDataStart,
+            (SELECT MIN(D1.Date) FROM DataDates AS D1)) AS St FROM OutputBooks AS B1
+            WHERE B1.ID = OutputBooks.ID) 
+            AND Date <= (SELECT COALESCE(B2.OutputDataEnd,
+            (SELECT MAX(D2.Date) FROM DataDates AS D2)) AS En FROM OutputBooks AS B2
+            WHERE B2.ID = OutputBooks.ID))
+             AS CtOfDays
+            FROM OutputBooks WHERE OutputBooks.ID = ?;
+        """
+        stSQL_SheetsForBook = """
+            SELECT ID, BookID, WorksheetName, DataSetNickname, ListingOrder,
+            (SELECT COUNT(C1.ID) FROM OutputColumns AS C1 
+            WHERE C1.WorksheetID = OutputSheets.ID) AS CtCols, 
+            (SELECT COUNT(C2.ID) FROM OutputColumns AS C2 
+            WHERE C2.WorksheetID = OutputSheets.ID 
+            AND C2.ColType = 'Aggregate') AS CtAggCols 
+            FROM OutputSheets
+            WHERE BookID = ?
+            ORDER BY ListingOrder;        
+        """
+        stSQL_Sheet = """
+            SELECT ID, BookID, WorksheetName, DataSetNickname, ListingOrder,
+            (SELECT COUNT(C1.ID) FROM OutputColumns AS C1 
+            WHERE C1.WorksheetID = OutputSheets.ID) AS CtCols, 
+            (SELECT COUNT(C2.ID) FROM OutputColumns AS C2 
+            WHERE C2.WorksheetID = OutputSheets.ID 
+            AND C2.ColType = 'Aggregate') AS CtAggCols 
+            FROM OutputSheets
+            WHERE ID = ?;        
+        """
+        if self.sourceTable == 'OutputSheets':
             stItem = 'Sheet'
-            stSQL = 'SELECT WorksheetName AS ItmName FROM OutputSheets WHERE ID = ?;'
-        scidb.curD.execute(stSQL, (self.recID,))
-        rec = scidb.curD.fetchone()
-        if rec['ItmName'] == None:
-            self.stItemName = '(unavailable)'
+            # get the sheet information
+            scidb.curD.execute(stSQL_Sheet, (self.recID,))
+            rec = scidb.curD.fetchone()
+            self.shDict = {} # store sheet info in dictionary
+            for recName in rec.keys():
+                self.shDict[recName] = rec[recName]
+            self.stItemName = self.shDict['WorksheetName']
+            # get the sheet's book information
+            scidb.curD.execute(stSQL_Bk, (self.shDict['BookID'],))
+            rec = scidb.curD.fetchone()
+            self.bkDict = {} # store book info in dictionary
+            for recName in rec.keys():
+                self.bkDict[recName] = rec[recName]
         else:
-            self.stItemName = rec['ItmName']
-#        self.parentTable = 'OutputBooks' # the parent table
-#        stSQL = "SELECT BookID FROM OutputSheets WHERE ID = ?;"
-#        scidb.curD.execute(stSQL, (self.recID,))
-#        rec = scidb.curD.fetchone()
-#        self.parentRecID = rec['BookID'] # the foreign key ID in the parent table
-        # get existing record
-#        stSQL = "SELECT * FROM OutputSheets WHERE ID = ?;"
-#        scidb.curD.execute(stSQL, (self.recID,))
-#        rec = scidb.curD.fetchone()
-#            ShDict = copy.copy(rec) # this crashes
-#        self.ShDict = {}
-#        for recName in rec.keys():
-#            self.ShDict[recName] = rec[recName]
+            stItem = 'Book'
+            # get the book information
+            scidb.curD.execute(stSQL_Bk, (self.recID,))
+            rec = scidb.curD.fetchone()
+            self.bkDict = {} # store book info in dictionary
+            for recName in rec.keys():
+                self.bkDict[recName] = rec[recName]
+            self.stItemName = self.bkDict['BookName']
+            # get info for the book's sheets
+            scidb.curD.execute(stSQL_SheetsForBook, (self.recID,))
+            recs = scidb.curD.fetchall()
+            # store as a list of dictionaries
+            lShs = []
+            for rec in recs:
+                shDict = {}
+                for recName in rec.keys():
+                    shDict[recName] = rec[recName]
+                lShs.append(copy.copy(shDict))                  
+
         self.SetBackgroundColour(wx.WHITE)
         mkDtSetSiz = wx.GridBagSizer(1, 1)
         note1 = wx.StaticText(self, -1, 'Make Dataset For: ')
@@ -1415,7 +1462,7 @@ class Dialog_MakeDataset(wx.Dialog):
         self.rbTabDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
         
         gRow += 1
-        self.rbCommaDelim = wx.RadioButton(self, label='Comma-seperated values ("CSV")')
+        self.rbCommaDelim = wx.RadioButton(self, label='Comma-separated values ("CSV")')
         mkDtSetSiz.Add(self.rbCommaDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbCommaDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
@@ -1668,6 +1715,7 @@ class Dialog_MakeDataset(wx.Dialog):
             wx.MessageBox('Tab delimited output is not implemented yet', 'Info',
                 wx.OK | wx.ICON_INFORMATION)
             return # end of if Tab delimited
+
         if self.rbCommaDelim.GetValue():
             wx.MessageBox('CSV output is not implemented yet', 'Info',
                 wx.OK | wx.ICON_INFORMATION)
