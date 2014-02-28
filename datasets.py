@@ -2034,30 +2034,30 @@ class SetupDatasetsPanel(wx.Panel):
             # test if there is nothing to output
             # Book with no Sheets
             if treeItemPyData[0] == 'OutputBooks':
-                stSQL = 'SELECT ID FROM OutputSheets WHERE BookID = ?;'
+                stSQL = 'SELECT Count(ID) AS Ct FROM OutputSheets WHERE BookID = ?;'
                 scidb.curD.execute(stSQL, (treeItemPyData[1],))
-                recs = scidb.curD.fetchall()
-                if len(recs) == 0:
+                rec = scidb.curD.fetchone()
+                if rec['Ct'] == 0:
                     wx.MessageBox('Book has no Sheets. Nothing to output.', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
                 # Book has Sheets but check if they have no columns
-                stSQL = 'SELECT OutputColumns.ID ' \
+                stSQL = 'SELECT Count(OutputColumns.ID) AS Ct ' \
                     'FROM OutputColumns LEFT JOIN OutputSheets ' \
                     'ON OutputColumns.WorksheetID = OutputSheets.ID ' \
                     'WHERE (((OutputSheets.BookID)=?));'
                 scidb.curD.execute(stSQL, (treeItemPyData[1],))
-                recs = scidb.curD.fetchall()
-                if len(recs) == 0:
+                rec = scidb.curD.fetchone()
+                if rec['Ct'] == 0:
                     wx.MessageBox('Book Sheets have no Columns. Nothing to output.', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return                
             # Sheet with no Columns
             if treeItemPyData[0] == 'OutputSheets':
-                stSQL = 'SELECT ID FROM OutputColumns WHERE WorksheetID = ?;'
+                stSQL = 'SELECT Count(ID) AS Ct FROM OutputColumns WHERE WorksheetID = ?;'
                 scidb.curD.execute(stSQL, (treeItemPyData[1],))
-                recs = scidb.curD.fetchall()
-                if len(recs) == 0:
+                rec = scidb.curD.fetchone()
+                if rec['Ct'] == 0:
                     wx.MessageBox('Sheet has no Columns. Nothing to output.', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
