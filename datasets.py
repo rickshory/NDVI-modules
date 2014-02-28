@@ -1420,7 +1420,29 @@ class Dialog_MakeDataset(wx.Dialog):
         self.rbCommaDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
-        mkDtSetSiz.Add((0, 10), pos=(gRow, 0), span=(1, 3))
+        mkDtSetSiz.Add((0, 10), pos=(gRow, 0), span=(1, 3)) # some space
+
+        gRow += 1
+#        self.btnBrowseDir = wx.Button(self, label="Dir", size=(90, 28))
+        self.btnBrowseDir = wx.Button(self, label="Dir", size=(-1, -1))
+        self.btnBrowseDir.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnGetDir(evt))
+        mkDtSetSiz.Add(self.btnBrowseDir, pos=(gRow, 0), flag=wx.LEFT, border=5)
+        
+        mkDtSetSiz.Add(wx.StaticText(self, -1, 'Filename:'),
+                     pos=(gRow, 1), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT, border=5)
+
+        self.tcFilename = wx.TextCtrl(self, -1)
+        mkDtSetSiz.Add(self.tcFilename, pos=(gRow, 2), span=(1, 3),
+            flag=wx.ALIGN_LEFT|wx.EXPAND, border=5)
+        self.tcFilename.SetValue('(default filename)')
+
+        gRow += 1
+        self.tcDir = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
+        mkDtSetSiz.Add(self.tcDir, pos=(gRow, 0), span=(2, 5),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        gRow += 1 # space for the 2 grid rows for tcDir
+        self.tcDir.SetValue('(save output in default directory)')
+
         
         gRow += 1
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
@@ -1442,11 +1464,11 @@ class Dialog_MakeDataset(wx.Dialog):
         gRow += 1
         sheetNoteBlocking1 = wx.StaticText(self, -1, 'NOTE: Making a dataset will block this application until complete.')
         sheetNoteBlocking1.SetFont(bolded)
-        mkDtSetSiz.Add(sheetNoteBlocking1, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        mkDtSetSiz.Add(sheetNoteBlocking1, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT, border=5)
         gRow += 1
         sheetNoteBlocking2 = wx.StaticText(self, -1, ' Making a full dataset can take a long time.')
         sheetNoteBlocking2.SetFont(bolded)
-        mkDtSetSiz.Add(sheetNoteBlocking2, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        mkDtSetSiz.Add(sheetNoteBlocking2, pos=(gRow, 0), span=(1, 5), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         mkDtSetSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
@@ -1476,9 +1498,31 @@ class Dialog_MakeDataset(wx.Dialog):
         self.btnCancel = wx.Button(self, label="Cancel", size=(90, 28))
         self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
         mkDtSetSiz.Add(self.btnCancel, pos=(gRow, 4), flag=wx.LEFT|wx.BOTTOM, border=5)
-        
+
+        gRow += 1
+        self.tcProgress = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE|wx.TE_READONLY)
+        mkDtSetSiz.Add(self.tcProgress, pos=(gRow, 0), span=(4, 5),
+            flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        gRow += 1 # space for the 4 grid rows for tcProgress
+        gRow += 1
+        gRow += 1
+
         self.SetSizer(mkDtSetSiz)
         self.SetAutoLayout(1)
+
+    def onClick_BtnGetDir(self, event):
+        """
+        Get the directory to save the file we are about to make
+        """
+        dlg = wx.DirDialog(self, "Choose a directory:",
+                           style=wx.DD_DEFAULT_STYLE
+                           #| wx.DD_DIR_MUST_EXIST
+                           #| wx.DD_CHANGE_DIR
+                           )
+        if dlg.ShowModal() == wx.ID_OK:
+            self.tcDir.SetValue(dlg.GetPath())
+#            print "You chose %s" % dlg.GetPath()
+        dlg.Destroy()
 
     def onCkPreview(self, evt):
         if self.ckPreview.GetValue():
