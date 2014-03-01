@@ -1405,6 +1405,9 @@ class Dialog_MakeDataset(wx.Dialog):
             self.shDict = {} # store sheet info in dictionary
             for recName in rec.keys():
                 self.shDict[recName] = rec[recName]
+            # also, store this dictionary in a 1-item list; same format as if multiple
+            self.lShs = []
+            self.lShs.append(copy.copy(self.shDict))
             self.stItemName = self.shDict['WorksheetName']
             # get the sheet's book information
             scidb.curD.execute(stSQL_Bk, (self.shDict['BookID'],))
@@ -1425,12 +1428,12 @@ class Dialog_MakeDataset(wx.Dialog):
             scidb.curD.execute(stSQL_SheetsForBook, (self.recID,))
             recs = scidb.curD.fetchall()
             # store as a list of dictionaries
-            lShs = []
+            self.lShs = []
             for rec in recs:
                 shDict = {}
                 for recName in rec.keys():
                     shDict[recName] = rec[recName]
-                lShs.append(copy.copy(shDict))                  
+                self.lShs.append(copy.copy(shDict))                  
 
         self.SetBackgroundColour(wx.WHITE)
         mkDtSetSiz = wx.GridBagSizer(1, 1)
@@ -1559,15 +1562,17 @@ class Dialog_MakeDataset(wx.Dialog):
         fEstSecsPerQuery = 0.2
         iNumRows = self.bkDict['CtOfDays'] * self.bkDict['NumberOfTimeSlicesPerDay']
         if self.sourceTable == 'OutputSheets':
-            self.tcProgress.AppendText(str(iNumRows) + ' rows; ')
+            self.iTotRowEstimate = iNumRows
+            self.tcProgress.AppendText(str(self.iTotRowEstimate) + ' rows; ')
             iNumQueries = self.shDict['CtAggCols'] + 1
             fNumSecsWorking = iNumRows * iNumQueries * fEstSecsPerQuery
             self.tcProgress.AppendText('working time, %d seconds ' % fNumSecsWorking)
         else: # book
-            self.tcProgress.AppendText('%d rows in each of %d sheets' % (iNumRows, len(lShs)))
-            self.tcProgress.AppendText(', for a total of %d rows; ' % ((iNumRows * len(lShs)),))
+            self.tcProgress.AppendText('%d rows in each of %d sheets' % (iNumRows, len(self.lShs)))
+            self.iTotRowEstimate = iNumRows * len(self.lShs)
+            self.tcProgress.AppendText(', for a total of %d rows; ' % self.iTotRowEstimate)
             iTotQueries = 0
-            for shDict in lShs:
+            for shDict in self.lShs:
                 iTotQueries += (shDict['CtAggCols'] + 1)
             fNumSecsWorking = iNumRows * iTotQueries * fEstSecsPerQuery
             self.tcProgress.AppendText('Estimated working time for whole dataset, %d seconds ' % fNumSecsWorking)
@@ -1665,26 +1670,26 @@ class Dialog_MakeDataset(wx.Dialog):
                 while bXL.Sheets.Count > 1:
 #                    print "Workbook has this many sheets:", bXL.Sheets.Count
                     bXL.Sheets(1).Delete()
-                if self.sourceTable == 'OutputBooks':
-                    wx.MessageBox('Making Books is not implemented yet', 'Info',
-                        wx.OK | wx.ICON_INFORMATION)
-                    return
+                shXL = bXL.Sheets(1)
+                boolSheetReady = True
                 try: # before we go any further
                     bXL.SaveAs(stSavePath) # make sure there's nothing invalid about the filename
                 except:
                     wx.MessageBox('Can not save file "' + stSavePath + '"', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
-                    
-                if self.sourceTable == 'OutputSheets':
-                    iSheetID = self.recID
-                    dsSheet = 1
+                for shDict in self.lShs:
+                    if boolSheetReady == False:
+                        shXL = bXL.Sheets.Add()
+                        boolSheetReady = True
+                        
+                    iSheetID = shDict['ID']
                     dsRow = 1
                     dsCol = 1
                     # name the worksheet
-                    shXL = bXL.Sheets(1)
-                    shXL.Name = self.stItemName
-                    
+#                    shXL = bXL.Sheets(1)
+                    shXL.Name = shDict['WorksheetName']
+                    boolSheetReady = False # sheet has been used, next loop will add a new one
                     #set up the column headings
                     stSQL = "SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.ColumnHeading,\n" \
                         "OutputColumns.AggType, \n" \
@@ -1712,7 +1717,7 @@ class Dialog_MakeDataset(wx.Dialog):
                     iPreviewCt = 0
 
                     # use the row generator
-                    waitForExcel = wx.BusyInfo("Making Excel output")
+#                    waitForExcel = wx.BusyInfo("Making Excel output")
                     sheetRows = scidb.generateSheetRows(iSheetID, formatValues = False)
                     for dataRow in sheetRows:
                         # yielded object is list with as many members as there are grid columns
@@ -1722,7 +1727,7 @@ class Dialog_MakeDataset(wx.Dialog):
                         dsRow += 1
                         for dsCol in range(len(dataRow)):
                             shXL.Cells(dsRow,dsCol+1).Value = dataRow[dsCol]
-                    del waitForExcel    
+#                    del waitForExcel    
                 shXL.Columns.AutoFit()
                 bXL.Save() 
 #                oXL.Cells(1,1).Value = "Hello"
