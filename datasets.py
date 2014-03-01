@@ -1648,7 +1648,12 @@ class Dialog_MakeDataset(wx.Dialog):
             dlg.Destroy()
             print "result of Yes/No dialog:", result
             if result == wx.ID_YES:
-                os.remove(stSavePath)
+                try:
+                    os.remove(stSavePath)
+                except:
+                    wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
             else:
                 return
 
@@ -1680,7 +1685,15 @@ class Dialog_MakeDataset(wx.Dialog):
                     return
                 for shDict in self.lShs:
                     if boolSheetReady == False:
-                        shXL = bXL.Sheets.Add()
+                        print shXL.Name
+                        sPrevShNm = shXL.Name
+                        #shXL = bXL.Sheets.Add() # this works
+                        #print shXL.Name # this works, and is the expected new sheet 1st in the book
+                        #shXL.Move(After=bXL.Sheets(sPrevShNm)) # this moves sheet to a new book, then crashes
+                        oXL.Worksheets.Add(After=oXL.Sheets(sPrevShNm)) # creats sheet, but 1st in the book
+                        #worksheets.Add(After=worksheets(worksheets.Count)) # creats sheet, but 1st in the book 
+                        shXL = oXL.ActiveSheet
+                        print shXL.Name
                         boolSheetReady = True
                         
                     iSheetID = shDict['ID']
