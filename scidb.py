@@ -772,7 +772,7 @@ def generateSheetRows(sheetID, formatValues = True):
     Everything else is determininstic based on values in the database tables
     Each row is returned as a list of strings, including formatted dates, times, and numbers
     """
-    # a few format string:
+    # a few format strings:
     sFmtFullDateTime = '%Y-%m-%d %H:%M:%S'
     sFmtDateOnly = '%Y-%m-%d'
     # get values for this sheet

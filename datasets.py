@@ -1646,7 +1646,7 @@ class Dialog_MakeDataset(wx.Dialog):
             dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
             result = dlg.ShowModal()
             dlg.Destroy()
-            print "result of Yes/No dialog:", result
+#            print "result of Yes/No dialog:", result
             if result == wx.ID_YES:
                 try:
                     os.remove(stSavePath)
@@ -1662,87 +1662,84 @@ class Dialog_MakeDataset(wx.Dialog):
                 wx.MessageBox('This operating system cannot make Excel files', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 return
-            else:
-                try:
-                    oXL = win32com.client.Dispatch("Excel.Application")
-                    oXL.Visible = 1
-                except:
-                    wx.MessageBox('Excel is not on this computer', 'Info',
-                        wx.OK | wx.ICON_INFORMATION)
-                    return
-                bXL = oXL.Workbooks.Add()
-                #remove any extra sheets
-                while bXL.Sheets.Count > 1:
+            try:
+                oXL = win32com.client.Dispatch("Excel.Application")
+                oXL.Visible = 1
+            except:
+                wx.MessageBox('Excel is not on this computer', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            bXL = oXL.Workbooks.Add()
+            #remove any extra sheets
+            while bXL.Sheets.Count > 1:
 #                    print "Workbook has this many sheets:", bXL.Sheets.Count
-                    bXL.Sheets(1).Delete()
-                shXL = bXL.Sheets(1)
-                boolSheetReady = True
-                try: # before we go any further
-                    bXL.SaveAs(stSavePath) # make sure there's nothing invalid about the filename
-                except:
-                    wx.MessageBox('Can not save file "' + stSavePath + '"', 'Info',
-                        wx.OK | wx.ICON_INFORMATION)
-                    return
-                for shDict in self.lShs:
-                    if boolSheetReady == False:
-                        print shXL.Name
-                        sPrevShNm = shXL.Name
-                        #shXL = bXL.Sheets.Add() # this works
-                        #print shXL.Name # this works, and is the expected new sheet 1st in the book
-                        #shXL.Move(After=bXL.Sheets(sPrevShNm)) # this moves sheet to a new book, then crashes
-                        oXL.Worksheets.Add(After=oXL.Sheets(sPrevShNm)) # creats sheet, but 1st in the book
-                        #worksheets.Add(After=worksheets(worksheets.Count)) # creats sheet, but 1st in the book 
-                        shXL = oXL.ActiveSheet
-                        print shXL.Name
-                        boolSheetReady = True
-                        
-                    iSheetID = shDict['ID']
-                    dsRow = 1
-                    dsCol = 1
-                    # name the worksheet
+                bXL.Sheets(1).Delete()
+            shXL = bXL.Sheets(1)
+            boolSheetReady = True
+            try: # before we go any further
+                bXL.SaveAs(stSavePath) # make sure there's nothing invalid about the filename
+            except:
+                wx.MessageBox('Can not save file "' + stSavePath + '"', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            for shDict in self.lShs:
+                if boolSheetReady == False:
+                    print shXL.Name
+                    sPrevShNm = shXL.Name
+                    #shXL = bXL.Sheets.Add() # this works
+                    #print shXL.Name # this works, and is the expected new sheet 1st in the book
+                    #shXL.Move(After=bXL.Sheets(sPrevShNm)) # this moves sheet to a new book, then crashes
+                    oXL.Worksheets.Add(After=oXL.Sheets(sPrevShNm)) # creats sheet, but 1st in the book
+                    #worksheets.Add(After=worksheets(worksheets.Count)) # creats sheet, but 1st in the book 
+                    shXL = oXL.ActiveSheet
+                    print shXL.Name
+                    boolSheetReady = True
+                    
+                iSheetID = shDict['ID']
+                dsRow = 1
+                dsCol = 1
+                # name the worksheet
 #                    shXL = bXL.Sheets(1)
-                    shXL.Name = shDict['WorksheetName']
-                    boolSheetReady = False # sheet has been used, next loop will add a new one
-                    #set up the column headings
-                    stSQL = "SELECT Count(OutputColumns.ID) AS CountOfID, OutputColumns.ColumnHeading,\n" \
-                        "OutputColumns.AggType, \n" \
-                        "OutputColumns.Format_Excel, OutputColumns.ListingOrder\n" \
-                        "FROM OutputColumns GROUP BY OutputColumns.WorksheetID, OutputColumns.ColumnHeading,\n" \
-                        "OutputColumns.AggType, \n" \
-                        "OutputColumns.Format_Excel, OutputColumns.ListingOrder\n" \
-                        "HAVING (((OutputColumns.WorksheetID) = ?))\n" \
-                        "ORDER BY OutputColumns.ListingOrder;"
-                    scidb.curD.execute(stSQL, (iSheetID,))
-                    recs = scidb.curD.fetchall()
-                    for rec in recs:
-                        shXL.Cells(dsRow,rec['ListingOrder']).Value = rec['ColumnHeading']
-                        #apply column formats
-                        if rec['Format_Excel'] != None:
-                            try:
-                                shXL.Columns(rec['ListingOrder']).NumberFormat = rec['Format_Excel']
-                            except:
-                                print 'Invalid Excel format, column ' + str(rec['ListingOrder'])
+                shXL.Name = shDict['WorksheetName']
+                boolSheetReady = False # sheet has been used, next loop will add a new one
+                #set up the column headings
+                stSQL = "SELECT Count(ID) AS CountOfID, ColumnHeading, " \
+                    "AggType, Format_Excel, ListingOrder " \
+                    "FROM OutputColumns GROUP BY WorksheetID, ColumnHeading, " \
+                    "AggType, Format_Excel, ListingOrder " \
+                    "HAVING WorksheetID = ? " \
+                    "ORDER BY ListingOrder;"
+                scidb.curD.execute(stSQL, (iSheetID,))
+                recs = scidb.curD.fetchall()
+                for rec in recs:
+                    shXL.Cells(dsRow,rec['ListingOrder']).Value = rec['ColumnHeading']
+                    #apply column formats
+                    if rec['Format_Excel'] != None:
+                        try:
+                            shXL.Columns(rec['ListingOrder']).NumberFormat = rec['Format_Excel']
+                        except:
+                            print 'Invalid Excel format, column ' + str(rec['ListingOrder'])
 
-                    if self.ckPreview.GetValue():
-                        iNumRowsToPreview = self.spinPvwRows.GetValue()
-                    else:
-                        iNumRowsToPreview = 1000000 # improve this
-                    iPreviewCt = 0
+                if self.ckPreview.GetValue():
+                    iNumRowsToPreview = self.spinPvwRows.GetValue()
+                else:
+                    iNumRowsToPreview = 1000000 # improve this
+                iPreviewCt = 0
 
-                    # use the row generator
+                # use the row generator
 #                    waitForExcel = wx.BusyInfo("Making Excel output")
-                    sheetRows = scidb.generateSheetRows(iSheetID, formatValues = False)
-                    for dataRow in sheetRows:
-                        # yielded object is list with as many members as there are grid columns
-                        iPreviewCt += 1
-                        if iPreviewCt > iNumRowsToPreview:
-                            break
-                        dsRow += 1
-                        for dsCol in range(len(dataRow)):
-                            shXL.Cells(dsRow,dsCol+1).Value = dataRow[dsCol]
+                sheetRows = scidb.generateSheetRows(iSheetID, formatValues = False)
+                for dataRow in sheetRows:
+                    # yielded object is list with as many members as there are grid columns
+                    iPreviewCt += 1
+                    if iPreviewCt > iNumRowsToPreview:
+                        break
+                    dsRow += 1
+                    for dsCol in range(len(dataRow)):
+                        shXL.Cells(dsRow,dsCol+1).Value = dataRow[dsCol]
 #                    del waitForExcel    
-                shXL.Columns.AutoFit()
-                bXL.Save() 
+            shXL.Columns.AutoFit()
+            bXL.Save() 
 #                oXL.Cells(1,1).Value = "Hello"
             return # end of if Excel
 
@@ -1752,12 +1749,72 @@ class Dialog_MakeDataset(wx.Dialog):
             return # end of if Tab delimited
 
         if self.rbCommaDelim.GetValue():
-            wx.MessageBox('CSV output is not implemented yet', 'Info',
+            if self.sourceTable == 'OutputBooks':
+                # fix this to allow all-one-block multi-sheets
+                wx.MessageBox('This format can not make Books, only individual Sheets', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+
+            try: # before we go any further
+                # make sure there's nothing invalid about the filename
+                fOut = open(stSavePath, 'wb') 
+            except:
+                wx.MessageBox('Can not create file "' + stSavePath + '"', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            wr = csv.writer(fOut, quoting=csv.QUOTE_ALL)
+            for shDict in self.lShs: # for Sheet output, there will only be one
+                self.tcProgress.SetValue('Setting up column headings')
+                # item unless book is specified to go all in one block (not implemented yet)
+                # get the number of columns
+                stSQL = 'SELECT MAX(CAST(ListingOrder AS INTEGER)) AS Ct ' \
+                    'FROM OutputColumns WHERE WorksheetID = ?'
+                scidb.curD.execute(stSQL, (shDict['ID'],))
+                rec = scidb.curD.fetchone()
+                lColHds = ['' for x in range(rec['Ct'])]
+                #set up the column headings
+                stSQL = "SELECT Count(ID) AS CountOfID, " \
+                    "ColumnHeading, AggType, ListingOrder " \
+                    "FROM OutputColumns " \
+                    "GROUP BY WorksheetID, ColumnHeading, AggType, ListingOrder " \
+                    "HAVING WorksheetID = ? " \
+                    "ORDER BY ListingOrder;"
+                scidb.curD.execute(stSQL, (shDict['ID'],))
+                recs = scidb.curD.fetchall()
+                for rec in recs:
+                    lColHds[rec['ListingOrder']-1] = rec['ColumnHeading']
+                wr.writerow(lColHds)
+                lMsg = []
+                lMsg.append('')
+                lMsg.append('')
+                lMsg.append(' rows written to "')
+                lMsg.append(stSavePath)
+                lMsg.append('".')
+                if self.ckPreview.GetValue():
+                    iNumRowsToDo = self.spinPvwRows.GetValue()
+                    lMsg[0] = 'Preview of '
+                    lMsg[1] = str(iNumRowsToDo)
+                else:
+                    iNumRowsToDo = 1000000 # improve this
+                    lMsg[0] = 'Total of '
+                iRowCt = 0
+                # use the row generator
+                sheetRows = scidb.generateSheetRows(shDict['ID'])
+                for dataRow in sheetRows:
+                    # yielded object is list with as many members as there are columns
+                    iRowCt += 1
+                    if iRowCt > iNumRowsToDo:
+                        break
+                    self.tcProgress.SetValue('Doing row %d' % iRowCt)
+                    wx.Yield() # allow window updates to occur
+                    wr.writerow(dataRow)
+                    
+                lMsg[1] = str(iRowCt)
+
+            fOut.close()
+            wx.MessageBox("".join(lMsg), 'Info',
                 wx.OK | wx.ICON_INFORMATION)
             return # end of if CSV
-        
-                
-
 
     def onClick_BtnCancel(self, event):
         """
