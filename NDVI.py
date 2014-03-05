@@ -1860,16 +1860,18 @@ class NDVIPanel(wx.Panel):
         ndviOptsPanel = wx.Panel(hSplit, -1)
         optsSplit = wx.SplitterWindow(ndviOptsPanel, -1)
         ndviDatesPanel = wx.Panel(optsSplit, -1)
-        ndviDatesPanel.SetBackgroundColour('#F0FFF0')
+        ndviDatesPanel.SetBackgroundColour('#0FFF0F')
         datesLabel = wx.StaticText(ndviDatesPanel, -1, "dates will be here")
 
         ndviStationsPanel = wx.Panel(optsSplit, -1)
         ndviStationsPanel.SetBackgroundColour('#FF0FFF')
         stationsLabel = wx.StaticText(ndviStationsPanel, -1, "stations will be here")
         
+        optsSplit.SetMinimumPaneSize(20)
         optsSplit.SetSashGravity(0.5)
-        optsSplit.SplitVertically(ndviDatesPanel, ndviStationsPanel)
-
+        # 'sashPosition=0' is supposed to split it down the middle, but the left is way smaller
+        # see if further internal sizers fix this
+        optsSplit.SplitVertically(ndviDatesPanel, ndviStationsPanel, sashPosition=0)
         optsSiz = wx.BoxSizer(wx.HORIZONTAL)
         optsSiz.Add(optsSplit, 1, wx.EXPAND)
         ndviOptsPanel.SetSizer(optsSiz)
@@ -1880,12 +1882,14 @@ class NDVIPanel(wx.Panel):
         self.previewPanel.SetBackgroundColour('#FFFF00')
         self.pvwLabel = wx.StaticText(self.previewPanel, -1, "previews will be here")
 
+        hSplit.SetMinimumPaneSize(20)
         hSplit.SetSashGravity(0.5)
         hSplit.SplitHorizontally(ndviOptsPanel, self.previewPanel)
         vSiz = wx.BoxSizer(wx.VERTICAL)
         vSiz.Add(hSplit, 1, wx.EXPAND)
         ndviInfoPanel.SetSizer(vSiz)
 
+        vSplit.SetMinimumPaneSize(20)
         vSplit.SetSashGravity(0.5)
         vSplit.SplitVertically(self.ndviSetupPanel, ndviInfoPanel)
         hSiz = wx.BoxSizer(wx.HORIZONTAL)
