@@ -1858,9 +1858,12 @@ class NDVIPanel(wx.Panel):
         # 'sashPosition=0' is supposed to split it down the middle, but the left is way smaller
         # see if further internal sizers fix this
         optsSplit.SplitVertically(ndviDatesPanel, self.ndviStationsPanel, sashPosition=0)
+        # following doesn't help
+        #optsSplit.SplitVertically(ndviDatesPanel, self.ndviStationsPanel, sashPosition=self.datesList.GetSize()[0]+10)
         optsSiz = wx.BoxSizer(wx.HORIZONTAL)
         optsSiz.Add(optsSplit, 1, wx.EXPAND)
         ndviOptsPanel.SetSizer(optsSiz)
+        ndviOptsPanel.SetAutoLayout(1)
         
 #        ndviOptsPanel.SetBackgroundColour(wx.ORANGE)
 #        self.ndviOptsLabel = wx.StaticText(ndviOptsPanel, -1, "NDVI options will be here")
@@ -1881,6 +1884,9 @@ class NDVIPanel(wx.Panel):
         hSiz = wx.BoxSizer(wx.HORIZONTAL)
         hSiz.Add(vSplit, 1, wx.EXPAND)
         self.SetSizer(hSiz)
+        print 'dates list size:', self.datesList.GetSize()
+        # following doesn't help
+        optsSplit.SetSashPosition(position=self.datesList.GetSize()[0]+10, redraw=True)
 
         return
     
@@ -2004,10 +2010,19 @@ class NDVIPanel(wx.Panel):
 
     def InitDatesPanel(self, pnl):
         pnl.SetBackgroundColour('#0FFF0F')
-        dtSiz = wx.BoxSizer(wx.VERTICAL)
+        dtSiz = wx.GridBagSizer(0, 0)
+        
+        gRow = 0
         datesLabel = wx.StaticText(pnl, -1, "dates")
-        dtSiz.Add(datesLabel, 1, wx.EXPAND)
+#        dtSiz.Add(datesLabel, 1, wx.EXPAND)
+        dtSiz.Add(datesLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        
+        gRow += 1
+        self.datesList = wx.ListCtrl(pnl, style = wx.LC_REPORT | wx.LC_NO_HEADER)
+        dtSiz.Add(self.datesList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
+        dtSiz.AddGrowableRow(gRow)
         pnl.SetSizer(dtSiz)
+        pnl.SetAutoLayout(1)
 
 #        self.ndviSetupPanel.SetBackgroundColour(wx.BLUE)
 #        stpSiz = wx.GridBagSizer(1, 1)
