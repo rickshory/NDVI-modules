@@ -1852,10 +1852,41 @@ class NDVIPanel(wx.Panel):
 #        self.ndviSetupPanel.SetupScrolling()
         
 #        self.ndviSetupLabel = wx.StaticText(self.ndviSetupPanel, -1, "Set up NDVI calculations here")
-        ndviInfoPanel =  wx.Panel(vSplit, -1)
+        ndviInfoPanel = wx.Panel(vSplit, -1)
         ndviInfoPanel.SetBackgroundColour(wx.RED)
-        self.ndviInfoLabel = wx.StaticText(ndviInfoPanel, -1, "NDVI info will be here")
+#        self.ndviInfoLabel = wx.StaticText(ndviInfoPanel, -1, "NDVI info will be here")
 
+        hSplit = wx.SplitterWindow(ndviInfoPanel, -1)
+        ndviOptsPanel = wx.Panel(hSplit, -1)
+        optsSplit = wx.SplitterWindow(ndviOptsPanel, -1)
+        ndviDatesPanel = wx.Panel(optsSplit, -1)
+        ndviDatesPanel.SetBackgroundColour('#F0FFF0')
+        datesLabel = wx.StaticText(ndviDatesPanel, -1, "dates will be here")
+
+        ndviStationsPanel = wx.Panel(optsSplit, -1)
+        ndviStationsPanel.SetBackgroundColour('#FF0FFF')
+        stationsLabel = wx.StaticText(ndviStationsPanel, -1, "stations will be here")
+        
+        optsSplit.SetSashGravity(0.5)
+        optsSplit.SplitVertically(ndviDatesPanel, ndviStationsPanel)
+
+        optsSiz = wx.BoxSizer(wx.HORIZONTAL)
+        optsSiz.Add(optsSplit, 1, wx.EXPAND)
+        ndviOptsPanel.SetSizer(optsSiz)
+        
+#        ndviOptsPanel.SetBackgroundColour(wx.ORANGE)
+#        self.ndviOptsLabel = wx.StaticText(ndviOptsPanel, -1, "NDVI options will be here")
+        self.previewPanel = wx.Panel(hSplit, -1)
+        self.previewPanel.SetBackgroundColour('#FFFF00')
+        self.pvwLabel = wx.StaticText(self.previewPanel, -1, "previews will be here")
+
+        hSplit.SetSashGravity(0.5)
+        hSplit.SplitHorizontally(ndviOptsPanel, self.previewPanel)
+        vSiz = wx.BoxSizer(wx.VERTICAL)
+        vSiz.Add(hSplit, 1, wx.EXPAND)
+        ndviInfoPanel.SetSizer(vSiz)
+
+        vSplit.SetSashGravity(0.5)
         vSplit.SplitVertically(self.ndviSetupPanel, ndviInfoPanel)
         hSiz = wx.BoxSizer(wx.HORIZONTAL)
         hSiz.Add(vSplit, 1, wx.EXPAND)
