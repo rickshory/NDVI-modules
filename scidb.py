@@ -322,7 +322,53 @@ try:
         LEFT JOIN OutputSheets ON GrpDupOutputColumns.WorksheetID = OutputSheets.ID)
         LEFT JOIN OutputBooks ON OutputSheets.BookID = OutputBooks.ID
         WHERE (((GrpOutputColumnsOnSheetCol.CountOfID)<>[ReCountOfID]));
-        
+
+        CREATE TABLE IF NOT EXISTS "NDVIcalc" (
+        "ID" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE ,
+        "CalcName" VARCHAR(50) NOT NULL  UNIQUE ,
+        "ChartFromRefDay" BOOL NOT NULL  DEFAULT 0 ,
+        "RefDay" date ,
+        "RefStationID" INTEGER ,
+        "IRRefSeriesID" INTEGER ,
+        "VISRefSeriesID" INTEGER ,
+        "IRDataSeriesID" INTEGER ,
+        "VisDataSeriesID" INTEGER ,
+        "IRFunction" VARCHAR(50) DEFAULT "=i" ,
+        "VISFunction" VARCHAR(50) DEFAULT "=v" ,
+        "PlusMinusCutoffHours" FLOAT DEFAULT 2 ,
+        "Opt1ClrDayVsSetTholds" BOOL NOT NULL  DEFAULT 1 ,
+        "ClearDay" date ,
+        "ThresholdPctLow" FLOAT ,
+        "ThresholdPctHigh" FLOAT ,
+        "IRRefCutoff" FLOAT ,
+        "VISRefCutoff" FLOAT ,
+        "IRDatCutoff" FLOAT ,
+        "VISDatCutoff" FLOAT,
+        "UseOnlyValidNDVI" BOOL NOT NULL  DEFAULT 0 ,
+        "NDVIvalidMin" FLOAT DEFAULT -1 ,
+        "NDVIvalidMax" FLOAT DEFAULT 1   
+        CHECK ("PlusMinusCutoffHours" >= 0)
+        CHECK ("PlusMinusCutoffHours" <= 12)
+        CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" >= 0))
+        CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" <= 100))
+        CHECK (("ThresholdPctHigh" is NULL) OR ("ThresholdPctHigh" >= 100))  
+        );
+
+        CREATE TABLE IF NOT EXISTS "NDVIcalcDates" (
+        "ID" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE ,
+        "CalcID" INTEGER NOT NULL ,
+        "CalcDate" date NOT NULL ,
+        FOREIGN KEY("CalcID") REFERENCES NDVIcalc("ID")
+        );
+
+        CREATE TABLE IF NOT EXISTS "NDVIcalcStations" (
+        "ID" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE ,
+        "CalcID" INTEGER NOT NULL ,
+        "StationID" INTEGER NOT NULL ,
+        FOREIGN KEY("CalcID") REFERENCES NDVIcalc("ID")
+        FOREIGN KEY("StationID") REFERENCES Stations("ID")
+        );
+
         """)
 
 except sqlite3.Error, e:
