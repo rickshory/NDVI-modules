@@ -1836,20 +1836,8 @@ class NDVIPanel(wx.Panel):
         #horizontal split means the split goes across
         #vertical split means the split goes up and down
         vSplit = wx.SplitterWindow(self, -1)
-        self.ndviSetupPanel = wx.Panel(vSplit, -1)
-        self.ndviSetupPanel.SetBackgroundColour(wx.BLUE)
-        stpSiz = wx.GridBagSizer(1, 1)
-        
-        gRow = 0
-        self.stpLabel = wx.StaticText(self.ndviSetupPanel, -1, 'Set up NDVI calculations here')
-        stpSiz.Add(self.stpLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-
-        gRow += 1
-        stpSiz.Add(wx.StaticLine(self.ndviSetupPanel), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
-
-        self.ndviSetupPanel.SetSizer(stpSiz)
-        self.ndviSetupPanel.SetAutoLayout(1)
-#        self.ndviSetupPanel.SetupScrolling()
+        self.ndviSetupPanel = scrolled.ScrolledPanel(vSplit, -1)
+        self.InitNDVISetupPanel()
         
 #        self.ndviSetupLabel = wx.StaticText(self.ndviSetupPanel, -1, "Set up NDVI calculations here")
         ndviInfoPanel = wx.Panel(vSplit, -1)
@@ -1860,18 +1848,16 @@ class NDVIPanel(wx.Panel):
         ndviOptsPanel = wx.Panel(hSplit, -1)
         optsSplit = wx.SplitterWindow(ndviOptsPanel, -1)
         ndviDatesPanel = wx.Panel(optsSplit, -1)
-        ndviDatesPanel.SetBackgroundColour('#0FFF0F')
-        datesLabel = wx.StaticText(ndviDatesPanel, -1, "dates will be here")
+        self.InitDatesPanel(ndviDatesPanel)
 
-        ndviStationsPanel = wx.Panel(optsSplit, -1)
-        ndviStationsPanel.SetBackgroundColour('#FF0FFF')
-        stationsLabel = wx.StaticText(ndviStationsPanel, -1, "stations will be here")
+        self.ndviStationsPanel = wx.Panel(optsSplit, -1)
+        self.InitStationsPanel()
         
         optsSplit.SetMinimumPaneSize(20)
         optsSplit.SetSashGravity(0.5)
         # 'sashPosition=0' is supposed to split it down the middle, but the left is way smaller
         # see if further internal sizers fix this
-        optsSplit.SplitVertically(ndviDatesPanel, ndviStationsPanel, sashPosition=0)
+        optsSplit.SplitVertically(ndviDatesPanel, self.ndviStationsPanel, sashPosition=0)
         optsSiz = wx.BoxSizer(wx.HORIZONTAL)
         optsSiz.Add(optsSplit, 1, wx.EXPAND)
         ndviOptsPanel.SetSizer(optsSiz)
@@ -2000,6 +1986,48 @@ class NDVIPanel(wx.Panel):
         vSiz = wx.BoxSizer(wx.VERTICAL)
         vSiz.Add(hSplit, 1, wx.EXPAND)
         self.SetSizer(vSiz)        
+
+    def InitNDVISetupPanel(self):
+        self.ndviSetupPanel.SetBackgroundColour(wx.BLUE)
+        stpSiz = wx.GridBagSizer(1, 1)
+        
+        gRow = 0
+        self.stpLabel = wx.StaticText(self.ndviSetupPanel, -1, 'Set up NDVI calculations here')
+        stpSiz.Add(self.stpLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(self.ndviSetupPanel), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+
+        self.ndviSetupPanel.SetSizer(stpSiz)
+        self.ndviSetupPanel.SetAutoLayout(1)
+        self.ndviSetupPanel.SetupScrolling()
+
+    def InitDatesPanel(self, pnl):
+        pnl.SetBackgroundColour('#0FFF0F')
+        dtSiz = wx.BoxSizer(wx.VERTICAL)
+        datesLabel = wx.StaticText(pnl, -1, "dates")
+        dtSiz.Add(datesLabel, 1, wx.EXPAND)
+        pnl.SetSizer(dtSiz)
+
+#        self.ndviSetupPanel.SetBackgroundColour(wx.BLUE)
+#        stpSiz = wx.GridBagSizer(1, 1)
+        
+#        gRow = 0
+#        self.stpLabel = wx.StaticText(self.ndviSetupPanel, -1, 'Set up NDVI calculations here')
+#        stpSiz.Add(self.stpLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+#        gRow += 1
+#        stpSiz.Add(wx.StaticLine(self.ndviSetupPanel), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+
+#        self.ndviSetupPanel.SetSizer(stpSiz)
+#        self.ndviSetupPanel.SetAutoLayout(1)
+#        self.ndviSetupPanel.SetupScrolling()
+    def InitStationsPanel(self):
+        self.ndviStationsPanel.SetBackgroundColour('#FF0FFF')
+        stationsLabel = wx.StaticText(self.ndviStationsPanel, -1, "stations will be here")
+
+
+        
 
     def OnSelChanged(self, event):
         print "OnSelChanged"
