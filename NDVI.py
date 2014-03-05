@@ -1835,10 +1835,38 @@ class NDVIPanel(wx.Panel):
     def InitUI(self):
         #horizontal split means the split goes across
         #vertical split means the split goes up and down
-        hSplit = wx.SplitterWindow(self, -1)
-        setupPanel = wx.Panel(hSplit, -1)
-        vSplit = wx.SplitterWindow(setupPanel, -1)
-        treeViewPanel = wx.Panel(vSplit, -1)
+        vSplit = wx.SplitterWindow(self, -1)
+        self.ndviSetupPanel = wx.Panel(vSplit, -1)
+        self.ndviSetupPanel.SetBackgroundColour(wx.BLUE)
+        stpSiz = wx.GridBagSizer(1, 1)
+        
+        gRow = 0
+        self.stpLabel = wx.StaticText(self.ndviSetupPanel, -1, 'Set up NDVI calculations here')
+        stpSiz.Add(self.stpLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(self.ndviSetupPanel), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+
+        self.ndviSetupPanel.SetSizer(stpSiz)
+        self.ndviSetupPanel.SetAutoLayout(1)
+#        self.ndviSetupPanel.SetupScrolling()
+        
+#        self.ndviSetupLabel = wx.StaticText(self.ndviSetupPanel, -1, "Set up NDVI calculations here")
+        ndviInfoPanel =  wx.Panel(vSplit, -1)
+        ndviInfoPanel.SetBackgroundColour(wx.RED)
+        self.ndviInfoLabel = wx.StaticText(ndviInfoPanel, -1, "NDVI info will be here")
+
+        vSplit.SplitVertically(self.ndviSetupPanel, ndviInfoPanel)
+        hSiz = wx.BoxSizer(wx.HORIZONTAL)
+        hSiz.Add(vSplit, 1, wx.EXPAND)
+        self.SetSizer(hSiz)
+
+        return
+    
+        ndviOptsPanel =  wx.Panel(vSplit, -1)
+        hSplit = wx.SplitterWindow(ndviOptsPanel, -1)
+        ndviDatesPanel = wx.Panel(hSplit, -1)
+#        ndviStationsPanel = 
 
         self.dsTree = wx.TreeCtrl(treeViewPanel, 1, wx.DefaultPosition, (-1,-1), wx.TR_HAS_BUTTONS|wx.TR_LINES_AT_ROOT)
         self.dsRootID = self.dsTree.AddRoot('DataSets')
