@@ -1830,20 +1830,27 @@ class Dialog_MakeDataset(wx.Dialog):
         self.Destroy()
 
 
-##
 class ndviDatesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
         wx.ListCtrl.__init__(self, *arg, **kw)
         ListCtrlAutoWidthMixin.__init__(self)
         self.setResizeColumn(0) # 1st column will take up any extra spaces
-#        self.style=wx.LC_REPORT
         self.InsertColumn(0, 'Dates')
         stSQL = 'SELECT Date FROM DataDates;'
         rows = scidb.curD.execute(stSQL).fetchall()
         for row in rows:
             self.Append((row['Date'],))
 
-##
+class ndviStationsList(wx.ListCtrl, ListCtrlAutoWidthMixin):
+    def __init__(self, *arg, **kw):
+        wx.ListCtrl.__init__(self, *arg, **kw)
+        ListCtrlAutoWidthMixin.__init__(self)
+        self.setResizeColumn(0) # 1st column will take up any extra spaces
+        self.InsertColumn(0, 'Stations')
+        stSQL = 'SELECT ID, StationName FROM Stations;'
+        rows = scidb.curD.execute(stSQL).fetchall()
+        for row in rows:
+            self.Append((row['StationName'],))
 
 class NDVIPanel(wx.Panel):
     def __init__(self, parent, id):
@@ -2037,13 +2044,6 @@ class NDVIPanel(wx.Panel):
         
 #        gRow += 1
         self.datesList = ndviDatesList(pnl, style = wx.LC_REPORT)
-#        self.datesList = wx.ListCtrl(pnl, style = wx.LC_REPORT)
-#        self.datesList.InsertColumn(0, 'Dates')
-##        self.datesList.setResizeColumn(0) # make this column expand to the full horizontal width of the list
-#        stSQL = 'SELECT Date FROM DataDates;'
-#        rows = scidb.curD.execute(stSQL).fetchall()
-#        for row in rows:
-#            self.datesList.Append((row['Date'],))
         dtSiz.Add(self.datesList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         dtSiz.AddGrowableRow(gRow)
         pnl.SetSizer(dtSiz)
@@ -2060,14 +2060,14 @@ class NDVIPanel(wx.Panel):
 #        stSiz.Add(stationsLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
 #        gRow += 1
-        self.stationsList = wx.ListCtrl(pnl, style = wx.LC_REPORT)
-#        self.stationsList = wx.ListCtrl(pnl, style = wx.LC_REPORT | wx.LC_NO_HEADER)
-        self.stationsList.InsertColumn(0, 'Stations')
-#        self.stationsList.setResizeColumn(0) # make this column expand to the full horizontal width of the list
-        stSQL = 'SELECT ID, StationName FROM Stations;'
-        rows = scidb.curD.execute(stSQL).fetchall()
-        for row in rows:
-            self.stationsList.Append((row['StationName'],))
+        self.stationsList = ndviStationsList(pnl, style = wx.LC_REPORT)
+##        self.stationsList = wx.ListCtrl(pnl, style = wx.LC_REPORT | wx.LC_NO_HEADER)
+#        self.stationsList.InsertColumn(0, 'Stations')
+##        self.stationsList.setResizeColumn(0) # make this column expand to the full horizontal width of the list
+#        stSQL = 'SELECT ID, StationName FROM Stations;'
+#        rows = scidb.curD.execute(stSQL).fetchall()
+#        for row in rows:
+#            self.stationsList.Append((row['StationName'],))
         stSiz.Add(self.stationsList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         stSiz.AddGrowableRow(gRow)
         pnl.SetSizer(stSiz)
