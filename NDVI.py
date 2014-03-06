@@ -3,6 +3,8 @@ import os, sys, re, cPickle, datetime
 import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
+from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
+
 try:
     import win32com.client
     hasCom = True
@@ -1827,6 +1829,22 @@ class Dialog_MakeDataset(wx.Dialog):
     def OnClose(self, event):
         self.Destroy()
 
+
+##
+class ndviDatesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
+    def __init__(self, *arg, **kw):
+        wx.ListCtrl.__init__(self, *arg, **kw)
+        ListCtrlAutoWidthMixin.__init__(self)
+        self.setResizeColumn(0) # 1st column will take up any extra spaces
+#        self.style=wx.LC_REPORT
+        self.InsertColumn(0, 'Dates')
+        stSQL = 'SELECT Date FROM DataDates;'
+        rows = scidb.curD.execute(stSQL).fetchall()
+        for row in rows:
+            self.Append((row['Date'],))
+
+##
+
 class NDVIPanel(wx.Panel):
     def __init__(self, parent, id):
         wx.Panel.__init__(self, parent, id)
@@ -1850,14 +1868,14 @@ class NDVIPanel(wx.Panel):
         ndviDatesPanel = wx.Panel(optsSplit, -1)
         self.InitDatesPanel(ndviDatesPanel)
 
-        self.ndviStationsPanel = wx.Panel(optsSplit, -1)
-        self.InitStationsPanel()
+        ndviStationsPanel = wx.Panel(optsSplit, -1)
+        self.InitStationsPanel(ndviStationsPanel)
         
-        optsSplit.SetMinimumPaneSize(20)
+        optsSplit.SetMinimumPaneSize(100)
         optsSplit.SetSashGravity(0.5)
         # 'sashPosition=0' is supposed to split it down the middle, but the left panel is way smaller
         # see if further internal sizers fix this
-        optsSplit.SplitVertically(ndviDatesPanel, self.ndviStationsPanel, sashPosition=0)
+        optsSplit.SplitVertically(ndviDatesPanel, ndviStationsPanel, sashPosition=0)
         # following doesn't help
         #optsSplit.SplitVertically(ndviDatesPanel, self.ndviStationsPanel, sashPosition=self.datesList.GetSize()[0]+10)
         optsSiz = wx.BoxSizer(wx.HORIZONTAL)
@@ -1884,7 +1902,9 @@ class NDVIPanel(wx.Panel):
         self.SetSizer(hSiz)
         print 'dates list size:', self.datesList.GetSize()
         # following doesn't help
+        print "dates list width:", self.datesList.GetSize()[0]
         optsSplit.SetSashPosition(position=self.datesList.GetSize()[0]+10, redraw=True)
+        
 
         return
     
@@ -2009,41 +2029,49 @@ class NDVIPanel(wx.Panel):
     def InitDatesPanel(self, pnl):
         pnl.SetBackgroundColour('#0FFF0F')
         dtSiz = wx.GridBagSizer(0, 0)
+        dtSiz.AddGrowableCol(0)
         
         gRow = 0
-        datesLabel = wx.StaticText(pnl, -1, "dates")
-#        dtSiz.Add(datesLabel, 1, wx.EXPAND)
-        dtSiz.Add(datesLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+#        datesLabel = wx.StaticText(pnl, -1, "Dates")
+#        dtSiz.Add(datesLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
-        gRow += 1
-        self.datesList = wx.ListCtrl(pnl, style = wx.LC_REPORT | wx.LC_NO_HEADER)
-        self.datesList.InsertColumn(0, 'DataDate')
-        stSQL = 'SELECT Date FROM DataDates;'
-        rows = scidb.curD.execute(stSQL).fetchall()
-        for row in rows:
-            self.datesList.Append((row['Date'],))
+#        gRow += 1
+        self.datesList = ndviDatesList(pnl, style = wx.LC_REPORT)
+#        self.datesList = wx.ListCtrl(pnl, style = wx.LC_REPORT)
+#        self.datesList.InsertColumn(0, 'Dates')
+##        self.datesList.setResizeColumn(0) # make this column expand to the full horizontal width of the list
+#        stSQL = 'SELECT Date FROM DataDates;'
+#        rows = scidb.curD.execute(stSQL).fetchall()
+#        for row in rows:
+#            self.datesList.Append((row['Date'],))
         dtSiz.Add(self.datesList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         dtSiz.AddGrowableRow(gRow)
         pnl.SetSizer(dtSiz)
         pnl.SetAutoLayout(1)
 
-#        self.ndviSetupPanel.SetBackgroundColour(wx.BLUE)
-#        stpSiz = wx.GridBagSizer(1, 1)
+    def InitStationsPanel(self, pnl):
+        pnl.SetBackgroundColour('#FF0FFF')
+#        stationsLabel = wx.StaticText(pnl, -1, "stations will be here")
+        stSiz = wx.GridBagSizer(0, 0)
+        stSiz.AddGrowableCol(0)
         
-#        gRow = 0
-#        self.stpLabel = wx.StaticText(self.ndviSetupPanel, -1, 'Set up NDVI calculations here')
-#        stpSiz.Add(self.stpLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-
+        gRow = 0
+#        stationsLabel = wx.StaticText(pnl, -1, "Stations")
+#        stSiz.Add(stationsLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        
 #        gRow += 1
-#        stpSiz.Add(wx.StaticLine(self.ndviSetupPanel), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
-
-#        self.ndviSetupPanel.SetSizer(stpSiz)
-#        self.ndviSetupPanel.SetAutoLayout(1)
-#        self.ndviSetupPanel.SetupScrolling()
-    def InitStationsPanel(self):
-        self.ndviStationsPanel.SetBackgroundColour('#FF0FFF')
-        stationsLabel = wx.StaticText(self.ndviStationsPanel, -1, "stations will be here")
-
+        self.stationsList = wx.ListCtrl(pnl, style = wx.LC_REPORT)
+#        self.stationsList = wx.ListCtrl(pnl, style = wx.LC_REPORT | wx.LC_NO_HEADER)
+        self.stationsList.InsertColumn(0, 'Stations')
+#        self.stationsList.setResizeColumn(0) # make this column expand to the full horizontal width of the list
+        stSQL = 'SELECT ID, StationName FROM Stations;'
+        rows = scidb.curD.execute(stSQL).fetchall()
+        for row in rows:
+            self.stationsList.Append((row['StationName'],))
+        stSiz.Add(self.stationsList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
+        stSiz.AddGrowableRow(gRow)
+        pnl.SetSizer(stSiz)
+        pnl.SetAutoLayout(1)
 
         
 
