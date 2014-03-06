@@ -49,7 +49,7 @@ class NDVIPanel(wx.Panel):
         #vertical split means the split goes up and down
         vSplit = wx.SplitterWindow(self, -1)
         self.ndviSetupPanel = scrolled.ScrolledPanel(vSplit, -1)
-        self.InitNDVISetupPanel()
+        self.InitNDVISetupPanel(self.ndviSetupPanel)
         
 #        self.ndviSetupLabel = wx.StaticText(self.ndviSetupPanel, -1, "Set up NDVI calculations here")
         ndviInfoPanel = wx.Panel(vSplit, -1)
@@ -101,20 +101,20 @@ class NDVIPanel(wx.Panel):
         return
     
 
-    def InitNDVISetupPanel(self):
-        self.ndviSetupPanel.SetBackgroundColour(wx.BLUE)
+    def InitNDVISetupPanel(self, pnl):
+        pnl.SetBackgroundColour(wx.WHITE)
         stpSiz = wx.GridBagSizer(1, 1)
         
         gRow = 0
-        self.stpLabel = wx.StaticText(self.ndviSetupPanel, -1, 'Set up NDVI calculations here')
-        stpSiz.Add(self.stpLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        stpLabel = wx.StaticText(pnl, -1, 'Set up NDVI calculations here')
+        stpSiz.Add(stpLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
-        stpSiz.Add(wx.StaticLine(self.ndviSetupPanel), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
 
-        self.ndviSetupPanel.SetSizer(stpSiz)
-        self.ndviSetupPanel.SetAutoLayout(1)
-        self.ndviSetupPanel.SetupScrolling()
+        pnl.SetSizer(stpSiz)
+        pnl.SetAutoLayout(1)
+        pnl.SetupScrolling()
 
     def InitDatesPanel(self, pnl):
         pnl.SetBackgroundColour('#0FFF0F')
