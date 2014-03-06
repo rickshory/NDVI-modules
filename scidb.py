@@ -717,6 +717,24 @@ def getComboboxIndex(objComboBox):
     """
     return objComboBox.GetClientData(objComboBox.GetSelection())
 
+##
+def fillListctrlFromSQL(objListctrl, stSQL, keyCol=0, visibleCol=1):
+    """
+    Given a listctrl with it's list currently empty and
+    an SQL statement that returns at least two columns
+    Returns the list control with the records appended as it's selection entries
+    The visible items are from 'visibleCol' in the results set.
+    The 'keyCol' items can be retrieved using a format like the following,
+    where LC is the list control:
+    keyItem = LC.GetItemData(LC.GetFocusedItem())
+    both columns are zero based
+    """
+    recs = curD.execute(stSQL).fetchall()
+    i=0 # dummy variable, will change with each InsertStringItem
+    for rec in recs:
+        objListctrl.InsertStringItem(i, rec[visibleCol])
+        objListctrl.SetItemData(i, rec[keyCol])
+
 def ckDupOutputColumnsNotAggregate():
     curD.execute('SELECT * FROM DupOutputColumnsNotAggregate;')
     # fields: BookName, WorksheetName, ListingOrder
