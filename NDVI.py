@@ -1855,7 +1855,7 @@ class NDVIPanel(wx.Panel):
         
         optsSplit.SetMinimumPaneSize(20)
         optsSplit.SetSashGravity(0.5)
-        # 'sashPosition=0' is supposed to split it down the middle, but the left is way smaller
+        # 'sashPosition=0' is supposed to split it down the middle, but the left panel is way smaller
         # see if further internal sizers fix this
         optsSplit.SplitVertically(ndviDatesPanel, self.ndviStationsPanel, sashPosition=0)
         # following doesn't help
@@ -1865,8 +1865,6 @@ class NDVIPanel(wx.Panel):
         ndviOptsPanel.SetSizer(optsSiz)
         ndviOptsPanel.SetAutoLayout(1)
         
-#        ndviOptsPanel.SetBackgroundColour(wx.ORANGE)
-#        self.ndviOptsLabel = wx.StaticText(ndviOptsPanel, -1, "NDVI options will be here")
         self.previewPanel = wx.Panel(hSplit, -1)
         self.previewPanel.SetBackgroundColour('#FFFF00')
         self.pvwLabel = wx.StaticText(self.previewPanel, -1, "previews will be here")
@@ -2019,6 +2017,11 @@ class NDVIPanel(wx.Panel):
         
         gRow += 1
         self.datesList = wx.ListCtrl(pnl, style = wx.LC_REPORT | wx.LC_NO_HEADER)
+        self.datesList.InsertColumn(0, 'DataDate')
+        stSQL = 'SELECT Date FROM DataDates;'
+        rows = scidb.curD.execute(stSQL).fetchall()
+        for row in rows:
+            self.datesList.Append((row['Date'],))
         dtSiz.Add(self.datesList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         dtSiz.AddGrowableRow(gRow)
         pnl.SetSizer(dtSiz)
