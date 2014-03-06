@@ -1848,10 +1848,30 @@ class ndviStationsList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         self.setResizeColumn(0) # 1st column will take up any extra spaces
         self.InsertColumn(0, 'Stations')
         stSQL = 'SELECT ID, StationName FROM Stations;'
-        scidb.fillComboboxFromSQL(self, stSQL)
-#        rows = scidb.curD.execute(stSQL).fetchall()
-#        for row in rows:
+
+##        scidb.fillComboboxFromSQL(self, stSQL)
+        i = 0
+        rows = scidb.curD.execute(stSQL).fetchall()
+        for row in rows:
 #            self.Append((row['StationName'],))
+##
+            self.InsertStringItem(i, row['StationName'])
+            self.SetItemData(i, row['ID'])
+##
+        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, lambda evt: self.onClick_StaList(evt))
+
+##
+#self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnClick, self.list)
+
+
+    def onClick_StaList(self, event):
+        currentItem = event.m_itemIndex
+        i = self.GetItemData(currentItem)
+#        print event.GetText()
+        print 'stations list clicked: "', event.GetText(), '", record ID:', i
+
+##
+
 
 class NDVIPanel(wx.Panel):
     def __init__(self, parent, id):
