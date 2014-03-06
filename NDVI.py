@@ -1848,9 +1848,10 @@ class ndviStationsList(wx.ListCtrl, ListCtrlAutoWidthMixin):
         self.setResizeColumn(0) # 1st column will take up any extra spaces
         self.InsertColumn(0, 'Stations')
         stSQL = 'SELECT ID, StationName FROM Stations;'
-        rows = scidb.curD.execute(stSQL).fetchall()
-        for row in rows:
-            self.Append((row['StationName'],))
+        scidb.fillComboboxFromSQL(self, stSQL)
+#        rows = scidb.curD.execute(stSQL).fetchall()
+#        for row in rows:
+#            self.Append((row['StationName'],))
 
 class NDVIPanel(wx.Panel):
     def __init__(self, parent, id):
@@ -2061,13 +2062,6 @@ class NDVIPanel(wx.Panel):
         
 #        gRow += 1
         self.stationsList = ndviStationsList(pnl, style = wx.LC_REPORT)
-##        self.stationsList = wx.ListCtrl(pnl, style = wx.LC_REPORT | wx.LC_NO_HEADER)
-#        self.stationsList.InsertColumn(0, 'Stations')
-##        self.stationsList.setResizeColumn(0) # make this column expand to the full horizontal width of the list
-#        stSQL = 'SELECT ID, StationName FROM Stations;'
-#        rows = scidb.curD.execute(stSQL).fetchall()
-#        for row in rows:
-#            self.stationsList.Append((row['StationName'],))
         stSiz.Add(self.stationsList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         stSiz.AddGrowableRow(gRow)
         pnl.SetSizer(stSiz)
