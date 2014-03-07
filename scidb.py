@@ -338,8 +338,8 @@ try:
         "PlusMinusCutoffHours" FLOAT DEFAULT 2 ,
         "Opt1ClrDayVsSetTholds" BOOL NOT NULL  DEFAULT 1 ,
         "ClearDay" date ,
-        "ThresholdPctLow" FLOAT ,
-        "ThresholdPctHigh" FLOAT ,
+        "ThresholdPctLow" FLOAT DEFAULT 0.75 ,
+        "ThresholdPctHigh" FLOAT DEFAULT 1.25 ,
         "IRRefCutoff" FLOAT ,
         "VISRefCutoff" FLOAT ,
         "IRDatCutoff" FLOAT ,
@@ -350,8 +350,8 @@ try:
         CHECK ("PlusMinusCutoffHours" >= 0)
         CHECK ("PlusMinusCutoffHours" <= 12)
         CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" >= 0))
-        CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" <= 100))
-        CHECK (("ThresholdPctHigh" is NULL) OR ("ThresholdPctHigh" >= 100))  
+        CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" <= 1))
+        CHECK (("ThresholdPctHigh" is NULL) OR ("ThresholdPctHigh" >= 1))  
         );
 
         CREATE TABLE IF NOT EXISTS "NDVIcalcDates" (
@@ -481,6 +481,65 @@ def lenOfVarcharTableField(stTable, stField):
         if len(lLen) > 1:
             return -4 # multiple found, invalid
         return int(lLen[0])
+
+def dictFromTableDefaults(stTable):
+    """
+    Given a table, returns a dictionary with keys corresponding to all the fields.
+    If a field has a default, that is returned as the member value, otherwise None
+    """
+    """
+    the following 'cursor.description' format does not work right;
+    tuples are only the field name followed by 'None' seven times
+    
+        stSQL = "SELECT * FROM NDVIcalc;"
+        rec = curD.execute(stSQL).fetchone()
+        print 'curD.description:', curD.description
+
+    """
+    #following format fails
+    #fields = curD.execute('PRAGMA table_info(?)', (stTable,)).fetchall()
+    fields = curD.execute('PRAGMA table_info("' + stTable + '")').fetchall()
+    """
+    positions in this tuple (zero based):
+    0 = numerical index of this field
+    1 = name of the field as a string
+    2 = data type of the field; not really, see SQLite docs
+    3 = whether the field is required
+    4 = default value, if any
+    5 = whether the field participates in the primary key
+    Example:
+        (0, 'ID', 'INTEGER', 1, None, 1)
+        (1, 'CalcName', 'VARCHAR(50)', 1, None, 0)
+        (2, 'ChartFromRefDay', 'BOOL', 1, '0', 0)
+        (3, 'RefDay', 'date', 0, None, 0)
+        (4, 'RefStationID', 'INTEGER', 0, None, 0)
+        ...
+        (10, 'VISFunction', 'VARCHAR(50)', 0, '"=v"', 0)
+        (11, 'PlusMinusCutoffHours', 'FLOAT', 0, '2', 0)
+        (12, 'Opt1ClrDayVsSetTholds', 'BOOL', 1, '1', 0)
+        (13, 'ClearDay', 'date', 0, None, 0)
+        (14, 'ThresholdPctLow', 'FLOAT', 0, '0.75', 0)    
+    """
+    d = {}
+    for field in fields:
+#        print field
+        stFldNm = field[1]
+        if field[4] != None: # the default value, if any
+            if field[2].upper() == 'FLOAT': # the data type, as much as there is one in sqlite
+                val = float(field[4])
+            elif field[2][:3].upper() == 'INT':
+                val = int(field[4])
+            elif field[2][:4].upper() == 'BOOL':
+                if field[4] == '1':
+                    val = True
+                else:
+                    val = False
+            else:
+                val = re.sub(r'^"|"$', '', field[4]) # strip any quotes
+            d[stFldNm] = val
+        else:
+            d[stFldNm] = None
+    return d
 
 def countTableFieldItems(stTable, stField, stItem=None):
     """

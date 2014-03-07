@@ -112,6 +112,22 @@ class NDVIPanel(wx.Panel):
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
 
+        # get existing or blank record
+#        stSQL = "SELECT * FROM NDVIcalc WHERE ID = ?;"
+#        rec = scidb.curD.execute(stSQL, (0,)).fetchone()
+        stSQL = "SELECT * FROM NDVIcalc;"
+        rec = scidb.curD.execute(stSQL).fetchone()
+        if rec == None:
+            print "no records yet in 'NDVIcalc'"
+            self.calcDict = scidb.dictFromTableDefaults('NDVIcalc')
+        else:
+#            calcDict = copy.copy(rec) # this crashes
+#        print 'scidb.curD.description:', scidb.curD.description
+            self.calcDict = {}
+            for recName in rec.keys():
+                self.calcDict[recName] = rec[recName]
+        print "self.calcDict:", self.calcDict
+
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
         pnl.SetupScrolling()
