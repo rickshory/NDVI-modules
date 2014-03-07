@@ -104,12 +104,26 @@ class NDVIPanel(wx.Panel):
 
     def InitNDVISetupPanel(self, pnl):
         pnl.SetBackgroundColour(wx.WHITE)
-        iLinespan = 7
+        iLinespan = 5
         stpSiz = wx.GridBagSizer(1, 1)
         
         gRow = 0
         stpLabel = wx.StaticText(pnl, -1, 'Set up NDVI calculations here')
-        stpSiz.Add(stpLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        stpSiz.Add(stpLabel, pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+##
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Use panel:'),
+                     pos=(gRow, 2), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+#        stSQLStations = 'SELECT ID, StationName FROM Stations;'
+        self.cbxGetPanel = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+#        scidb.fillComboboxFromSQL(self.cbxGetPanel, stSQLStations)
+#        if self.calcDict['RefStationID'] != None:
+#            scidb.setComboboxToClientData(self.cbxRefStationID, self.calcDict['RefStationID'])
+        stpSiz.Add(self.cbxGetPanel, pos=(gRow, 3), span=(1, 1), flag=wx.LEFT, border=5)
+        self.refresh_cbxPanelsChoices(-1)
+
+##
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
@@ -131,7 +145,7 @@ class NDVIPanel(wx.Panel):
 #        print "self.calcDict:", self.calcDict
 
         gRow += 1
-        stpSiz.Add(wx.StaticText(pnl, -1, 'Name of this panel'),
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Name for this panel'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)              
         self.tcCalcName = wx.TextCtrl(pnl)
         if self.calcDict['CalcName'] != None:
@@ -190,8 +204,8 @@ class NDVIPanel(wx.Panel):
         stpSiz.Add(self.cbxVISRefSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
-        stpSiz.Add(wx.StaticText(pnl, -1, 'For the other stations:'),
-                     pos=(gRow, 1), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        stpSiz.Add(wx.StaticText(pnl, -1, 'For the other stations (selected to the right):'),
+                     pos=(gRow, 1), span=(1, 4), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'IR is in:'),
@@ -339,6 +353,12 @@ class NDVIPanel(wx.Panel):
         stSiz.AddGrowableRow(gRow)
         pnl.SetSizer(stSiz)
         pnl.SetAutoLayout(1)
+
+    def refresh_cbxPanelsChoices(self, event):
+        self.cbxGetPanel.Clear()
+        stSQLPanels = 'SELECT ID, CalcName FROM NDVIcalc;'
+        scidb.fillComboboxFromSQL(self.cbxGetPanel, stSQLPanels)
+        
 
 class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
