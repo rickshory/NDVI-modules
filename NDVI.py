@@ -280,12 +280,26 @@ class NDVIPanel(wx.Panel):
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
+        gRow += 1
+        self.btnSavePnl = wx.Button(pnl, label="Save\npanel", size=(-1, -1))
+        self.btnSavePnl.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnSavePnl(evt))
+        stpSiz.Add(self.btnSavePnl, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Tasks:'),
+                     pos=(gRow, 1), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        lTasks = ['Make this NDVI dataset','Copy the current panel, which you can then vary']
+        self.cbxTasks = wx.ComboBox(pnl, -1, choices=lTasks, style=wx.CB_READONLY)
+        self.cbxTasks.Bind(wx.EVT_COMBOBOX, self.onCbxTasks)
+        stpSiz.Add(self.cbxTasks, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
         pnl.SetupScrolling()
 
     def FillNDVISetupPanelFromCalcDict(self):
+        if self.calcDict['CalcName'] != None:
+            self.tcCalcName.SetValue('%s' % self.calcDict['CalcName'])
         # following is rarely used, not implemented yet
 #        self.ckChartFromRefDay.SetValue(self.calcDict['ChartFromRefDay'])
 #        if self.calcDict['RefDay'] != None:
@@ -356,7 +370,23 @@ class NDVIPanel(wx.Panel):
         self.cbxGetPanel.Clear()
         stSQLPanels = 'SELECT ID, CalcName FROM NDVIcalc;'
         scidb.fillComboboxFromSQL(self.cbxGetPanel, stSQLPanels)
-        
+
+    def onClick_BtnSavePnl(self, event):
+        """
+        """
+        # clean up whitespace; remove leading/trailing & multiples
+        stCalcName = " ".join(self.tcCalcName.GetValue().split())
+        print "stCalcName:", stCalcName
+        if stCalcName == '':
+            wx.MessageBox('Need a Name for this panel', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcCalcName.SetValue(stCalcName)
+            self.tcCalcName.SetFocus()
+            self.Scroll(0, 0) # at the top
+            return
+
+    def onCbxTasks(self, event):
+        print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
 
 class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
