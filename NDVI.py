@@ -103,6 +103,7 @@ class NDVIPanel(wx.Panel):
 
     def InitNDVISetupPanel(self, pnl):
         pnl.SetBackgroundColour(wx.WHITE)
+        iLinespan = 7
         stpSiz = wx.GridBagSizer(1, 1)
         
         gRow = 0
@@ -110,7 +111,7 @@ class NDVIPanel(wx.Panel):
         stpSiz.Add(stpLabel, pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
-        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
         # get existing or blank record
 #        stSQL = "SELECT * FROM NDVIcalc WHERE ID = ?;"
@@ -129,15 +130,90 @@ class NDVIPanel(wx.Panel):
 #        print "self.calcDict:", self.calcDict
 
         gRow += 1
-        stpSiz.Add(wx.StaticText(self, -1, 'Name'),
-                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)              
-        self.tcCalcName = wx.TextCtrl(self)
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Name of this panel'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)              
+        self.tcCalcName = wx.TextCtrl(pnl)
         if self.calcDict['CalcName'] != None:
-            self.tcCalcName.SetValue('%s' % self.ColDict['CalcName'])
-        stpSiz.Add(self.tcCalcName, pos=(gRow, 1), span=(1, 2), 
+            self.tcCalcName.SetValue('%s' % self.calcDict['CalcName'])
+        stpSiz.Add(self.tcCalcName, pos=(gRow, 2), span=(1, 3), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        # following is rarely used, not implemented yet
+#        gRow += 1
+#        self.ckChartFromRefDay = wx.CheckBox(pnl, label="Chart using")
+#        self.ckChartFromRefDay.SetValue(self.calcDict['ChartFromRefDay'])
+#        stpSiz.Add(self.ckChartFromRefDay, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+#        self.tcRefDay = wx.TextCtrl(pnl)
+#        if self.calcDict['RefDay'] != None:
+#            self.tcRefDay.SetValue('%s' % self.calcDict['RefDay'])
+#        stpSiz.Add(self.tcRefDay, pos=(gRow, 2), span=(1, 1), 
+#            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+#        stpSiz.Add(wx.StaticText(pnl, -1, 'as day 1'),
+#                     pos=(gRow, 3), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         gRow += 1
-        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Reference station:'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        stSQLStations = 'SELECT ID, StationName FROM Stations;'
+        self.cbxRefStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxRefStationID, stSQLStations)
+        if self.calcDict['RefStationID'] != None:
+            scidb.setComboboxToClientData(self.cbxRefStationID, self.calcDict['RefStationID'])
+        stpSiz.Add(self.cbxRefStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'For the reference station:'),
+                     pos=(gRow, 1), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        stSQLSeries = 'SELECT ID, DataSeriesDescription FROM DataSeries;'
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'IR is in:'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.cbxIRRefSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxIRRefSeriesID, stSQLSeries)
+        if self.calcDict['IRRefSeriesID'] != None:
+            scidb.setComboboxToClientData(self.cbxIRRefSeriesID, self.calcDict['IRRefSeriesID'])
+        stpSiz.Add(self.cbxIRRefSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'VIS is in:'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.cbxVISRefSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxVISRefSeriesID, stSQLSeries)
+        if self.calcDict['VISRefSeriesID'] != None:
+            scidb.setComboboxToClientData(self.cbxVISRefSeriesID, self.calcDict['VISRefSeriesID'])
+        stpSiz.Add(self.cbxVISRefSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'For the other stations:'),
+                     pos=(gRow, 1), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'IR is in:'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.cbxIRDataSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxIRDataSeriesID, stSQLSeries)
+        if self.calcDict['IRDataSeriesID'] != None:
+            scidb.setComboboxToClientData(self.cbxIRDataSeriesID, self.calcDict['IRDataSeriesID'])
+        stpSiz.Add(self.cbxIRDataSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'VIS is in:'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.cbxVisDataSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxVisDataSeriesID, stSQLSeries)
+        if self.calcDict['VisDataSeriesID'] != None:
+            scidb.setComboboxToClientData(self.cbxVisDataSeriesID, self.calcDict['VisDataSeriesID'])
+        stpSiz.Add(self.cbxVisDataSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+
+
+        gRow += 1
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
         gRow += 1
 
 
