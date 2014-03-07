@@ -338,8 +338,8 @@ try:
         "PlusMinusCutoffHours" FLOAT DEFAULT 2 ,
         "Opt1ClrDayVsSetTholds" BOOL NOT NULL  DEFAULT 1 ,
         "ClearDay" date ,
-        "ThresholdPctLow" FLOAT DEFAULT 0.75 ,
-        "ThresholdPctHigh" FLOAT DEFAULT 1.25 ,
+        "ThresholdPctLow" INTEGER DEFAULT 75 ,
+        "ThresholdPctHigh" INTEGER DEFAULT 125 ,
         "IRRefCutoff" FLOAT ,
         "VISRefCutoff" FLOAT ,
         "IRDatCutoff" FLOAT ,
@@ -350,8 +350,8 @@ try:
         CHECK ("PlusMinusCutoffHours" >= 0)
         CHECK ("PlusMinusCutoffHours" <= 12)
         CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" >= 0))
-        CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" <= 1))
-        CHECK (("ThresholdPctHigh" is NULL) OR ("ThresholdPctHigh" >= 1))  
+        CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" <= 100))
+        CHECK (("ThresholdPctHigh" is NULL) OR ("ThresholdPctHigh" >= 100))  
         );
 
         CREATE TABLE IF NOT EXISTS "NDVIcalcDates" (

@@ -4,6 +4,7 @@ import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
+from wx.lib.wordwrap import wordwrap
 
 try:
     import win32com.client
@@ -210,11 +211,96 @@ class NDVIPanel(wx.Panel):
             scidb.setComboboxToClientData(self.cbxVisDataSeriesID, self.calcDict['VisDataSeriesID'])
         stpSiz.Add(self.cbxVisDataSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
-
-        gRow += 1
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
         gRow += 1
+        stAboutFns = 'Functions to process raw bands into IR and VIS signals. Use "i" and "v" for ' \
+                        'raw IR- and VIS-containing bands respectively.'
+        stWr = wordwrap(stAboutFns, 450, wx.ClientDC(pnl))
+        stpSiz.Add(wx.StaticText(pnl, -1, stWr),
+                     pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'IR:'),
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcIRFunction = wx.TextCtrl(pnl)
+        if self.calcDict['IRFunction'] != None:
+            self.tcIRFunction.SetValue('%s' % self.calcDict['IRFunction'])
+        stpSiz.Add(self.tcIRFunction, pos=(gRow, 1), span=(1, 4), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'VIS:'),
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcVISFunction = wx.TextCtrl(pnl)
+        if self.calcDict['VISFunction'] != None:
+            self.tcVISFunction.SetValue('%s' % self.calcDict['VISFunction'])
+        stpSiz.Add(self.tcVISFunction, pos=(gRow, 1), span=(1, 4), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Cutoff, hours +/- solar noon:'),
+                     pos=(gRow, 0), span=(1, 4), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcPlusMinusCutoffHours = wx.TextCtrl(pnl)
+        if self.calcDict['PlusMinusCutoffHours'] != None:
+            self.tcPlusMinusCutoffHours.SetValue('%.1f' % self.calcDict['PlusMinusCutoffHours'])
+        stpSiz.Add(self.tcPlusMinusCutoffHours, pos=(gRow, 4), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Only include readings from'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcThresholdPctLow = wx.TextCtrl(pnl)
+        if self.calcDict['ThresholdPctLow'] != None:
+            self.tcThresholdPctLow.SetValue('%d' % self.calcDict['ThresholdPctLow'])
+        stpSiz.Add(self.tcThresholdPctLow, pos=(gRow, 2), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        stpSiz.Add(wx.StaticText(pnl, -1, 'to'),
+                     pos=(gRow, 3), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcThresholdPctHigh = wx.TextCtrl(pnl)
+        if self.calcDict['ThresholdPctHigh'] != None:
+            self.tcThresholdPctHigh.SetValue('%d' % self.calcDict['ThresholdPctHigh'])
+        stpSiz.Add(self.tcThresholdPctHigh, pos=(gRow, 4), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'percent of solar maximum on the clear day:'),
+                     pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcClearDay = wx.TextCtrl(pnl)
+        if self.calcDict['ClearDay'] != None:
+            self.tcClearDay.SetValue('%d' % self.calcDict['ClearDay'])
+        stpSiz.Add(self.tcClearDay, pos=(gRow, 3), span=(1, 2), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
+        gRow += 1
+        self.ckUseOnlyValidNDVI = wx.CheckBox(pnl, label="Use only")
+        self.ckUseOnlyValidNDVI.SetValue(self.calcDict['UseOnlyValidNDVI'])
+        stpSiz.Add(self.ckUseOnlyValidNDVI, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcNDVIvalidMin = wx.TextCtrl(pnl)
+        if self.calcDict['NDVIvalidMin'] != None:
+            self.tcNDVIvalidMin.SetValue('%.2f' % self.calcDict['NDVIvalidMin'])
+        stpSiz.Add(self.tcNDVIvalidMin, pos=(gRow, 1), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        stpSiz.Add(wx.StaticText(pnl, -1, '<= NDVI <='),
+            pos=(gRow, 2), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcNDVIvalidMax = wx.TextCtrl(pnl)
+        if self.calcDict['NDVIvalidMax'] != None:
+            self.tcNDVIvalidMax.SetValue('%.2f' % self.calcDict['NDVIvalidMax'])
+        stpSiz.Add(self.tcNDVIvalidMax, pos=(gRow, 3), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
 
 
         pnl.SetSizer(stpSiz)
