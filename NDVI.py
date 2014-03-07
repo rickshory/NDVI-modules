@@ -103,31 +103,8 @@ class NDVIPanel(wx.Panel):
     
 
     def InitNDVISetupPanel(self, pnl):
-        pnl.SetBackgroundColour(wx.WHITE)
-        iLinespan = 5
-        stpSiz = wx.GridBagSizer(1, 1)
+        self.LayoutNDVISetupPanel(pnl)
         
-        gRow = 0
-        stpLabel = wx.StaticText(pnl, -1, 'Set up NDVI calculations here')
-        stpSiz.Add(stpLabel, pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-
-##
-        stpSiz.Add(wx.StaticText(pnl, -1, 'Use panel:'),
-                     pos=(gRow, 2), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-
-#        stSQLStations = 'SELECT ID, StationName FROM Stations;'
-        self.cbxGetPanel = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-#        scidb.fillComboboxFromSQL(self.cbxGetPanel, stSQLStations)
-#        if self.calcDict['RefStationID'] != None:
-#            scidb.setComboboxToClientData(self.cbxRefStationID, self.calcDict['RefStationID'])
-        stpSiz.Add(self.cbxGetPanel, pos=(gRow, 3), span=(1, 1), flag=wx.LEFT, border=5)
-        self.refresh_cbxPanelsChoices(-1)
-
-##
-
-        gRow += 1
-        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
-
         # get existing or blank record
 #        stSQL = "SELECT * FROM NDVIcalc WHERE ID = ?;"
 #        rec = scidb.curD.execute(stSQL, (0,)).fetchone()
@@ -143,24 +120,39 @@ class NDVIPanel(wx.Panel):
             for recName in rec.keys():
                 self.calcDict[recName] = rec[recName]
 #        print "self.calcDict:", self.calcDict
+        self.FillNDVISetupPanelFromCalcDict()
+
+    def LayoutNDVISetupPanel(self, pnl):
+        pnl.SetBackgroundColour(wx.WHITE)
+        iLinespan = 5
+        stpSiz = wx.GridBagSizer(1, 1)
+        
+        gRow = 0
+        stpLabel = wx.StaticText(pnl, -1, 'Set up NDVI calculations here')
+        stpSiz.Add(stpLabel, pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Use panel:'),
+                     pos=(gRow, 2), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        self.cbxGetPanel = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        stpSiz.Add(self.cbxGetPanel, pos=(gRow, 3), span=(1, 1), flag=wx.LEFT, border=5)
+        self.refresh_cbxPanelsChoices(-1)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'Name for this panel'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)              
         self.tcCalcName = wx.TextCtrl(pnl)
-        if self.calcDict['CalcName'] != None:
-            self.tcCalcName.SetValue('%s' % self.calcDict['CalcName'])
         stpSiz.Add(self.tcCalcName, pos=(gRow, 2), span=(1, 3), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         # following is rarely used, not implemented yet
 #        gRow += 1
 #        self.ckChartFromRefDay = wx.CheckBox(pnl, label="Chart using")
-#        self.ckChartFromRefDay.SetValue(self.calcDict['ChartFromRefDay'])
 #        stpSiz.Add(self.ckChartFromRefDay, pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 #        self.tcRefDay = wx.TextCtrl(pnl)
-#        if self.calcDict['RefDay'] != None:
-#            self.tcRefDay.SetValue('%s' % self.calcDict['RefDay'])
 #        stpSiz.Add(self.tcRefDay, pos=(gRow, 2), span=(1, 1), 
 #            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 #        stpSiz.Add(wx.StaticText(pnl, -1, 'as day 1'),
@@ -175,8 +167,6 @@ class NDVIPanel(wx.Panel):
         stSQLStations = 'SELECT ID, StationName FROM Stations;'
         self.cbxRefStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxRefStationID, stSQLStations)
-        if self.calcDict['RefStationID'] != None:
-            scidb.setComboboxToClientData(self.cbxRefStationID, self.calcDict['RefStationID'])
         stpSiz.Add(self.cbxRefStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
@@ -190,8 +180,6 @@ class NDVIPanel(wx.Panel):
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.cbxIRRefSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxIRRefSeriesID, stSQLSeries)
-        if self.calcDict['IRRefSeriesID'] != None:
-            scidb.setComboboxToClientData(self.cbxIRRefSeriesID, self.calcDict['IRRefSeriesID'])
         stpSiz.Add(self.cbxIRRefSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
@@ -199,8 +187,6 @@ class NDVIPanel(wx.Panel):
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.cbxVISRefSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxVISRefSeriesID, stSQLSeries)
-        if self.calcDict['VISRefSeriesID'] != None:
-            scidb.setComboboxToClientData(self.cbxVISRefSeriesID, self.calcDict['VISRefSeriesID'])
         stpSiz.Add(self.cbxVISRefSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
@@ -212,8 +198,6 @@ class NDVIPanel(wx.Panel):
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.cbxIRDataSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxIRDataSeriesID, stSQLSeries)
-        if self.calcDict['IRDataSeriesID'] != None:
-            scidb.setComboboxToClientData(self.cbxIRDataSeriesID, self.calcDict['IRDataSeriesID'])
         stpSiz.Add(self.cbxIRDataSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
@@ -221,8 +205,6 @@ class NDVIPanel(wx.Panel):
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.cbxVisDataSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxVisDataSeriesID, stSQLSeries)
-        if self.calcDict['VisDataSeriesID'] != None:
-            scidb.setComboboxToClientData(self.cbxVisDataSeriesID, self.calcDict['VisDataSeriesID'])
         stpSiz.Add(self.cbxVisDataSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
@@ -238,8 +220,6 @@ class NDVIPanel(wx.Panel):
         stpSiz.Add(wx.StaticText(pnl, -1, 'IR:'),
                      pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcIRFunction = wx.TextCtrl(pnl)
-        if self.calcDict['IRFunction'] != None:
-            self.tcIRFunction.SetValue('%s' % self.calcDict['IRFunction'])
         stpSiz.Add(self.tcIRFunction, pos=(gRow, 1), span=(1, 4), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -247,8 +227,6 @@ class NDVIPanel(wx.Panel):
         stpSiz.Add(wx.StaticText(pnl, -1, 'VIS:'),
                      pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcVISFunction = wx.TextCtrl(pnl)
-        if self.calcDict['VISFunction'] != None:
-            self.tcVISFunction.SetValue('%s' % self.calcDict['VISFunction'])
         stpSiz.Add(self.tcVISFunction, pos=(gRow, 1), span=(1, 4), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -259,8 +237,6 @@ class NDVIPanel(wx.Panel):
         stpSiz.Add(wx.StaticText(pnl, -1, 'Cutoff, hours +/- solar noon:'),
                      pos=(gRow, 0), span=(1, 4), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcPlusMinusCutoffHours = wx.TextCtrl(pnl)
-        if self.calcDict['PlusMinusCutoffHours'] != None:
-            self.tcPlusMinusCutoffHours.SetValue('%.1f' % self.calcDict['PlusMinusCutoffHours'])
         stpSiz.Add(self.tcPlusMinusCutoffHours, pos=(gRow, 4), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -271,15 +247,11 @@ class NDVIPanel(wx.Panel):
         stpSiz.Add(wx.StaticText(pnl, -1, 'Only include readings from'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcThresholdPctLow = wx.TextCtrl(pnl)
-        if self.calcDict['ThresholdPctLow'] != None:
-            self.tcThresholdPctLow.SetValue('%d' % self.calcDict['ThresholdPctLow'])
         stpSiz.Add(self.tcThresholdPctLow, pos=(gRow, 2), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
         stpSiz.Add(wx.StaticText(pnl, -1, 'to'),
                      pos=(gRow, 3), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcThresholdPctHigh = wx.TextCtrl(pnl)
-        if self.calcDict['ThresholdPctHigh'] != None:
-            self.tcThresholdPctHigh.SetValue('%d' % self.calcDict['ThresholdPctHigh'])
         stpSiz.Add(self.tcThresholdPctHigh, pos=(gRow, 4), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -287,8 +259,6 @@ class NDVIPanel(wx.Panel):
         stpSiz.Add(wx.StaticText(pnl, -1, 'percent of solar maximum on the clear day:'),
                      pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcClearDay = wx.TextCtrl(pnl)
-        if self.calcDict['ClearDay'] != None:
-            self.tcClearDay.SetValue('%d' % self.calcDict['ClearDay'])
         stpSiz.Add(self.tcClearDay, pos=(gRow, 3), span=(1, 2), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -297,18 +267,13 @@ class NDVIPanel(wx.Panel):
 
         gRow += 1
         self.ckUseOnlyValidNDVI = wx.CheckBox(pnl, label="Use only")
-        self.ckUseOnlyValidNDVI.SetValue(self.calcDict['UseOnlyValidNDVI'])
         stpSiz.Add(self.ckUseOnlyValidNDVI, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcNDVIvalidMin = wx.TextCtrl(pnl)
-        if self.calcDict['NDVIvalidMin'] != None:
-            self.tcNDVIvalidMin.SetValue('%.2f' % self.calcDict['NDVIvalidMin'])
         stpSiz.Add(self.tcNDVIvalidMin, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
         stpSiz.Add(wx.StaticText(pnl, -1, '<= NDVI <='),
             pos=(gRow, 2), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcNDVIvalidMax = wx.TextCtrl(pnl)
-        if self.calcDict['NDVIvalidMax'] != None:
-            self.tcNDVIvalidMax.SetValue('%.2f' % self.calcDict['NDVIvalidMax'])
         stpSiz.Add(self.tcNDVIvalidMax, pos=(gRow, 3), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -316,10 +281,43 @@ class NDVIPanel(wx.Panel):
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
 
-
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
         pnl.SetupScrolling()
+
+    def FillNDVISetupPanelFromCalcDict(self):
+        # following is rarely used, not implemented yet
+#        self.ckChartFromRefDay.SetValue(self.calcDict['ChartFromRefDay'])
+#        if self.calcDict['RefDay'] != None:
+#            self.tcRefDay.SetValue('%s' % self.calcDict['RefDay'])
+        if self.calcDict['RefStationID'] != None:
+            scidb.setComboboxToClientData(self.cbxRefStationID, self.calcDict['RefStationID'])
+        if self.calcDict['IRRefSeriesID'] != None:
+            scidb.setComboboxToClientData(self.cbxIRRefSeriesID, self.calcDict['IRRefSeriesID'])
+        if self.calcDict['VISRefSeriesID'] != None:
+            scidb.setComboboxToClientData(self.cbxVISRefSeriesID, self.calcDict['VISRefSeriesID'])
+        if self.calcDict['IRDataSeriesID'] != None:
+            scidb.setComboboxToClientData(self.cbxIRDataSeriesID, self.calcDict['IRDataSeriesID'])
+        if self.calcDict['VisDataSeriesID'] != None:
+            scidb.setComboboxToClientData(self.cbxVisDataSeriesID, self.calcDict['VisDataSeriesID'])
+        if self.calcDict['IRFunction'] != None:
+            self.tcIRFunction.SetValue('%s' % self.calcDict['IRFunction'])
+        if self.calcDict['VISFunction'] != None:
+            self.tcVISFunction.SetValue('%s' % self.calcDict['VISFunction'])
+        if self.calcDict['PlusMinusCutoffHours'] != None:
+            self.tcPlusMinusCutoffHours.SetValue('%.1f' % self.calcDict['PlusMinusCutoffHours'])
+        if self.calcDict['ThresholdPctLow'] != None:
+            self.tcThresholdPctLow.SetValue('%d' % self.calcDict['ThresholdPctLow'])
+        if self.calcDict['ThresholdPctHigh'] != None:
+            self.tcThresholdPctHigh.SetValue('%d' % self.calcDict['ThresholdPctHigh'])
+        if self.calcDict['ClearDay'] != None:
+            self.tcClearDay.SetValue('%d' % self.calcDict['ClearDay'])
+        self.ckUseOnlyValidNDVI.SetValue(self.calcDict['UseOnlyValidNDVI'])
+        if self.calcDict['NDVIvalidMin'] != None:
+            self.tcNDVIvalidMin.SetValue('%.2f' % self.calcDict['NDVIvalidMin'])
+        if self.calcDict['NDVIvalidMax'] != None:
+            self.tcNDVIvalidMax.SetValue('%.2f' % self.calcDict['NDVIvalidMax'])
+
 
     def InitDatesPanel(self, pnl):
         pnl.SetBackgroundColour('#0FFF0F')
