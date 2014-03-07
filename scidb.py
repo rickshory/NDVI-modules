@@ -524,21 +524,22 @@ def dictFromTableDefaults(stTable):
     for field in fields:
 #        print field
         stFldNm = field[1]
-        if field[4] != None: # the default value, if any
+        if field[4] == None: # there is no default value
+            d[stFldNm] = None
+        else: # process the default value
             if field[2].upper() == 'FLOAT': # the data type, as much as there is one in sqlite
                 val = float(field[4])
             elif field[2][:3].upper() == 'INT':
                 val = int(field[4])
             elif field[2][:4].upper() == 'BOOL':
-                if field[4] == '1':
-                    val = True
-                else:
-                    val = False
-            else:
+                val = int(field[4]) # convert to 0 or 1
+#                if field[4] == '1':
+#                    val = True
+#                else:
+#                    val = False
+            else: # text
                 val = re.sub(r'^"|"$', '', field[4]) # strip any quotes
             d[stFldNm] = val
-        else:
-            d[stFldNm] = None
     return d
 
 def countTableFieldItems(stTable, stField, stItem=None):

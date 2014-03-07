@@ -126,7 +126,20 @@ class NDVIPanel(wx.Panel):
             self.calcDict = {}
             for recName in rec.keys():
                 self.calcDict[recName] = rec[recName]
-        print "self.calcDict:", self.calcDict
+#        print "self.calcDict:", self.calcDict
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(self, -1, 'Name'),
+                     pos=(gRow, 0), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)              
+        self.tcCalcName = wx.TextCtrl(self)
+        if self.calcDict['CalcName'] != None:
+            self.tcCalcName.SetValue('%s' % self.ColDict['CalcName'])
+        stpSiz.Add(self.tcCalcName, pos=(gRow, 1), span=(1, 2), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+        gRow += 1
+
 
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
