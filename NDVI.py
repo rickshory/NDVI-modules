@@ -384,6 +384,12 @@ class NDVIPanel(wx.Panel):
             self.tcCalcName.SetFocus()
             self.Scroll(0, 0) # at the top
             return
+        # if Name is same as in the dictionary, assume edited; overwrite
+        if stCalcName == self.calcDict['CalcName']
+            boolUpdatePanel = 1
+        else:
+            boolUpdatePanel = 0
+        
 
     def onCbxTasks(self, event):
         print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'

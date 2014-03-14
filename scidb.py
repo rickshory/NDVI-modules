@@ -75,13 +75,28 @@ try:
         print "EqnOfTime table created and filled"
         
     curD.executescript("""
+
+        CREATE TABLE IF NOT EXISTS "InstrumentSpecs"
+        ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+        "InstrumentSpec" VARCHAR(255) NOT NULL UNIQUE);
+
         CREATE TABLE IF NOT EXISTS "Loggers"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
-        "LoggerSerialNumber" VARCHAR(32) NOT NULL UNIQUE);
-
+        "LoggerSerialNumber" VARCHAR(32) NOT NULL UNIQUE,
+        "InstrumentSpecID" INTEGER,
+        FOREIGN KEY("InstrumentSpecID") REFERENCES InstrumentSpecs("ID")
+        );
+        
+        CREATE TABLE IF NOT EXISTS "DeviceSpecs"
+        ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+        "DeviceSpec" VARCHAR(255) NOT NULL UNIQUE);
+        
         CREATE TABLE IF NOT EXISTS "Sensors"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
-        "SensorSerialNumber" VARCHAR(32) NOT NULL UNIQUE);
+        "SensorSerialNumber" VARCHAR(32),
+        "DeviceSpecID" INTEGER,
+        FOREIGN KEY("DeviceSpecID") REFERENCES DeviceSpecs("ID")
+        );
         
         CREATE TABLE IF NOT EXISTS "DataTypes"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
@@ -130,31 +145,19 @@ try:
         "LongitudeDecDegrees" FLOAT,
         "UTC_Offset" INTEGER
         );
-        
-        CREATE TABLE IF NOT EXISTS "StationSpecs"
-        ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
-        "InstrumentSpec" VARCHAR(255) NOT NULL UNIQUE);
-        
+                
         CREATE TABLE IF NOT EXISTS "Stations" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "StationName" VARCHAR(25) NOT NULL UNIQUE,
         "SiteID" INTEGER,
         "LatitudeDecDegrees" FLOAT,
         "LongitudeDecDegrees" FLOAT,
-        "InstrumentSpecID" INTEGER,
-        FOREIGN KEY("SiteID") REFERENCES FieldSites("ID"),
-        FOREIGN KEY("InstrumentSpecID") REFERENCES StationSpecs("ID")
+        FOREIGN KEY("SiteID") REFERENCES FieldSites("ID")
         );
-        
-        CREATE TABLE IF NOT EXISTS "DataSeriesSpecs"
-        ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
-        "DeviceSpec" VARCHAR(255) NOT NULL UNIQUE);
         
         CREATE TABLE IF NOT EXISTS "DataSeries" (
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
-        "DataSeriesDescription" VARCHAR(30) NOT NULL UNIQUE,
-        "DeviceSpecID" INTEGER,
-        FOREIGN KEY("DeviceSpecID") REFERENCES DataSeriesSpecs("ID")
+        "DataSeriesDescription" VARCHAR(30) NOT NULL UNIQUE
         );
         
         CREATE TABLE IF NOT EXISTS "ChannelSegments" (
