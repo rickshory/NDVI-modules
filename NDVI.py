@@ -382,8 +382,13 @@ class NDVIPanel(wx.Panel):
         pvSiz.Add(pvLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
         gRow += 1
+        # Add the FloatCanvas canvas
+        NC = NavCanvas.NavCanvas(pnl,
+             Debug = 0,
+             BackgroundColor = "DARK SLATE BLUE")
+        self.Canvas = NC.Canvas # reference the contained FloatCanvas
 #        self.datesList = ndviDatesList(pnl, style = wx.LC_REPORT)
-#        pvSiz.Add(self.datesList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
+        pvSiz.Add(NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         pvSiz.AddGrowableRow(gRow)
         pnl.SetSizer(pvSiz)
         pnl.SetAutoLayout(1)
