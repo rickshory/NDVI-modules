@@ -48,12 +48,30 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                                     dctInfo['dataFormat'] + '"\n')
         if dctInfo['dataFormat'] == r"Hoboware text export":
             self.parseHoboWareTextFile(dctInfo)
+        elif dctInfo['dataFormat'] == r"Greenlogger text file":
+            self.parseGLTextFile(dctInfo)
         # add others as else if here
         else:
             self.progressArea.SetInsertionPointEnd()
             self.progressArea.WriteText('Parsing of this data format is not implemented yet\n')
             return "Done"                       
+    def parseGLTextFile(self, infoDict):
+        """
+        parse a GreenLogger text file
+        """
+        dataRecItemCt = 0
+        dataRecsAdded = 0
+        dataRecsDupSkipped = 0
 
+        print "About to put lines into temp table"
+        self.putTextLinesIntoTmpTable(infoDict)
+        print "Finished putting lines into temp table"
+        # DELETE FROM tmpLines WHERE hex(Line) = '0D0A';
+        #parse file, start with header line; 1st line in this file format
+        scidb.curT.execute("SELECT * FROM tmpLines ORDER BY ID;")
+#        for rec in scidb.curT:
+            
+        
     def parseHoboWareTextFile(self, infoDict):
 
         """
@@ -230,7 +248,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 ct += 1
                 # much faster to insert a batch at once
                 wx.Yield()
-                lstLines.append((sLine,))
+                st = sLine.strip()                
+                if st != '':
+                    lstLines.append((st,))
                 wx.Yield()
                 if  len(lstLines) >= numToInsertAtOnce:
                     self.msgArea.ChangeValue("counting lines in file: " +
@@ -337,8 +357,14 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 
                     if ('Timestamp\tBBDn\tIRDn\tBBUp\tIRUp\tT(C)\tVbatt(mV)' in sLine):
                         infoDict['dataFormat'] = "Greenlogger text file"
-                        infoDict['versionNumber'] = 13
-                        # in versions <=13, header is 1st non-blank line
+                        infoDict['versionNumber'] = 0
+                        # version 0 means no metadata, simple text header is 1st non-blank line
+                        break
+
+                    if ('{"Instrument identifier":' in sLine):
+                        infoDict['dataFormat'] = "Greenlogger text file"
+                        infoDict['versionNumber'] = 0
+                        # version 1 means JSON metadata header is 1st non-blank line
                         break
 
                     # test for iButton file
@@ -480,7 +506,7 @@ class ParseFilesFrame(wx.Frame):
         framePanel = ParseFilesPanel(self, wx.ID_ANY)
 
 def main():
-    app = wx.App()
+    app = wx.App(redirect=False)
     ParseFilesFrame(None, wx.ID_ANY, 'Add Data to Database')
     app.MainLoop() 
 

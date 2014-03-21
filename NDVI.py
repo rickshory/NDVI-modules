@@ -385,7 +385,7 @@ class NDVIPanel(wx.Panel):
             self.Scroll(0, 0) # at the top
             return
         # if Name is same as in the dictionary, assume edited; overwrite
-        if stCalcName == self.calcDict['CalcName']
+        if stCalcName == self.calcDict['CalcName']:
             boolUpdatePanel = 1
         else:
             boolUpdatePanel = 0
