@@ -391,8 +391,10 @@ class NDVIPanel(wx.Panel):
 #        self.UnBindAllMouseEvents()
 #        self.Canvas.InitAll()
 #        self.Canvas.Draw()
-        points = [(-100,-100),(100,100)]
+        points = [(-100,-100),(100,100), (100,-100), (-100,100)]
         self.Canvas.AddLine(points, LineWidth = 1, LineColor = 'BLUE')
+        self.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
+        # then the "Zoom To Fit" button correctly expands it to the whole space
 
         pvSiz.Add(NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         pvSiz.AddGrowableRow(gRow)
