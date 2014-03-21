@@ -12,6 +12,12 @@ try:
 except ImportError:
     hasCom = False
 
+try:
+    from floatcanvas import NavCanvas, FloatCanvas, Resources
+except ImportError: # if it's not there locally, try the wxPython lib.
+    from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
+import wx.lib.colourdb
+
 class ndviDatesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
         wx.ListCtrl.__init__(self, *arg, **kw)
@@ -78,13 +84,14 @@ class NDVIPanel(wx.Panel):
         ndviOptsPanel.SetSizer(optsSiz)
         ndviOptsPanel.SetAutoLayout(1)
         
-        self.previewPanel = wx.Panel(hSplit, -1)
-        self.previewPanel.SetBackgroundColour('#FFFF00')
-        self.pvwLabel = wx.StaticText(self.previewPanel, -1, "previews will be here")
+        previewPanel = wx.Panel(hSplit, -1)
+        self.InitPreviewPanel(previewPanel)
+#        self.previewPanel.SetBackgroundColour('#FFFF00')
+#        self.pvwLabel = wx.StaticText(self.previewPanel, -1, "previews will be here")
 
         hSplit.SetMinimumPaneSize(20)
         hSplit.SetSashGravity(0.5)
-        hSplit.SplitHorizontally(ndviOptsPanel, self.previewPanel)
+        hSplit.SplitHorizontally(ndviOptsPanel, previewPanel)
         vSiz = wx.BoxSizer(wx.VERTICAL)
         vSiz.Add(hSplit, 1, wx.EXPAND)
         ndviInfoPanel.SetSizer(vSiz)
@@ -332,7 +339,6 @@ class NDVIPanel(wx.Panel):
         if self.calcDict['NDVIvalidMax'] != None:
             self.tcNDVIvalidMax.SetValue('%.2f' % self.calcDict['NDVIvalidMax'])
 
-
     def InitDatesPanel(self, pnl):
         pnl.SetBackgroundColour('#0FFF0F')
         dtSiz = wx.GridBagSizer(0, 0)
@@ -366,6 +372,22 @@ class NDVIPanel(wx.Panel):
         pnl.SetSizer(stSiz)
         pnl.SetAutoLayout(1)
 
+    def InitPreviewPanel(self, pnl):
+        pnl.SetBackgroundColour('#FFFF00')
+        pvSiz = wx.GridBagSizer(0, 0)
+        pvSiz.AddGrowableCol(0)
+        
+        gRow = 0
+        pvLabel = wx.StaticText(pnl, -1, "previews will be here")
+        pvSiz.Add(pvLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        
+        gRow += 1
+#        self.datesList = ndviDatesList(pnl, style = wx.LC_REPORT)
+#        pvSiz.Add(self.datesList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
+        pvSiz.AddGrowableRow(gRow)
+        pnl.SetSizer(pvSiz)
+        pnl.SetAutoLayout(1)
+
     def refresh_cbxPanelsChoices(self, event):
         self.cbxGetPanel.Clear()
         stSQLPanels = 'SELECT ID, CalcName FROM NDVIcalc;'
@@ -393,6 +415,7 @@ class NDVIPanel(wx.Panel):
 
     def onCbxTasks(self, event):
         print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
+
 
 class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
