@@ -373,7 +373,7 @@ class NDVIPanel(wx.Panel):
         pnl.SetAutoLayout(1)
 
     def InitPreviewPanel(self, pnl):
-        pnl.SetBackgroundColour('#FFFF00')
+        pnl.SetBackgroundColour('#FFFFFF')
         pvSiz = wx.GridBagSizer(0, 0)
         pvSiz.AddGrowableCol(0)
         
@@ -385,9 +385,15 @@ class NDVIPanel(wx.Panel):
         # Add the FloatCanvas canvas
         NC = NavCanvas.NavCanvas(pnl,
              Debug = 0,
-             BackgroundColor = "DARK SLATE BLUE")
+             BackgroundColor = "WHITE")
         self.Canvas = NC.Canvas # reference the contained FloatCanvas
-#        self.datesList = ndviDatesList(pnl, style = wx.LC_REPORT)
+        # test of drawing one line
+#        self.UnBindAllMouseEvents()
+#        self.Canvas.InitAll()
+#        self.Canvas.Draw()
+        points = [(-100,-100),(100,100)]
+        self.Canvas.AddLine(points, LineWidth = 1, LineColor = 'BLUE')
+
         pvSiz.Add(NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         pvSiz.AddGrowableRow(gRow)
         pnl.SetSizer(pvSiz)
