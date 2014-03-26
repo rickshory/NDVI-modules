@@ -110,7 +110,7 @@ try:
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "Column" INTEGER NOT NULL ,
         "LoggerID" INTEGER NOT NULL ,
-        "SensorID" INTEGER NOT NULL  DEFAULT 0,
+        "SensorID" INTEGER NOT NULL,
         "DataTypeID" INTEGER NOT NULL ,
         "DataUnitsID" INTEGER NOT NULL ,
         "UTC_Offset" INTEGER NOT NULL  DEFAULT 0,
@@ -397,9 +397,28 @@ try:
     curT = tmpConn.cursor()
 
     curT.executescript("""
+    
         CREATE TABLE IF NOT EXISTS "Text"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
-        "Line" VARCHAR(50) NOT NULL UNIQUE);
+        "Line" VARCHAR(50) NOT NULL UNIQUE
+        );
+        
+        CREATE TABLE IF NOT EXISTS "tmpLines" (
+        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+        "Line" VARCHAR(200)
+        );
+
+        CREATE TABLE IF NOT EXISTS "tmpChanSegSeries" (
+        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+        "ChannelID" INTEGER NOT NULL,
+        "SeriesID" INTEGER NOT NULL
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS "tmpChanSegSeries_NoDup"
+        ON "tmpChanSegSeries"
+        ("ChannelID" ASC, "SeriesID" ASC);
+
+
         """)
 
     curT.execute("drop table if exists testDates")
@@ -1060,7 +1079,12 @@ def generateSheetRows(sheetID, formatValues = True):
     # get the data for the columns
     # fields:  ID, WorksheetID, ColumnHeading, ColType, TimeSystem, TimeIsInterval, IntervalIsFrom,
     #  Constant, Formula,AggType, AggStationID, AggDataSeriesID, Format_Python, Format_Excel, ListingOrder
-    
+
+# set up these defaults
+noSensID = assureItemIsInTableField('(n/a)', 'Sensors', 'SensorSerialNumber')
+noDataTypeID = assureItemIsInTableField('(n/a)', 'DataTypes', 'TypeText')
+noDataUnitsID = assureItemIsInTableField('(n/a)', 'DataUnits', 'UnitsText')
+
 def is_number(s):
     try:
         float(s)

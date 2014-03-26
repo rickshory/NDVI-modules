@@ -101,7 +101,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 # list items are: ChannelID, originalCol, Logger, Sensor, dataType, dataUnits, hrOffset, new
                 lChannel = [0, dictCol['Order'], dictHd['Instrument identifier'], dictCol['Identifier'],
                             dictCol['DataType'], dictCol['DataUnits'], iTimeZoneOffset, '']
-                dictChannels[dictCol['Order']] = (lChannel[:])
+                dictChannels[dictCol['Order']] = (lChannel[:]) # the key is the column number
 
                 print 'Before Channel function'
                 for ky in dictChannels.keys():
@@ -129,7 +129,6 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             recs = scidb.curT.execute(stSQL, (hrOffset['TZ'],)).fetchall()
             for rec in recs:
                 lData = rec['Line'].split('\t')
-# >>>
                 # item zero is the timestamp followed by the timezone offset
                 sTimeStamp = lData[0][:-4] # drop timezone offset, we already have it
                 tsAsTime = datetime.datetime.strptime(sTimeStamp, "%Y-%m-%d %H:%M:%S")
