@@ -102,27 +102,37 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 lChannel = [0, dictCol['Order'], dictHd['Instrument identifier'], dictCol['Identifier'],
                             dictCol['DataType'], dictCol['DataUnits'], iTimeZoneOffset, '']
                 dictChannels[dictCol['Order']] = (lChannel[:]) # the key is the column number
+                scidb.assureChannelIsInDB(dictChannels[dictCol['Order']]) # get or create the channel
+                iChannelID = dictChannels[dictCol['Order']][0]
+                # store the column name as a Series
+                iSeriesID = scidb.assureItemIsInTableField(dictCol['Name'], "DataSeries", "DataSeriesDescription")
+                # tie it to this Channel, to offer later
+                stSQLcs = 'INSERT INTO tmpChanSegSeries(ChannelID, SeriesID) VALUES (?, ?);'
+                try:
+                    scidb.curT.execute(stSQLcs, (iChannelID, iSeriesID))
+                except sqlite3.IntegrityError:
+                    pass # silently ignore duplicates
 
-                print 'Before Channel function'
-                for ky in dictChannels.keys():
-                    print ky, dictChannels[ky][:]
-                for ky in dictChannels.keys():
-                    scidb.assureChannelIsInDB(dictChannels[ky])
-                print 'After Channel function'
-                for ky in dictChannels.keys():
-                    print ky, dictChannels[ky][:]
+#            print 'Before Channel function'
+#            for ky in dictChannels.keys():
+#                print ky, dictChannels[ky][:]
+#            for ky in dictChannels.keys():
+#                scidb.assureChannelIsInDB(dictChannels[ky])
+#            print 'After Channel function'
+#            for ky in dictChannels.keys():
+#                print ky, dictChannels[ky][:]
 
-                # make a list of channel IDs for the set of lines with this HrOffset, for quick lookup
-                # it is indexed by the columns list, and is zero-based
-                lCh = []
-                for iCol in range(len(lCols)):
-                    iNomCol = iCol + 1
-                    if iNomCol in dictChannels:
-                        lChanSet = dictChannels[iNomCol][:]
-                        lCh.append(lChanSet[0])
-                    else: # does not correspond to a data colum
-                        lCh.append(0) # placeholder, to make list indexes work right             
-            
+            # make a list of channel IDs for the set of lines with this HrOffset, for quick lookup
+            # it is indexed by the columns list, and is zero-based
+            lCh = []
+            for iCol in range(len(lCols)):
+                iNomCol = iCol + 1
+                if iNomCol in dictChannels:
+                    lChanSet = dictChannels[iNomCol][:]
+                    lCh.append(lChanSet[0])
+                else: # does not correspond to a data colum
+                    lCh.append(0) # placeholder, to make list indexes work right             
+        
             # done setting up channels, get data lines
             stSQL = "SELECT ID, Line FROM tmpLines WHERE substr(Line, 21, 3) = ? " \
                 "AND Line LIKE '____-__-__ __:__:__ ___%' ORDER BY ID;"
