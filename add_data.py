@@ -1,5 +1,5 @@
 import wx, sqlite3, datetime
-import os, sys, re
+import os, sys, re, ast
 import scidb
 
 class DropTargetForFilesToParse(wx.FileDropTarget):
@@ -55,6 +55,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             self.progressArea.SetInsertionPointEnd()
             self.progressArea.WriteText('Parsing of this data format is not implemented yet\n')
             return "Done"                       
+
     def parseGLTextFile(self, infoDict):
         """
         parse a GreenLogger text file
@@ -66,18 +67,107 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         print "About to put lines into temp table"
         self.putTextLinesIntoTmpTable(infoDict)
         print "Finished putting lines into temp table"
-        # DELETE FROM tmpLines WHERE hex(Line) = '0D0A';
-        #parse file, start with header line; 1st line in this file format
-        scidb.curT.execute("SELECT * FROM tmpLines ORDER BY ID;")
-#        for rec in scidb.curT:
+        # get the metadata header
+        stSQL = """SELECT Line FROM tmpLines WHERE Line LIKE '{"Instrument identifier":%' GROUP BY Line;"""
+        mtDat =  scidb.curT.execute(stSQL).fetchone()
+        dictHd = ast.literal_eval(mtDat['Line'])
+        # somewhat redundant to do 'LoggerSerialNumber' here (fn 'assureChannelIsInDB' would fill in
+        # later), but allows putting Model into the DB
+        iInstSpecID = scidb.assureItemIsInTableField(dictHd['Model'], "InstrumentSpecs", "InstrumentSpec")
+        iLoggerID = scidb.assureItemIsInTableField(dictHd['Instrument identifier'], "Loggers", "LoggerSerialNumber")
+        scidb.curD.execute("UPDATE Loggers SET InstrumentSpecID = ? WHERE ID = ?;", (iInstSpecID, iLoggerID))
+        
+        # get the hour offset(s); most files will have only one
+        stSQL = "SELECT substr(Line, 21, 3) as TZ FROM tmpLines " \
+                "WHERE Line LIKE '____-__-__ __:__:__ ___%' GROUP BY TZ;"
+        hrOffsets = scidb.curT.execute(stSQL).fetchall()
+        for hrOffset in hrOffsets:
+            iTimeZoneOffset = int(hrOffset['TZ'])
+            # make a dictionary of channel IDs for data lines that have this hour offset
+            # would be slightly different for different hour offsets
+            lCols = dictHd['Columns'] # get col metadata; this is a list of dictionaries
+#            # it is indexed by the columns list, and is zero-based
+#            lCh = [0 for i in range(len(lCols))] # initially, fill with all zeroes
+            dictChannels = {} # this is the dictionary we will build
+            for dictCol in lCols:
+                # somewhat redundant to fill these in before calling function 'assureChannelIsInDB', but
+                #  allows assigning sensor device types
+                iDeviceTypeID = scidb.assureItemIsInTableField(dictCol['Device'], "DeviceSpecs", "DeviceSpec")
+                iSensorID = scidb.assureItemIsInTableField(dictCol['Identifier'], "Sensors", "SensorSerialNumber")
+                scidb.curD.execute("UPDATE Sensors SET DeviceSpecID = ? WHERE ID = ?;", (iDeviceTypeID, iSensorID))
+#                iDataTypeID = scidb.assureItemIsInTableField(dictCol['DataType'], "DataTypes", "TypeText")
+#                iDataUnitsID = scidb.assureItemIsInTableField(dictCol['DataUnits'], "DataUnits", "UnitsText")
+                # build list to create the channel
+                # list items are: ChannelID, originalCol, Logger, Sensor, dataType, dataUnits, hrOffset, new
+                lChannel = [0, dictCol['Order'], dictHd['Instrument identifier'], dictCol['Identifier'],
+                            dictCol['DataType'], dictCol['DataUnits'], iTimeZoneOffset, '']
+                dictChannels[dictCol['Order']] = (lChannel[:])
+
+                print 'Before Channel function'
+                for ky in dictChannels.keys():
+                    print ky, dictChannels[ky][:]
+                for ky in dictChannels.keys():
+                    scidb.assureChannelIsInDB(dictChannels[ky])
+                print 'After Channel function'
+                for ky in dictChannels.keys():
+                    print ky, dictChannels[ky][:]
+
+                # make a list of channel IDs for the set of lines with this HrOffset, for quick lookup
+                # it is indexed by the columns list, and is zero-based
+                lCh = []
+                for iCol in range(len(lCols)):
+                    iNomCol = iCol + 1
+                    if iNomCol in dictChannels:
+                        lChanSet = dictChannels[iNomCol][:]
+                        lCh.append(lChanSet[0])
+                    else: # does not correspond to a data colum
+                        lCh.append(0) # placeholder, to make list indexes work right             
             
+            # done setting up channels, get data lines
+            stSQL = "SELECT ID, Line FROM tmpLines WHERE substr(Line, 21, 3) = ? " \
+                "AND Line LIKE '____-__-__ __:__:__ ___%' ORDER BY ID;"
+            recs = scidb.curT.execute(stSQL, (hrOffset['TZ'],)).fetchall()
+            for rec in recs:
+                lData = rec['Line'].split('\t')
+# >>>
+                # item zero is the timestamp followed by the timezone offset
+                sTimeStamp = lData[0][:-4] # drop timezone offset, we already have it
+                tsAsTime = datetime.datetime.strptime(sTimeStamp, "%Y-%m-%d %H:%M:%S")
+                tsAsTime.replace(tzinfo=None) # make sure it does not get local timezone info
+                tsAsTime = tsAsTime + datetime.timedelta(hours = -iTimeZoneOffset)
+                tsAsDate = tsAsTime.date()
+                stSQL = "INSERT INTO Data (UTTimestamp, ChannelID, Value) VALUES (?, ?, ?)"
+                for iCol in range(len(lData)):
+                    if iCol > 0: # an item of data
+                        # give some progress diagnostics
+                        dataRecItemCt += 1
+                        if dataRecItemCt % 100 == 0:
+                            self.msgArea.ChangeValue("Line " + str(rec['ID']) +
+                                " of " + str(infoDict['lineCt']) + "; " +
+                                str(dataRecsAdded) + " records added, " +
+                                str(dataRecsDupSkipped) + " duplicates skipped.")
+                            wx.Yield()
+                        try: # much faster to try and fail than to test first
+                            scidb.curD.execute(stSQL, (tsAsTime, lCh[iCol], lData[iCol]))
+                            dataRecsAdded += 1 # count it
+                        except sqlite3.IntegrityError: # item is already in Data table
+                            dataRecsDupSkipped += 1 # count but otherwise ignore
+                        finally:
+                            wx.Yield()
+
+        # finished parsing lines
+        infoDict['numNewDataRecsAdded'] = dataRecsAdded
+        infoDict['numDupDataRecsSkipped'] = dataRecsDupSkipped
+        self.msgArea.ChangeValue(str(infoDict['lineCt']) +
+            " lines processed; " + str(dataRecsAdded) +
+            " data records added to database, " + str(dataRecsDupSkipped) +
+            " duplicates skipped.")
+
         
     def parseHoboWareTextFile(self, infoDict):
-
         """
         parse a data file exported as text by HoboWare
         """
-
         sStrip = '" \x0a\x0d' # characters to strip from parsed items
         # regular expression pattern to find logger number
         pLogger = re.compile(r'LGR S/N: (?P<nLogger>\d+)')
@@ -363,7 +453,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 
                     if ('{"Instrument identifier":' in sLine):
                         infoDict['dataFormat'] = "Greenlogger text file"
-                        infoDict['versionNumber'] = 0
+                        infoDict['versionNumber'] = 1
                         # version 1 means JSON metadata header is 1st non-blank line
                         break
 

@@ -93,7 +93,7 @@ try:
         
         CREATE TABLE IF NOT EXISTS "Sensors"
         ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
-        "SensorSerialNumber" VARCHAR(32),
+        "SensorSerialNumber" VARCHAR(32) UNIQUE,
         "DeviceSpecID" INTEGER,
         FOREIGN KEY("DeviceSpecID") REFERENCES DeviceSpecs("ID")
         );
@@ -1061,7 +1061,12 @@ def generateSheetRows(sheetID, formatValues = True):
     # fields:  ID, WorksheetID, ColumnHeading, ColType, TimeSystem, TimeIsInterval, IntervalIsFrom,
     #  Constant, Formula,AggType, AggStationID, AggDataSeriesID, Format_Python, Format_Excel, ListingOrder
     
-    
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 if __name__ == "__main__":
     pass # nothing yet
