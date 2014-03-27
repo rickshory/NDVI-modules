@@ -418,6 +418,11 @@ try:
         "Line" VARCHAR(200)
         );
 
+        CREATE TABLE IF NOT EXISTS "tmpParseLog"
+        ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+        "LogItem" VARCHAR(200));
+
+
         """)
 
     curT.execute("drop table if exists testDates")
@@ -763,6 +768,7 @@ def autofixChannelSegments():
     curD.execute(stSQL) # can be rather slow, but necessary
     # for Data table with 141,811 records, took 2.455ms
     # created 15 segments
+    offerSeriesForChannels() # if a Series is auto available, fill in
     
 def fillComboboxFromSQL(objComboBox, stSQL, keyCol=0, visibleCol=1):
     """
@@ -1078,6 +1084,42 @@ def generateSheetRows(sheetID, formatValues = True):
     # get the data for the columns
     # fields:  ID, WorksheetID, ColumnHeading, ColType, TimeSystem, TimeIsInterval, IntervalIsFrom,
     #  Constant, Formula,AggType, AggStationID, AggDataSeriesID, Format_Python, Format_Excel, ListingOrder
+
+def offerSeriesForChannels():
+    """
+    If the Series for a Channel Segment is still Null, fill in the SeriesID if one is available.
+    Presently, these are only available for Greenlogger files tha have full metadata.
+    """
+    stSQL = """
+        UPDATE ChannelSegments
+        SET
+         SeriesID = (SELECT tmpChanSegSeries.SeriesID 
+          FROM tmpChanSegSeries
+          WHERE tmpChanSegSeries.ChannelID = ChannelSegments.ChannelID)
+        WHERE
+         EXISTS (SELECT *
+          FROM tmpChanSegSeries
+          WHERE tmpChanSegSeries.ChannelID = ChannelSegments.ChannelID)
+        AND ChannelSegments.SeriesID IS NULL;
+    """
+    try:
+        curD.execute(stSQL)
+    except:
+        pass # fail silently
+
+def clearParseLog():
+    curT.executescript("""
+        DROP TABLE IF EXISTS "tmpParseLog";
+    """)
+    tmpConn.execute("VACUUM")
+    curT.executescript("""
+        CREATE TABLE "tmpParseLog"
+        ("ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+        "LogItem" VARCHAR(200));
+    """)
+
+def writeToParseLog(stLog):
+    curT.execute("INSERT INTO tmpParseLog (LogItem) VALUES (?);", (stLog,))
 
 # set up these defaults
 noSensID = assureItemIsInTableField('(n/a)', 'Sensors', 'SensorSerialNumber')

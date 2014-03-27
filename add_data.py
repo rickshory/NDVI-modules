@@ -2,6 +2,8 @@ import wx, sqlite3, datetime
 import os, sys, re, ast
 import scidb
 
+sUTimeFmt = '%Y-%m-%d %H:%M:%S'
+
 class DropTargetForFilesToParse(wx.FileDropTarget):
     def __init__(self, progressArea, msgArea):
         wx.FileDropTarget.__init__(self)
@@ -9,6 +11,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         self.msgArea = msgArea
 
     def OnDropFiles(self, x, y, filenames):
+        # for testing, disable clearing of the Parse Log
+        #scidb.clearParseLog() 
         self.progressArea.SetInsertionPointEnd()
 #        self.progressArea.WriteText("\n%d file(s) dropped at %d,%d:\n" %
 #                              (len(filenames), x, y))
@@ -32,7 +36,6 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         print "about to do autofixChannelSegments"
         dFX = datetime.datetime.now() - tStartFX
         print "autofixChannelSegments, elapsed seconds:", dFX.total_seconds()
-#        scidb.offerSeriesForChannels()
 
     def parseFileIntoDB(self, filename):
         """
@@ -40,9 +43,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         determines the file structure and parses the
         data into the proper tables
 
-        for initial testing, simply parses any text file into
-        the temp DB, the table "Text"
         """
+        tStartParse = datetime.datetime.now()
         dctInfo = {}
         dctInfo['fullPath'] = filename
         
@@ -50,23 +52,45 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 #        print dctInfo
         for k in dctInfo:
             print k, dctInfo[k]
-        if not ('dataFormat' in dctInfo):
-            self.progressArea.SetInsertionPointEnd()
-            self.progressArea.WriteText('Could not determine data format' + '\n')
-            return "Could not determine data format"
+        if 'isDir' in dctInfo: # a folder was dragged in, get everything inside it
+            scidb.writeToParseLog(tStartParse.strftime(sUTimeFmt) + ", start processing folder: " + dctInfo['fullPath'])
+            print "Processing folder", dctInfo['fullPath']
+            for subdir, dirs, files in os.walk(dctInfo['fullPath']):
+            #    print "subdir, dirs, files:", subdir, dirs, files
+                for file in files:
+                    stPath = os.path.join(subdir, file)
+                    print stPath
+            stParseSecs = "%.3f" % ((datetime.datetime.now() - tStartParse).total_seconds())
+            scidb.writeToParseLog(stParseSecs + " seconds elapsed processing folder: " + dctInfo['fullPath'])
+        else: # a file
+            scidb.writeToParseLog(tStartParse.strftime(sUTimeFmt) + ", start processing file: " + dctInfo['fullPath'])
+            if not ('dataFormat' in dctInfo):
+                self.progressArea.SetInsertionPointEnd()
+                self.progressArea.WriteText('Could not determine data format' + '\n')
+                stParseSecs = "%.3f" % ((datetime.datetime.now() - tStartParse).total_seconds())
+                scidb.writeToParseLog(stParseSecs + " seconds elapsed; could not determine data format ")
+                return "Could not determine data format"
 
-        self.progressArea.SetInsertionPointEnd()
-        self.progressArea.WriteText('Data format detected as: "' +
-                                    dctInfo['dataFormat'] + '"\n')
-        if dctInfo['dataFormat'] == r"Hoboware text export":
-            self.parseHoboWareTextFile(dctInfo)
-        elif dctInfo['dataFormat'] == r"Greenlogger text file":
-            self.parseGLTextFile(dctInfo)
-        # add others as else if here
-        else:
             self.progressArea.SetInsertionPointEnd()
-            self.progressArea.WriteText('Parsing of this data format is not implemented yet\n')
-            return "Done"                       
+            self.progressArea.WriteText('Data format detected as: "' +
+                                        dctInfo['dataFormat'] + '"\n')
+            stLog = 'Data format detected as: "' + dctInfo['dataFormat'] + '"'
+            scidb.writeToParseLog(stLog)
+            if dctInfo['dataFormat'] == r"Hoboware text export":
+                self.parseHoboWareTextFile(dctInfo)
+            elif dctInfo['dataFormat'] == r"Greenlogger text file":
+                self.parseGLTextFile(dctInfo)
+            # add others as elif here
+            else:
+                dctInfo['stParseMsg'] = 'Parsing of this data format is not implemented yet'
+                self.progressArea.SetInsertionPointEnd()
+                self.progressArea.WriteText(dctInfo['stParseMsg'] + '\n')
+            if 'stParseMsg' in dctInfo:
+                scidb.writeToParseLog(dctInfo['stParseMsg'])
+
+            stParseSecs = "%.3f" % ((datetime.datetime.now() - tStartParse).total_seconds())
+            scidb.writeToParseLog(stParseSecs + " seconds elapsed parsing file")
+        return "Done"                       
 
     def parseGLTextFile(self, infoDict):
         """
@@ -121,7 +145,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 # tie it to this Channel, to offer later
                 stSQLcs = 'INSERT INTO tmpChanSegSeries(ChannelID, SeriesID) VALUES (?, ?);'
                 try:
-                    scidb.curT.execute(stSQLcs, (iChannelID, iSeriesID))
+                    scidb.curD.execute(stSQLcs, (iChannelID, iSeriesID))
                 except sqlite3.IntegrityError:
                     pass # silently ignore duplicates
 
@@ -179,10 +203,10 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         # finished parsing lines
         infoDict['numNewDataRecsAdded'] = dataRecsAdded
         infoDict['numDupDataRecsSkipped'] = dataRecsDupSkipped
-        self.msgArea.ChangeValue(str(infoDict['lineCt']) +
-            " lines processed; " + str(dataRecsAdded) +
-            " data records added to database, " + str(dataRecsDupSkipped) +
-            " duplicates skipped.")
+        infoDict['stParseMsg'] = str(infoDict['lineCt']) + " lines processed; " + \
+            str(dataRecsAdded) + " data records added to database, " + \
+            str(dataRecsDupSkipped) + " duplicates skipped."
+        self.msgArea.ChangeValue(infoDict['stParseMsg'])
 
         
     def parseHoboWareTextFile(self, infoDict):
@@ -327,11 +351,10 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         # finished parsing lines
         infoDict['numNewDataRecsAdded'] = dataRecsAdded
         infoDict['numDupDataRecsSkipped'] = dataRecsDupSkipped
-        self.msgArea.ChangeValue(str(infoDict['lineCt']) +
-            " lines processed; " + str(dataRecsAdded) +
-            " data records added to database, " + str(dataRecsDupSkipped) +
-            " duplicates skipped.")
-        
+        infoDict['stParseMsg'] = str(infoDict['lineCt']) + " lines processed; " + \
+            str(dataRecsAdded) + " data records added to database, " + \
+            str(dataRecsDupSkipped) + " duplicates skipped."
+        self.msgArea.ChangeValue(infoDict['stParseMsg'])        
        
     def putTextLinesIntoTmpTable(self, infoDict):
         """
@@ -359,8 +382,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 ct += 1
                 # much faster to insert a batch at once
                 wx.Yield()
-                st = sLine.strip()                
-                if st != '':
+                st = sLine.strip() # removes ambiguous x0A, x0D, etc, chars from ends
+                if st != '': # ignore empty lines
                     lstLines.append((st,))
                 wx.Yield()
                 if  len(lstLines) >= numToInsertAtOnce:
@@ -421,9 +444,10 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             while True:
                 iBytesSoFar = f.tell()
                 sLine = f.readline()
-                    
                 if (sLine == ""): # empty when no more lines can be read
                     break
+                if sLine.strip() == '': # removes ambiguous x0A, x0D, etc, chars from ends
+                    continue # ignore empty lines at the beginning
                 iLineCt += 1
                 # diagnostics
                 if iLineCt == 1:
