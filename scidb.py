@@ -372,6 +372,16 @@ try:
         FOREIGN KEY("StationID") REFERENCES Stations("ID")
         );
 
+        CREATE TABLE IF NOT EXISTS "tmpChanSegSeries" (
+        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+        "ChannelID" INTEGER NOT NULL,
+        "SeriesID" INTEGER NOT NULL
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS "tmpChanSegSeries_NoDup"
+        ON "tmpChanSegSeries"
+        ("ChannelID" ASC, "SeriesID" ASC);
+
         """)
 
 except sqlite3.Error, e:
@@ -407,17 +417,6 @@ try:
         "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
         "Line" VARCHAR(200)
         );
-
-        CREATE TABLE IF NOT EXISTS "tmpChanSegSeries" (
-        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
-        "ChannelID" INTEGER NOT NULL,
-        "SeriesID" INTEGER NOT NULL
-        );
-
-        CREATE UNIQUE INDEX IF NOT EXISTS "tmpChanSegSeries_NoDup"
-        ON "tmpChanSegSeries"
-        ("ChannelID" ASC, "SeriesID" ASC);
-
 
         """)
 

@@ -14,13 +14,25 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
 #                              (len(filenames), x, y))
         self.progressArea.WriteText("\n%d file(s) dropped\n" % (len(filenames),))
 
-
+        tStartParse = datetime.datetime.now()
         for name in filenames:
             self.progressArea.WriteText(name + '\n')
             fileresult = self.parseFileIntoDB(name)
 #            self.progressArea.SetInsertionPointEnd()
 #            self.progressArea.WriteText(fileresult + '\n')
-            scidb.refreshDataDates()
+        dPR = datetime.datetime.now() - tStartParse
+        print "file(s) parsed, elapsed seconds:", dPR.total_seconds()
+        tStartDD = datetime.datetime.now()
+        print "about to do refreshDataDates"
+        scidb.refreshDataDates()
+        dDD = datetime.datetime.now() - tStartDD
+        print "refreshDataDates, elapsed seconds:", dDD.total_seconds()
+        tStartFX = datetime.datetime.now()
+        scidb.autofixChannelSegments()
+        print "about to do autofixChannelSegments"
+        dFX = datetime.datetime.now() - tStartFX
+        print "autofixChannelSegments, elapsed seconds:", dFX.total_seconds()
+#        scidb.offerSeriesForChannels()
 
     def parseFileIntoDB(self, filename):
         """
