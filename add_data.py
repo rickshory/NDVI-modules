@@ -72,9 +72,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 return "Could not determine data format"
 
             self.progressArea.SetInsertionPointEnd()
-            self.progressArea.WriteText('Data format detected as: "' +
-                                        dctInfo['dataFormat'] + '"\n')
-            stLog = 'Data format detected as: "' + dctInfo['dataFormat'] + '"'
+            stLog = '"' + dctInfo['fileName'] + '" data format detected as: "' + dctInfo['dataFormat'] + '"'
+            self.progressArea.WriteText(stLog + '"\n')
             scidb.writeToParseLog(stLog)
             if dctInfo['dataFormat'] == r"Hoboware text export":
                 self.parseHoboWareTextFile(dctInfo)
@@ -430,6 +429,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         if not os.path.isfile(infoDict['fullPath']):
             infoDict['fileErr'] = "Not a file"
             return
+        infoDict['fileName'] = os.path.basename(infoDict['fullPath'])
         infoDict['fileSize'] = os.path.getsize(infoDict['fullPath'])
         # splitext gives a 2-tuple of what's before and after the ext delim
         infoDict['fileExtension'] = os.path.splitext(infoDict['fullPath'])[1]
