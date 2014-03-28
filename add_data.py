@@ -384,7 +384,16 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 wx.Yield()
                 st = sLine.strip() # removes ambiguous x0A, x0D, etc, chars from ends
                 if st != '': # ignore empty lines
-                    lstLines.append((st,))
+
+                    m = re.search(r"\{.*\}", st) # if the line has a JSON string in it
+                    if m: # take it out into a separate line
+                        sJ = m.group(0)
+                        lstLines.append((sJ,))
+                        stx = st.replace(sJ,'')
+                        if len(stx) > 0:
+                            lstLines.append((stx,))
+                    else:
+                        lstLines.append((st,))
                 wx.Yield()
                 if  len(lstLines) >= numToInsertAtOnce:
                     self.msgArea.ChangeValue("counting lines in file: " +
