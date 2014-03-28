@@ -66,15 +66,16 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         else: # a file
             scidb.writeToParseLog(tStartParse.strftime(sUTimeFmt) + ", start processing file: " + dctInfo['fullPath'])
             if not ('dataFormat' in dctInfo):
+                stLog = '"' + dctInfo['fileName'] + '", could not determine data format'
                 self.progressArea.SetInsertionPointEnd()
-                self.progressArea.WriteText('Could not determine data format' + '\n')
+                self.progressArea.WriteText(stLog + '\n')
                 stParseSecs = "%.3f" % ((datetime.datetime.now() - tStartParse).total_seconds())
-                scidb.writeToParseLog(stParseSecs + " seconds elapsed; could not determine data format ")
-                return "Could not determine data format"
+                scidb.writeToParseLog(stParseSecs + " seconds elapsed; " + stLog)
+                return stLog
 
             self.progressArea.SetInsertionPointEnd()
             stLog = '"' + dctInfo['fileName'] + '" data format detected as: "' + dctInfo['dataFormat'] + '"'
-            self.progressArea.WriteText(stLog + '"\n')
+            self.progressArea.WriteText(stLog + '\n')
             scidb.writeToParseLog(stLog)
             if dctInfo['dataFormat'] == r"Hoboware text export":
                 self.parseHoboWareTextFile(dctInfo)
