@@ -59,7 +59,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             #    print "subdir, dirs, files:", subdir, dirs, files
                 for file in files:
                     stPath = os.path.join(subdir, file)
-                    print stPath
+#                    print stPath
+                    fileresult = self.parseFileIntoDB(stPath)
             stParseSecs = "%.3f" % ((datetime.datetime.now() - tStartParse).total_seconds())
             scidb.writeToParseLog(stParseSecs + " seconds elapsed processing folder: " + dctInfo['fullPath'])
         else: # a file
@@ -99,9 +100,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         dataRecsAdded = 0
         dataRecsDupSkipped = 0
 
-        print "About to put lines into temp table"
+#        print "About to put lines into temp table"
         self.putTextLinesIntoTmpTable(infoDict)
-        print "Finished putting lines into temp table"
+#        print "Finished putting lines into temp table"
         # get the metadata header
         stSQL = """SELECT Line FROM tmpLines WHERE Line LIKE '{"Instrument identifier":%' GROUP BY Line;"""
         mtDat =  scidb.curT.execute(stSQL).fetchone()
@@ -420,7 +421,7 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         member 'fullPath', which is a string that is a full file path
         """
         if (os.path.isdir(infoDict['fullPath'])):
-            infoDict['fileErr'] = "Path is a directory"
+#            infoDict['fileErr'] = "Path is a directory"
             infoDict['isDir'] = True
             return
         if not os.path.exists(infoDict['fullPath']):
@@ -450,8 +451,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                     continue # ignore empty lines at the beginning
                 iLineCt += 1
                 # diagnostics
-                if iLineCt == 1:
-                    infoDict['firstLine'] = sLine
+#                if iLineCt == 1:
+#                   infoDict['firstLine'] = sLine
                 # format can be determined in first few lines or not at all
                 if iLineCt >= 6:
                     break
