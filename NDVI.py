@@ -102,10 +102,15 @@ class NDVIPanel(wx.Panel):
         hSiz = wx.BoxSizer(wx.HORIZONTAL)
         hSiz.Add(vSplit, 1, wx.EXPAND)
         self.SetSizer(hSiz)
+        
+#        EVT_ENTER_WINDOW(self, self.OnMessage(1, "Hello, world") )
+#        EVT_LEAVE_WINDOW(self, self.OnMessage(0, "Goodbye, world") )
+
         print 'dates list size:', self.datesList.GetSize()
         # following doesn't help
         print "dates list width:", self.datesList.GetSize()[0]
         optsSplit.SetSashPosition(position=self.datesList.GetSize()[0]+10, redraw=True)
+
         return
     
 
@@ -417,7 +422,7 @@ class NDVIPanel(wx.Panel):
                 wx.OK | wx.ICON_INFORMATION)
             self.tcCalcName.SetValue(stCalcName)
             self.tcCalcName.SetFocus()
-            self.Scroll(0, 0) # at the top
+#            self.Scroll(0, 0) # at the top
             return
         # if Name is same as in the dictionary, assume edited; overwrite
         if stCalcName == self.calcDict['CalcName']:
@@ -430,6 +435,7 @@ class NDVIPanel(wx.Panel):
         print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
 
 
+
 class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title)
@@ -440,6 +446,38 @@ class NDVIFrame(wx.Frame):
 
     def InitUI(self):
         framePanel = NDVIPanel(self, wx.ID_ANY)
+#        self.Bind( wx.EVT_MOTION, self.OnMouseMotion )
+#        framePanel.Bind( wx.EVT_MOTION, self.OnMouseMotion )
+        self.DtList = framePanel.datesList
+        self.DtList.Bind(wx.EVT_ENTER_WINDOW, self.onMouseOver)
+        self.DtList.Bind(wx.EVT_LEAVE_WINDOW, self.onMouseLeave)
+        self.CreateStatusBar()
+        self.SetStatusText("Hello, world!")
+
+    def onMouseOver(self, event):
+        self.SetStatusText("Entered List")
+#        # mouseover changes colour of button
+#        self.butn1.SetBackgroundColour('Green')
+        event.Skip()
+        
+    def onMouseLeave(self, event):
+        self.SetStatusText("Exited List")
+#        # mouse not over button, back to original colour
+#        self.butn1.SetBackgroundColour(self.colour)
+        event.Skip()
+
+        
+    def OnMouseMotion( self, event ):
+        frameClientPos = event.GetPosition()
+        desktopPos = self.ClientToScreen( frameClientPos )  # Current cursor desktop coord
+        print '----  MyFrame::OnMouseMotion()     mouse is at: ', desktopPos
+
+    def OnMessage(self, on, msg):
+        if not on:
+            msg = ""
+        self.SetStatusText(msg)
+
+
 
 def main():
     app = wx.App(redirect=False)
