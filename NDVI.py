@@ -467,12 +467,9 @@ class NDVIFrame(wx.Frame):
 #        self.butn1.SetBackgroundColour(self.colour)
         event.Skip()
 
-        
     def onMouseMotion( self, event ):
-        frameClientPos = event.GetPosition()
-        desktopPos = self.ClientToScreen( frameClientPos )  # Current cursor desktop coord
-#        print '----  MyFrame::OnMouseMotion()     mouse is at: ', desktopPos
-        print '----  onMouseMotion() mouse is at: ', frameClientPos
+        index, flags = self.DtList.HitTest(event.GetPosition())
+        print "index: ", index, ", flags:", flags
 
     def OnMessage(self, on, msg):
         if not on:
