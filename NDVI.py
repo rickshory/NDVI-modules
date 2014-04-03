@@ -451,6 +451,7 @@ class NDVIFrame(wx.Frame):
         self.DtList = framePanel.datesList
         self.DtList.Bind(wx.EVT_ENTER_WINDOW, self.onMouseOver)
         self.DtList.Bind(wx.EVT_LEAVE_WINDOW, self.onMouseLeave)
+        self.DtList.Bind( wx.EVT_MOTION, self.onMouseMotion )
         self.CreateStatusBar()
         self.SetStatusText("Hello, world!")
 
@@ -467,10 +468,11 @@ class NDVIFrame(wx.Frame):
         event.Skip()
 
         
-    def OnMouseMotion( self, event ):
+    def onMouseMotion( self, event ):
         frameClientPos = event.GetPosition()
         desktopPos = self.ClientToScreen( frameClientPos )  # Current cursor desktop coord
-        print '----  MyFrame::OnMouseMotion()     mouse is at: ', desktopPos
+#        print '----  MyFrame::OnMouseMotion()     mouse is at: ', desktopPos
+        print '----  onMouseMotion() mouse is at: ', frameClientPos
 
     def OnMessage(self, on, msg):
         if not on:
