@@ -449,7 +449,7 @@ class NDVIFrame(wx.Frame):
         self.DtList = framePanel.datesList
         self.DtList.Bind( wx.EVT_MOTION, self.onMouseMotion )
         self.pvLabel = framePanel.pvLabel
-        
+        self.Canvas = framePanel.Canvas
         self.CreateStatusBar()
         self.SetStatusText("Hello, world!")
         self.stDateToPreview = ''
@@ -478,8 +478,12 @@ class NDVIFrame(wx.Frame):
                 AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATE('now'))
                 ORDER BY SolarTime;"""
             ptRecs = scidb.curD.execute(stSQL).fetchall()
+            pts = []
             for ptRec in ptRecs:
                 print ptRec['Secs'], ptRec['Value']
+                pts.append((ptRec['Secs'], ptRec['Value']))
+            self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
+            self.Canvas.ZoomToBB()
             
     def OnMessage(self, on, msg):
         if not on:
