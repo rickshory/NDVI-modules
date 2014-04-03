@@ -18,15 +18,6 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
-def yScale(center):
-    """
-    function that returns a scaling vector to scale y data to same range as x data
-
-    """
-    # center gets ignored in this case
-    # returns a vector that multiplies X and Y
-    return [20,1] # rule of thumb
-
 class ndviDatesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
         wx.ListCtrl.__init__(self, *arg, **kw)
@@ -386,6 +377,15 @@ class NDVIPanel(wx.Panel):
         pnl.SetSizer(stSiz)
         pnl.SetAutoLayout(1)
 
+    def ScalePreviewCanvas(self, center):
+        """
+        function that returns a scaling vector to scale y and x relative to each other
+
+        """
+        # center gets ignored in this case
+        # returns a vector that multiplies X and Y
+        return [20,1] # rule of thumb
+
     def InitPreviewPanel(self, pnl):
         pnl.SetBackgroundColour('#FFFFFF')
         pvSiz = wx.GridBagSizer(0, 0)
@@ -398,7 +398,7 @@ class NDVIPanel(wx.Panel):
         gRow += 1
         # Add the FloatCanvas canvas
         NC = NavCanvas.NavCanvas(pnl,
-             ProjectionFun = yScale,
+             ProjectionFun = self.ScalePreviewCanvas,
              Debug = 0,
              BackgroundColor = "WHITE")
         self.Canvas = NC.Canvas # reference the contained FloatCanvas
