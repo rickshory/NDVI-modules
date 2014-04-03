@@ -446,31 +446,24 @@ class NDVIFrame(wx.Frame):
 
     def InitUI(self):
         framePanel = NDVIPanel(self, wx.ID_ANY)
-#        self.Bind( wx.EVT_MOTION, self.OnMouseMotion )
-#        framePanel.Bind( wx.EVT_MOTION, self.OnMouseMotion )
         self.DtList = framePanel.datesList
-        self.DtList.Bind(wx.EVT_ENTER_WINDOW, self.onMouseOver)
-        self.DtList.Bind(wx.EVT_LEAVE_WINDOW, self.onMouseLeave)
         self.DtList.Bind( wx.EVT_MOTION, self.onMouseMotion )
         self.CreateStatusBar()
         self.SetStatusText("Hello, world!")
-
-    def onMouseOver(self, event):
-        self.SetStatusText("Entered List")
-#        # mouseover changes colour of button
-#        self.butn1.SetBackgroundColour('Green')
-        event.Skip()
-        
-    def onMouseLeave(self, event):
-        self.SetStatusText("Exited List")
-#        # mouse not over button, back to original colour
-#        self.butn1.SetBackgroundColour(self.colour)
-        event.Skip()
+        self.stDateToPreview = ''
 
     def onMouseMotion( self, event ):
         index, flags = self.DtList.HitTest(event.GetPosition())
-        print "index: ", index, ", flags:", flags
-
+#        print "index: ", index, ", flags:", flags
+        if index == wx.NOT_FOUND:
+            return
+        if flags & wx.LIST_HITTEST_NOWHERE:
+            return
+        txtDate = self.DtList.GetItemText(index)
+        if txtDate != self.stDateToPreview:
+            self.stDateToPreview = txtDate
+            print "date to preview:", self.stDateToPreview
+            
     def OnMessage(self, on, msg):
         if not on:
             msg = ""
