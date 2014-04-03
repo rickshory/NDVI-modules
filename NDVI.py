@@ -383,8 +383,8 @@ class NDVIPanel(wx.Panel):
         pvSiz.AddGrowableCol(0)
         
         gRow = 0
-        pvLabel = wx.StaticText(pnl, -1, "previews will be here")
-        pvSiz.Add(pvLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        self.pvLabel = wx.StaticText(pnl, -1, "previews will be here")
+        pvSiz.Add(self.pvLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
         gRow += 1
         # Add the FloatCanvas canvas
@@ -448,9 +448,13 @@ class NDVIFrame(wx.Frame):
         framePanel = NDVIPanel(self, wx.ID_ANY)
         self.DtList = framePanel.datesList
         self.DtList.Bind( wx.EVT_MOTION, self.onMouseMotion )
+        self.pvLabel = framePanel.pvLabel
+        
         self.CreateStatusBar()
         self.SetStatusText("Hello, world!")
         self.stDateToPreview = ''
+        self.previewSeries = 5 # for testing, use IrUP
+        self.previewStation = 1 # for testing, use P19
 
     def onMouseMotion( self, event ):
         index, flags = self.DtList.HitTest(event.GetPosition())
@@ -463,6 +467,19 @@ class NDVIFrame(wx.Frame):
         if txtDate != self.stDateToPreview:
             self.stDateToPreview = txtDate
             print "date to preview:", self.stDateToPreview
+            self.pvLabel.SetLabel('Generating preview for ' + self.stDateToPreview)
+            # testing:
+            stSQL = """SELECT DATETIME(Data.UTTimestamp, '-8.17 hour', '-6.05 minute') AS SolarTime, 
+                strftime('%s', DATETIME(Data.UTTimestamp, '-8.17 hour', '-6.05 minute')) - strftime('%s', '2013-06-10') AS Secs, Data.Value
+                FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
+                WHERE ChannelSegments.StationID = 1  AND ChannelSegments.SeriesID = 5
+                AND SolarTime >= '2013-06-10' AND SolarTime < '2013-06-11'
+                AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
+                AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATE('now'))
+                ORDER BY SolarTime;"""
+            ptRecs = scidb.curD.execute(stSQL).fetchall()
+            for ptRec in ptRecs:
+                print ptRec['Secs'], ptRec['Value']
             
     def OnMessage(self, on, msg):
         if not on:
