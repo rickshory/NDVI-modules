@@ -489,6 +489,10 @@ class NDVIFrame(wx.Frame):
             serID = 5 # series ID
             hrOffLon = -8.17 # hour offset from longitude
             minOffEqTm = -6.05 # minute offet from Equation of Time
+            stSQLm = """SELECT MinutesCorrection FROM EqnOfTime
+                WHERE DayOfYear = strftime('%j','{sDt}');
+                """.format(sDt=self.stDateToPreview)
+            minOffEqTm = scidb.curD.execute(stSQLm).fetchone()['MinutesCorrection']
             stSQL = """SELECT DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') AS SolarTime, 
                 strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
                 Data.Value
@@ -496,10 +500,13 @@ class NDVIFrame(wx.Frame):
                 WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
                 AND SolarTime >= '{sDt}' AND SolarTime < DATETIME('{sDt}', '1 day')
                 AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
-                AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATE('now'))
+                AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
                 ORDER BY SolarTime;
                 """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview)
             ptRecs = scidb.curD.execute(stSQL).fetchall()
+            if len(ptRecs) == 0:
+                self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
+                return
             pts = []
             for ptRec in ptRecs:
 #                print ptRec['Secs'], ptRec['Value']
