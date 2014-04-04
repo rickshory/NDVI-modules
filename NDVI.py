@@ -397,11 +397,11 @@ class NDVIPanel(wx.Panel):
         
         gRow += 1
         # Add the FloatCanvas canvas
-        NC = NavCanvas.NavCanvas(pnl,
+        self.NC = NavCanvas.NavCanvas(pnl,
              ProjectionFun = self.ScalePreviewCanvas,
              Debug = 0,
              BackgroundColor = "WHITE")
-        self.Canvas = NC.Canvas # reference the contained FloatCanvas
+        self.Canvas = self.NC.Canvas # reference the contained FloatCanvas
         # test of drawing one line
 #        self.UnBindAllMouseEvents()
 #        self.Canvas.InitAll()
@@ -411,7 +411,7 @@ class NDVIPanel(wx.Panel):
         self.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
 
-        pvSiz.Add(NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
+        pvSiz.Add(self.NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         pvSiz.AddGrowableRow(gRow)
         pnl.SetSizer(pvSiz)
         pnl.SetAutoLayout(1)
@@ -459,6 +459,8 @@ class NDVIFrame(wx.Frame):
         self.DtList = framePanel.datesList
         self.DtList.Bind( wx.EVT_MOTION, self.onMouseMotion )
         self.pvLabel = framePanel.pvLabel
+        self.ScalePreviewCanvas = framePanel.ScalePreviewCanvas
+        self.NC = framePanel.NC
         self.Canvas = framePanel.Canvas
         self.CreateStatusBar()
         self.SetStatusText("Hello, world!")
@@ -475,6 +477,9 @@ class NDVIFrame(wx.Frame):
             return
         txtDate = self.DtList.GetItemText(index)
         if txtDate != self.stDateToPreview:
+            self.Canvas.InitAll()
+            self.Canvas.SetProjectionFun(self.ScalePreviewCanvas)
+            self.Canvas.Draw()
             self.stDateToPreview = txtDate
             print "date to preview:", self.stDateToPreview
             self.pvLabel.SetLabel('Generating preview for ' + self.stDateToPreview)
@@ -490,7 +495,7 @@ class NDVIFrame(wx.Frame):
             ptRecs = scidb.curD.execute(stSQL).fetchall()
             pts = []
             for ptRec in ptRecs:
-                print ptRec['Secs'], ptRec['Value']
+#                print ptRec['Secs'], ptRec['Value']
                 pts.append((ptRec['Secs'], ptRec['Value']))
             self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
             self.Canvas.ZoomToBB()
