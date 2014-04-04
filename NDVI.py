@@ -465,17 +465,20 @@ class NDVIFrame(wx.Frame):
         self.CreateStatusBar()
         self.SetStatusText("Hello, world!")
         self.stDateToPreview = ''
+        self.cbxRefStationID = framePanel.cbxRefStationID
+        self.cbxIRRefSeriesID = framePanel.cbxIRRefSeriesID
         self.previewSeries = 5 # for testing, use IrUP
         self.previewStation = 1 # for testing, use P19
 
     def onMouseMotion( self, event ):
         index, flags = self.DtList.HitTest(event.GetPosition())
         if index == wx.NOT_FOUND:
+            self.pvLabel.SetLabel('Select Ref station, IR series, then float over dates to preview')
             return
         if flags & wx.LIST_HITTEST_NOWHERE:
+            self.pvLabel.SetLabel('Select Ref station, IR series, then float over dates to preview')
             return
         txtDate = self.DtList.GetItemText(index)
-# "Select Ref station, IR series, then float over dates to preview"
         if txtDate != self.stDateToPreview:
             self.Canvas.InitAll()
             self.Canvas.SetProjectionFun(self.ScalePreviewCanvas)
@@ -484,11 +487,19 @@ class NDVIFrame(wx.Frame):
             print "date to preview:", self.stDateToPreview
             self.pvLabel.SetLabel('Generating preview for ' + self.stDateToPreview)
             
-            # testing:
-            staID = 1 # station ID
-            serID = 5 # series ID
+            # get the station ID, if selected
+            staID = scidb.getComboboxIndex(self.cbxRefStationID)
+            if staID == None:
+                self.pvLabel.SetLabel('Select Reference Station, to preview dates')
+                return
+            # get the IR series ID, if selected
+            serID = scidb.getComboboxIndex(self.cbxIRRefSeriesID)
+            if serID == None:
+                self.pvLabel.SetLabel('Select IR series for the Reference Station, to preview dates')
+                return
+            # still testing this:
             hrOffLon = -8.17 # hour offset from longitude
-            minOffEqTm = -6.05 # minute offet from Equation of Time
+            # get the minute offet from the Equation of Time table
             stSQLm = """SELECT MinutesCorrection FROM EqnOfTime
                 WHERE DayOfYear = strftime('%j','{sDt}');
                 """.format(sDt=self.stDateToPreview)
