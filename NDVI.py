@@ -392,7 +392,7 @@ class NDVIPanel(wx.Panel):
         pvSiz.AddGrowableCol(0)
         
         gRow = 0
-        self.pvLabel = wx.StaticText(pnl, -1, "previews will be here")
+        self.pvLabel = wx.StaticText(pnl, -1, "Select Ref station, IR series, then float over dates to preview")
         pvSiz.Add(self.pvLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
         gRow += 1
@@ -406,9 +406,9 @@ class NDVIPanel(wx.Panel):
 #        self.UnBindAllMouseEvents()
 #        self.Canvas.InitAll()
 #        self.Canvas.Draw()
-        points = [(-100,-100),(100,100), (100,-100), (-100,100)]
-        self.Canvas.AddLine(points, LineWidth = 1, LineColor = 'BLUE')
-        self.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
+#        points = [(-100,-100),(100,100), (100,-100), (-100,100)]
+#        self.Canvas.AddLine(points, LineWidth = 1, LineColor = 'BLUE')
+#        self.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
 
         pvSiz.Add(self.NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
@@ -470,12 +470,12 @@ class NDVIFrame(wx.Frame):
 
     def onMouseMotion( self, event ):
         index, flags = self.DtList.HitTest(event.GetPosition())
-#        print "index: ", index, ", flags:", flags
         if index == wx.NOT_FOUND:
             return
         if flags & wx.LIST_HITTEST_NOWHERE:
             return
         txtDate = self.DtList.GetItemText(index)
+# "Select Ref station, IR series, then float over dates to preview"
         if txtDate != self.stDateToPreview:
             self.Canvas.InitAll()
             self.Canvas.SetProjectionFun(self.ScalePreviewCanvas)
@@ -483,15 +483,22 @@ class NDVIFrame(wx.Frame):
             self.stDateToPreview = txtDate
             print "date to preview:", self.stDateToPreview
             self.pvLabel.SetLabel('Generating preview for ' + self.stDateToPreview)
+            
             # testing:
-            stSQL = """SELECT DATETIME(Data.UTTimestamp, '-8.17 hour', '-6.05 minute') AS SolarTime, 
-                strftime('%s', DATETIME(Data.UTTimestamp, '-8.17 hour', '-6.05 minute')) - strftime('%s', '2013-06-10') AS Secs, Data.Value
+            staID = 1 # station ID
+            serID = 5 # series ID
+            hrOffLon = -8.17 # hour offset from longitude
+            minOffEqTm = -6.05 # minute offet from Equation of Time
+            stSQL = """SELECT DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') AS SolarTime, 
+                strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
+                Data.Value
                 FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
-                WHERE ChannelSegments.StationID = 1  AND ChannelSegments.SeriesID = 5
-                AND SolarTime >= '2013-06-10' AND SolarTime < '2013-06-11'
+                WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
+                AND SolarTime >= '{sDt}' AND SolarTime < DATETIME('{sDt}', '1 day')
                 AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
                 AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATE('now'))
-                ORDER BY SolarTime;"""
+                ORDER BY SolarTime;
+                """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview)
             ptRecs = scidb.curD.execute(stSQL).fetchall()
             pts = []
             for ptRec in ptRecs:
