@@ -497,8 +497,12 @@ class NDVIFrame(wx.Frame):
             if serID == None:
                 self.pvLabel.SetLabel('Select IR series for the Reference Station, to preview dates')
                 return
-            # still testing this:
-            hrOffLon = -8.17 # hour offset from longitude
+            # get the hour offset from the station longitude
+            longitude = scidb.stationLongitude(staID)
+            if longitude == None:
+                hrOffLon = 0
+            else:
+                hrOffLon = longitude / 15 # one hour for every 15 degrees of longitude
             # get the minute offet from the Equation of Time table
             stSQLm = """SELECT MinutesCorrection FROM EqnOfTime
                 WHERE DayOfYear = strftime('%j','{sDt}');

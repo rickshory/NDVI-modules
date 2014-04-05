@@ -854,6 +854,38 @@ def ckDupOutputColumnsMismatch():
         stWndHeader = 'Duplicate Column'
         return (stErr, stWndHeader)
 
+def stationLongitude(iStationID):
+    """
+    given a Station ID
+    returns the Longitude of the Station, either from the Stations table or the FieldSites table
+    or None if not available in either table
+    """
+    stSQL_Station = 'SELECT LongitudeDecDegrees FROM Stations WHERE ID = ?;'
+    try: # first, try the Stations table
+        lon = curD.execute(stSQL_Station, (iStationID,)).fetchone()['LongitudeDecDegrees']
+        if lon != None: # got a valid value from the Stations table
+            return lon
+        else: # Longitude was null in the stations table, try the FieldSites table
+            stSQL_SiteID = 'SELECT SiteID FROM Stations WHERE ID = ?;'
+            try:
+                siteID = curD.execute(stSQL_SiteID, (iStationID,)).fetchone()['SiteID']
+                if siteID == None: # SiteID is null in the Stations table
+                    return None
+                else:
+                    stSQL_Site= 'SELECT LongitudeDecDegrees FROM FieldSites WHERE ID = ?;'
+                    try:
+                        lon = curD.execute(stSQL_Site, (siteID,)).fetchone()['LongitudeDecDegrees']
+                        if lon == None: # Longitude was null in the FieldSites table
+                            return None
+                        else: # got a valid value from the FieldSites table
+                            return lon
+                    except: # 
+                        return None # no record in the FieldSites table for the passed ID 
+            except:
+                return None # no record in the Stations table for the passed ID 
+    except:
+        return None # no record in the Stations table for the passed ID
+
 def ordinalDayOfYear(stDate):
     try:
         dtGiven = datetime.datetime.strptime(stDate, "%Y-%m-%d").date()
