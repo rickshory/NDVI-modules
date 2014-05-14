@@ -81,6 +81,10 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 self.parseHoboWareTextFile(dctInfo)
             elif dctInfo['dataFormat'] == r"Greenlogger text file":
                 self.parseGLTextFile(dctInfo)
+            elif dctInfo['dataFormat'] == r"blueTerm log file":
+                # for now, parse as if regular GreenLogger text file
+                # a log file is simply a concatenation of multiple daily text files
+                self.parseGLTextFile(dctInfo)
             # add others as elif here
             else:
                 dctInfo['stParseMsg'] = 'Parsing of this data format is not implemented yet'
@@ -92,6 +96,11 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
             stParseSecs = "%.3f" % ((datetime.datetime.now() - tStartParse).total_seconds())
             scidb.writeToParseLog(stParseSecs + " seconds elapsed parsing file")
         return "Done"                       
+
+
+
+#    def parseBlueTermFile(self, infoDict):
+# for now, parse these log files exactly like GL text files
 
     def parseGLTextFile(self, infoDict):
         """
@@ -444,8 +453,12 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         infoDict['fileSize'] = os.path.getsize(infoDict['fullPath'])
         # splitext gives a 2-tuple of what's before and after the ext delim
         infoDict['fileExtension'] = os.path.splitext(infoDict['fullPath'])[1]
-        if infoDict['fileExtension'] == r'dtf':
+        if infoDict['fileExtension'] == r'.dtf':
             infoDict['dataFormat'] = "binary Onset DTF"
+            return
+        # example 'blueTerm_20140513_164442.log'
+        if infoDict['fileName'][:9] == r'blueTerm_' and infoDict['fileExtension'] == r'.log':
+            infoDict['dataFormat'] = "blueTerm log file"
             return
         # find first non-blank line, and keep track of which line it is
         iLineCt = 0
