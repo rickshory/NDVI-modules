@@ -142,6 +142,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         
         # being worked on >>>>
         iNumSegs = len(lDmpSegs)
+        if iNumSegs == 0:
+            infoDict['stParseMsg'] = " No valid data segments in file."
+            # will skip following loop
         iCtSeg = 0
         for tSeg in lDmpSegs:
             iCtSeg += 1
