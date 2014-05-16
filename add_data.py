@@ -244,7 +244,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                             dataRecItemCt += 1
                             if dataRecItemCt % 100 == 0:
                                 self.msgArea.ChangeValue("Segment " + str(iCtSeg) +
-                                    " of " + str(iNumSegs) + ", Line " + str(iCtSegLines) +
+                                    " of " + str(iNumSegs) +
+                                    ", HrOffset " + str(iTimeZoneOffset) +
+                                    ", Line " + str(iCtSegLines) +
                                     " of " + str(iNumSegLines) + "; " +
                                     str(dataRecsAdded) + " records added, " +
                                     str(dataRecsDupSkipped) + " duplicates skipped.")
