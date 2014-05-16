@@ -141,9 +141,12 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
         print "dump segments:", lDmpSegs
         
         # being worked on >>>>
+        iNumSegs = len(lDmpSegs)
+        iCtSeg = 0
         for tSeg in lDmpSegs:
+            iCtSeg += 1
             idSegStart, idSegEnd = tSeg
-            # get the metadata header
+            # get the metadata header; if multiple will all be the same for one dump segment
             stSQL = """SELECT Line 
                     FROM tmpLines 
                     WHERE ID > ? AND ID < ? 
@@ -220,7 +223,10 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                     "AND substr(Line, 21, 3) = ? " \
                     "AND Line LIKE '____-__-__ __:__:__ ___%' ORDER BY ID;"
                 recs = scidb.curT.execute(stSQL, (idSegStart, idSegEnd, hrOffset['TZ'],)).fetchall()
+                iNumSegLines = len(recs)
+                iCtSegLines = 0
                 for rec in recs:
+                    iCtSegLines += 1
                     lData = rec['Line'].split('\t')
                     # item zero is the timestamp followed by the timezone offset
                     sTimeStamp = lData[0][:-4] # drop timezone offset, we already have it
@@ -234,8 +240,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                             # give some progress diagnostics
                             dataRecItemCt += 1
                             if dataRecItemCt % 100 == 0:
-                                self.msgArea.ChangeValue("Line " + str(rec['ID']) +
-                                    " of " + str(infoDict['lineCt']) + "; " +
+                                self.msgArea.ChangeValue("Segment " + str(iCtSeg) +
+                                    " of " + str(iNumSegs) + ", Line " + str(iCtSegLines) +
+                                    " of " + str(iNumSegLines) + "; " +
                                     str(dataRecsAdded) + " records added, " +
                                     str(dataRecsDupSkipped) + " duplicates skipped.")
                                 wx.Yield()
