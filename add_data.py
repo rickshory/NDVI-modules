@@ -2,6 +2,9 @@ import wx, sqlite3, datetime
 import os, sys, re, ast
 import scidb
 
+# add_data_TNP2
+# TNP 8-JUN-2014 If units not specified, add units as 'NA'
+
 sUTimeFmt = '%Y-%m-%d %H:%M:%S'
 
 class DropTargetForFilesToParse(wx.FileDropTarget):
@@ -452,6 +455,12 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                         lTypeUnits = sHd.split('(',2)
                         sTypeUnits = lTypeUnits[0].strip(' ')
                         lTypeUnits = sTypeUnits.split(',')
+                        
+                        ## TNP_MOD
+                        ## If units specified, make units 'NA'
+                        if(len(lTypeUnits)==1):
+                            lTypeUnits.append('NA')
+                        
                         if lTypeUnits[0]:
                             sType = lTypeUnits[0].strip(' ')
                         else:
