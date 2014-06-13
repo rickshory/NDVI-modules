@@ -527,8 +527,11 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                             dataRecsAdded += 1 # count it
                         except sqlite3.IntegrityError: # item is already in Data table
                             err_type, err_value, err_traceback = sys.exc_info()
-                            print err_value
-                            dataRecsDupSkipped += 1 # count but otherwise ignore
+                            print repr(err_value)
+                            if repr(err_value) == "IntegrityError('constraint failed',)":
+                                print "Data Value is not numeric"
+                            else:
+                                dataRecsDupSkipped += 1 # count but otherwise ignore
                         finally:
                             wx.Yield()
 
