@@ -452,6 +452,12 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                         lTypeUnits = sHd.split('(',2)
                         sTypeUnits = lTypeUnits[0].strip(' ')
                         lTypeUnits = sTypeUnits.split(',')
+                        # check validity
+                        print "lTypeUnits (before fix):", lTypeUnits
+                        # If there are no umits, this is a non-data column like "Bad Battery"
+                        if(len(lTypeUnits)==1):
+                            lTypeUnits.append('non-data')
+                        print "lTypeUnits (after fix):", lTypeUnits
                         if lTypeUnits[0]:
                             sType = lTypeUnits[0].strip(' ')
                         else:
