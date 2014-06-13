@@ -453,11 +453,11 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                         sTypeUnits = lTypeUnits[0].strip(' ')
                         lTypeUnits = sTypeUnits.split(',')
                         # check validity
-                        print "lTypeUnits (before fix):", lTypeUnits
+#                        print "lTypeUnits (before fix):", lTypeUnits
                         # If there are no umits, this is a non-data column like "Bad Battery"
                         if(len(lTypeUnits)==1):
                             lTypeUnits.append('non-data')
-                        print "lTypeUnits (after fix):", lTypeUnits
+#                        print "lTypeUnits (after fix):", lTypeUnits
                         if lTypeUnits[0]:
                             sType = lTypeUnits[0].strip(' ')
                         else:
@@ -526,6 +526,8 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                             scidb.curD.execute(stSQL, (tsAsTime, lCh[iCol], lData[iCol]))
                             dataRecsAdded += 1 # count it
                         except sqlite3.IntegrityError: # item is already in Data table
+                            err_type, err_value, err_traceback = sys.exc_info()
+                            print err_value
                             dataRecsDupSkipped += 1 # count but otherwise ignore
                         finally:
                             wx.Yield()
