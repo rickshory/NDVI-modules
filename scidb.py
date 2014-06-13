@@ -131,6 +131,7 @@ try:
         "ChannelID" INTEGER NOT NULL ,
         "Value" FLOAT NOT NULL ,
         "Use" BOOL NOT NULL  DEFAULT 1,
+        CHECK (CAST(Value AS FLOAT) == Value),
         FOREIGN KEY("ChannelID") REFERENCES DataChannels("ID")
         );
         
