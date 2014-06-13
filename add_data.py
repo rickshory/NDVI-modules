@@ -525,14 +525,12 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                         try: # much faster to try and fail than to test first
                             scidb.curD.execute(stSQL, (tsAsTime, lCh[iCol], lData[iCol]))
                             dataRecsAdded += 1 # count it
-                        except sqlite3.IntegrityError: # item is already in Data table
+                        except sqlite3.IntegrityError: # error adding item
                             # distinguish duplicate error from invalid Value error
                             err_type, err_value, err_traceback = sys.exc_info()
                             if 'not unique' in repr(err_value):
                                 dataRecsDupSkipped += 1 # count but otherwise ignore
-                            else:
                                 # if Value is non-numeric, we get 'constraint failed'; junk, silently ignore
-                                print repr(err_value)
                         finally:
                             wx.Yield()
 
