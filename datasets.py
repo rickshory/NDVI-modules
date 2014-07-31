@@ -1769,6 +1769,23 @@ class Dialog_MakeDataset(wx.Dialog):
         stDir = self.tcDir.GetValue()
         stBaseName = self.tcBaseName.GetValue()
         stSavePath = os.path.join(stDir, stBaseName) + '.xlsx'
+
+        if os.path.isfile(stSavePath):
+            stMsg = '"' + stSavePath + '" already exists. Overwrite?'
+            dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+#            print "result of Yes/No dialog:", result
+            if result == wx.ID_YES:
+                try:
+                    os.remove(stSavePath)
+                except:
+                    wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+            else:
+                return
+
         try:
             bXL.SaveAs(stSavePath) # make sure there's nothing invalid about the filename
         except:
