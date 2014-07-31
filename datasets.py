@@ -1628,8 +1628,6 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         Make the dataset
         """
-        self.tcOutputOptInfo.SetValue(" Test of progress messages.")
-        self.tcOutputOptInfo.SetValue(self.tcOutputOptInfo.GetValue() + " ... Done")
         # test if our file save info is valid
         stDir = self.tcDir.GetValue()
         if not os.path.exists(stDir):
@@ -1745,8 +1743,6 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         Make an Excel workbook
         """
-        wx.MessageBox('Called makeExcel function', 'Info',
-            wx.OK | wx.ICON_INFORMATION)
         if hasCom == False: # we tested for this at the top of this module
             wx.MessageBox('This operating system cannot make Excel files', 'Info',
                 wx.OK | wx.ICON_INFORMATION)
@@ -1792,8 +1788,12 @@ class Dialog_MakeDataset(wx.Dialog):
             wx.MessageBox('Can not save file "' + stSavePath + '"', 'Info',
                 wx.OK | wx.ICON_INFORMATION)
             return
+        self.tcOutputOptInfo.SetValue(' Creating Excel file "' + stSavePath + '"\n')
+
+
         for shDict in self.lShs:
             if boolSheetReady == False:
+                self.tcOutputOptInfo.SetValue(self.tcOutputOptInfo.GetValue() + 'Sheet "' + shXL.Name + '"\n')
                 print shXL.Name
                 sPrevShNm = shXL.Name
                 #shXL = bXL.Sheets.Add() # this works
@@ -1858,6 +1858,8 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         wx.MessageBox('Called makeTextFile function', 'Info',
             wx.OK | wx.ICON_INFORMATION)
+        self.tcOutputOptInfo.SetValue(" Test of progress messages.")
+        self.tcOutputOptInfo.SetValue(self.tcOutputOptInfo.GetValue() + " ... Done")
 
 
     def onClick_BtnCancel(self, event):
