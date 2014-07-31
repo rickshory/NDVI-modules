@@ -1876,14 +1876,15 @@ class Dialog_MakeDataset(wx.Dialog):
         stBaseName = self.tcBaseName.GetValue()
         stBasePath = os.path.join(stDir, stBaseName)
         if combineSheets == 0: # not making the whole book into one file, use base name for folder and add filename
-            try:
-                os.makedirs(stBasePath)
-            except OSError as exception:
-                if exception.errno != errno.EEXIST:
+            if not os.path.exists(stBasePath):
+                try:
+                    os.makedirs(stBasePath)
+                except:
                     wx.MessageBox('Can not create folder "' + stBasePath + '"', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
-                wx.MessageBox('Folder "' + stBasePath + '" already exists, OK', 'Info',
+            else:
+                wx.MessageBox('Folder "' + stBasePath + '" exists, OK', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
             stSavePath = os.path.join(stBasePath, shDict['WorksheetName'])
 
