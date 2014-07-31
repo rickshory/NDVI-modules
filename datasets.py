@@ -1478,13 +1478,13 @@ class Dialog_MakeDataset(wx.Dialog):
         self.btnBrowseDir.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnGetDir(evt))
         mkDtSetSiz.Add(self.btnBrowseDir, pos=(gRow, 0), flag=wx.LEFT, border=5)
         
-        mkDtSetSiz.Add(wx.StaticText(self, -1, 'Filename:'),
+        mkDtSetSiz.Add(wx.StaticText(self, -1, 'Base name, file or folder:'),
                      pos=(gRow, 1), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT, border=5)
 
-        self.tcFilename = wx.TextCtrl(self, -1)
-        mkDtSetSiz.Add(self.tcFilename, pos=(gRow, 2), span=(1, 3),
+        self.tcBaseName = wx.TextCtrl(self, -1)
+        mkDtSetSiz.Add(self.tcBaseName, pos=(gRow, 2), span=(1, 3),
             flag=wx.ALIGN_LEFT|wx.EXPAND, border=5)
-        self.tcFilename.SetValue('(default filename)')
+        self.tcBaseName.SetValue('(default)')
 
         gRow += 1
         self.tcDir = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
@@ -1628,16 +1628,18 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         Make the dataset
         """
+        self.tcOutputOptInfo.SetValue(" Test of progress messages.")
+        self.tcOutputOptInfo.SetValue(self.tcOutputOptInfo.GetValue() + " ... Done")
         # test if our file save info is valid
         stDir = self.tcDir.GetValue()
         if not os.path.exists(stDir):
             stDir = os.path.expanduser('~') # user doesn't like? next time choose one
             self.tcDir.SetValue(stDir)
-        stFileName = self.tcFilename.GetValue()
+        stFileName = self.tcBaseName.GetValue()
         if stFileName[0] == '(': # assume '(default filename)' was sitting there
             stFileName = self.stItemName #default
         stFileName = "".join(x for x in stFileName if x.isalnum())
-        self.tcFilename.SetValue(stFileName)
+        self.tcBaseName.SetValue(stFileName)
         stSavePath = os.path.join(stDir, stFileName)
         print "stSavePath:", stSavePath
         if self.rbExcel.GetValue():
