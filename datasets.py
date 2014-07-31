@@ -1605,18 +1605,23 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         stMsg = ''
         if self.rbExcel.GetValue():
-            stMsg = 'Excel output is only available on Windows systems, and only ' \
+            stMsg = ' Excel output is only available on Windows systems, and only ' \
                 'if you have Excel installed. Only Excel allows making a multi-Sheet Book. ' \
-                'With other options, you can make only one Sheet at a time. \r' \
-                'With Excel, you will see the dataset as it builds. Other options do not show.'
+                'With other options, each Sheet becomes a separate file. \r' \
+                ' With Excel, you will see the dataset as it builds. Other options do not show.'
         if self.rbTabDelim.GetValue():
-            stMsg = 'Tab delimited output allows making only one Sheet at a time.\r' \
-                'You will not see the dataset as it builds. It builds as a file on disk.'
+            stMsg = ' With tab delimited output, each Sheet becomes a separate file. If you ' \
+                ' make a whole Book at once, the Sheets will be a set of files, within a ' \
+                'folder named for the Book.\r' \
+                ' You will not see the dataset as it builds. It builds as a file (or files) on disk.'
         if self.rbCommaDelim.GetValue():
-            stMsg = 'CSV output allows making only one Sheet at a time. If you have ' \
-                'a comma within any data item, it will break that row into a new ' \
+            stMsg = ' With CSV output, each Sheet becomes a separate file. If you ' \
+                ' make a whole Book at once, the Sheets will be a set of files, within a Book ' \
+                'folder.\r' \
+                ' If you have a comma within any data item, that item will have quotes around it in ' \
+                'the output file, to prevent the comma from breaking that row into a new ' \
                 'column at that point.\r' \
-                'You will not see the dataset as it builds. It builds as a file on disk.'
+                'You will not see the dataset as it builds. It builds as a file (or files) on disk.'
         self.tcOutputOptInfo.SetValue(stMsg)
         
     def onClick_BtnMake(self, event):
