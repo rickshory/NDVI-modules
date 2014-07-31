@@ -1883,6 +1883,8 @@ class Dialog_MakeDataset(wx.Dialog):
                     wx.MessageBox('Can not create folder "' + stBasePath + '"', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
+                wx.MessageBox('Folder "' + stBasePath + '" already exists, OK', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
             stSavePath = os.path.join(stBasePath, shDict['WorksheetName'])
 
         else:
