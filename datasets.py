@@ -1484,7 +1484,7 @@ class Dialog_MakeDataset(wx.Dialog):
         self.tcBaseName = wx.TextCtrl(self, -1)
         mkDtSetSiz.Add(self.tcBaseName, pos=(gRow, 2), span=(1, 3),
             flag=wx.ALIGN_LEFT|wx.EXPAND, border=5)
-        self.tcBaseName.SetValue('(default)')
+        self.tcBaseName.SetValue(self.stItemName)
 
         gRow += 1
         self.tcDir = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
@@ -1635,12 +1635,12 @@ class Dialog_MakeDataset(wx.Dialog):
         if not os.path.exists(stDir):
             stDir = os.path.expanduser('~') # user doesn't like? next time choose one
             self.tcDir.SetValue(stDir)
-        stFileName = self.tcBaseName.GetValue()
-        if stFileName[0] == '(': # assume '(default filename)' was sitting there
-            stFileName = self.stItemName #default
-        stFileName = "".join(x for x in stFileName if x.isalnum())
-        self.tcBaseName.SetValue(stFileName)
-        stSavePath = os.path.join(stDir, stFileName)
+        stBaseName = self.tcBaseName.GetValue()
+#        if stBaseName[0] == '(': # assume '(default filename)' was sitting there
+#            stBaseName = self.stItemName #default
+#        stBaseName = "".join(x for x in stBaseName if x.isalnum())
+#        self.tcBaseName.SetValue(stBaseName)
+        stSavePath = os.path.join(stDir, stBaseName)
         print "stSavePath:", stSavePath
         if self.rbExcel.GetValue():
             stSavePath = stSavePath + '.xlsx'
@@ -1665,6 +1665,7 @@ class Dialog_MakeDataset(wx.Dialog):
                 return
 
         if self.rbExcel.GetValue():
+            self.makeExcel()
             if hasCom == False: # we tested for this at the top of this module
                 wx.MessageBox('This operating system cannot make Excel files', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
@@ -1822,6 +1823,14 @@ class Dialog_MakeDataset(wx.Dialog):
             wx.MessageBox("".join(lMsg), 'Info',
                 wx.OK | wx.ICON_INFORMATION)
             return # end of if CSV
+
+    def makeExcel(self):
+        """
+        Make an Excel workbook
+        """
+        wx.MessageBox('Called makeExcel function', 'Info',
+            wx.OK | wx.ICON_INFORMATION)
+
 
     def onClick_BtnCancel(self, event):
         """
