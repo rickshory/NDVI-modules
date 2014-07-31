@@ -1666,6 +1666,20 @@ class Dialog_MakeDataset(wx.Dialog):
             self.makeExcel()
             return # end of if Excel
 
+        else: # one of the text formats
+            if self.sourceTable == 'OutputSheets': # going to create only one file, from this one sheet
+                shDict = self.lShs[0]
+                self.makeTextFile(0, shDict) # explictily pass the sheet dictionary
+                return
+            if self.sourceTable == 'OutputBooks': # process the whole book
+                if self.bkDict['PutAllOutputRowsInOneSheet'] == 1:
+                    self.makeTextFile(1, None) # flag to compile the whole book into one file, no shDict needed
+                else:
+                    for shDict in self.lShs:
+                        self.makeTextFile(0, shDict) # explictily pass each sheet dictionary
+                return
+            return # end of if text file(s)    
+
         if self.rbTabDelim.GetValue():
             wx.MessageBox('Tab delimited output is not implemented yet', 'Info',
                 wx.OK | wx.ICON_INFORMATION)
@@ -1852,12 +1866,112 @@ class Dialog_MakeDataset(wx.Dialog):
         bXL.Save() 
 #                oXL.Cells(1,1).Value = "Hello"
 
-    def makeTextFile(self):
+    def makeTextFile(self, combineSheets, shDict):
         """
-        Make an a text file
+        Make a text file
         """
         wx.MessageBox('Called makeTextFile function', 'Info',
             wx.OK | wx.ICON_INFORMATION)
+        stDir = self.tcDir.GetValue()
+        stBaseName = self.tcBaseName.GetValue()
+        stBasePath = os.path.join(stDir, stBaseName)
+        if combineSheets == 0: # not making the whole book into one file, use base name for folder and add filename
+            try:
+                os.makedirs(stBasePath)
+            except OSError as exception:
+                if exception.errno != errno.EEXIST:
+                    wx.MessageBox('Can not create folder "' + stBasePath + '"', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+            stSavePath = os.path.join(stBasePath, shDict['WorksheetName'])
+
+        else:
+
+            stSavePath = stBasePath
+        if self.rbTabDelim.GetValue():
+            stSavePath = stSavePath + '.txt'
+        if self.rbCommaDelim.GetValue():
+            stSavePath = stSavePath + '.csv'
+        if os.path.isfile(stSavePath):
+            stMsg = '"' + stSavePath + '" already exists. Overwrite?'
+            dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+#            print "result of Yes/No dialog:", result
+            if result == wx.ID_YES:
+                try:
+                    os.remove(stSavePath)
+                except:
+                    wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+            else:
+                return
+        try: # before we go any further
+            # make sure there's nothing invalid about the filename
+            fOut = open(stSavePath, 'wb') 
+        except:
+            wx.MessageBox('Can not create file "' + stSavePath + '"', 'Info',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+
+        if self.rbTabDelim.GetValue():
+            wr = csv.writer(fOut, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        if self.rbCommaDelim.GetValue():
+            wr = csv.writer(fOut, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+        self.tcProgress.SetValue('Setting up column headings')
+        # item unless book is specified to go all in one block (not implemented yet)
+        # get the number of columns
+        stSQL = 'SELECT MAX(CAST(ListingOrder AS INTEGER)) AS Ct ' \
+            'FROM OutputColumns WHERE WorksheetID = ?'
+        scidb.curD.execute(stSQL, (shDict['ID'],))
+        rec = scidb.curD.fetchone()
+        lColHds = ['' for x in range(rec['Ct'])]
+        #set up the column headings
+        stSQL = "SELECT Count(ID) AS CountOfID, " \
+            "ColumnHeading, AggType, ListingOrder " \
+            "FROM OutputColumns " \
+            "GROUP BY WorksheetID, ColumnHeading, AggType, ListingOrder " \
+            "HAVING WorksheetID = ? " \
+            "ORDER BY ListingOrder;"
+        scidb.curD.execute(stSQL, (shDict['ID'],))
+        recs = scidb.curD.fetchall()
+        for rec in recs:
+            lColHds[rec['ListingOrder']-1] = rec['ColumnHeading']
+        wr.writerow(lColHds)
+        lMsg = []
+        lMsg.append('')
+        lMsg.append('')
+        lMsg.append(' rows written to "')
+        lMsg.append(stSavePath)
+        lMsg.append('".')
+        if self.ckPreview.GetValue():
+            iNumRowsToDo = self.spinPvwRows.GetValue()
+            lMsg[0] = 'Preview of '
+            lMsg[1] = str(iNumRowsToDo)
+        else:
+            iNumRowsToDo = 1000000 # improve this
+            lMsg[0] = 'Total of '
+        iRowCt = 0
+        # use the row generator
+        sheetRows = scidb.generateSheetRows(shDict['ID'])
+        for dataRow in sheetRows:
+            # yielded object is list with as many members as there are columns
+            iRowCt += 1
+            if iRowCt > iNumRowsToDo:
+                break
+            self.tcProgress.SetValue('Doing row %d' % iRowCt)
+            wx.Yield() # allow window updates to occur
+            wr.writerow(dataRow)
+            
+        lMsg[1] = str(iRowCt)
+
+        fOut.close()
+        wx.MessageBox("".join(lMsg), 'Info',
+            wx.OK | wx.ICON_INFORMATION)
+        return # end of if CSV
+
         self.tcOutputOptInfo.SetValue(" Test of progress messages.")
         self.tcOutputOptInfo.SetValue(self.tcOutputOptInfo.GetValue() + " ... Done")
 
