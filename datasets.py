@@ -1852,7 +1852,12 @@ class Dialog_MakeDataset(wx.Dialog):
         bXL.Save() 
 #                oXL.Cells(1,1).Value = "Hello"
 
-
+    def makeTextFile(self):
+        """
+        Make an a text file
+        """
+        wx.MessageBox('Called makeTextFile function', 'Info',
+            wx.OK | wx.ICON_INFORMATION)
 
 
     def onClick_BtnCancel(self, event):
