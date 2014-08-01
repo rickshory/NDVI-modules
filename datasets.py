@@ -1675,7 +1675,12 @@ class Dialog_MakeDataset(wx.Dialog):
                 if self.bkDict['PutAllOutputRowsInOneSheet'] == 1:
                     self.makeTextFile(1, None) # flag to compile the whole book into one file, no shDict needed
                 else:
+                    iNumSheets = len(self.lShs)
+                    iSheetCt = 0
                     for shDict in self.lShs:
+                        iSheetCt += 1
+                        stMsg = 'Doing sheet "' + shDict['WorksheetName'] + '", ' + str(iSheetCt) + ' of ' + str(iNumSheets)
+                        self.tcOutputOptInfo.SetValue(stMsg)
                         self.makeTextFile(0, shDict) # explictily pass each sheet dictionary
                 return
             return # end of if text file(s)    
@@ -1870,8 +1875,8 @@ class Dialog_MakeDataset(wx.Dialog):
         """
         Make a text file
         """
-        wx.MessageBox('Called makeTextFile function', 'Info',
-            wx.OK | wx.ICON_INFORMATION)
+#        wx.MessageBox('Called makeTextFile function', 'Info',
+#            wx.OK | wx.ICON_INFORMATION)
         stDir = self.tcDir.GetValue()
         stBaseName = self.tcBaseName.GetValue()
         stBasePath = os.path.join(stDir, stBaseName)
@@ -1883,13 +1888,9 @@ class Dialog_MakeDataset(wx.Dialog):
                     wx.MessageBox('Can not create folder "' + stBasePath + '"', 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
-            else:
-                wx.MessageBox('Folder "' + stBasePath + '" exists, OK', 'Info',
-                    wx.OK | wx.ICON_INFORMATION)
             stSavePath = os.path.join(stBasePath, shDict['WorksheetName'])
 
         else:
-
             stSavePath = stBasePath
         if self.rbTabDelim.GetValue():
             stSavePath = stSavePath + '.txt'
@@ -1974,10 +1975,6 @@ class Dialog_MakeDataset(wx.Dialog):
         wx.MessageBox("".join(lMsg), 'Info',
             wx.OK | wx.ICON_INFORMATION)
         return # end of if CSV
-
-        self.tcOutputOptInfo.SetValue(" Test of progress messages.")
-        self.tcOutputOptInfo.SetValue(self.tcOutputOptInfo.GetValue() + " ... Done")
-
 
     def onClick_BtnCancel(self, event):
         """
