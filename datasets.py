@@ -5,6 +5,10 @@ import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
 import thread
 
+# This is a global flag that we will manipulate as needed
+# to allow graceful exit from previewing
+KeepPreviewing = 0
+
 try:
     import win32com.client
     hasCom = True
@@ -2073,16 +2077,15 @@ class SetupDatasetsPanel(wx.Panel):
 
         self.showPreview(ckPyData)
 
-
     def showPreview(self, ckPyData):
         # set up the grid
         # first, erase it
         nR = self.pvwGrid.GetNumberRows()
         nC = self.pvwGrid.GetNumberCols()
         if nR > 0:
-            self.pvwGrid.DeleteRows(numRows=nR)
+            wx.CallAfter(self.pvwGrid.DeleteRows(numRows=nR))
         if nC > 0:
-            self.pvwGrid.DeleteCols(numCols=nC)
+            wx.CallAfter(self.pvwGrid.DeleteCols(numCols=nC))
 
         # build grid based on what is selected in the tree
         stPvwTopMsg = 'preview unavailable'
@@ -2106,7 +2109,7 @@ class SetupDatasetsPanel(wx.Panel):
 #                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % dFm
                 stPvwTopMsg = sB % dFm
                 self.sheetID = rec['SheetID']
-                self.insertPreviewGridHeaders(self.sheetID)
+                wx.CallAfter(self.insertPreviewGridHeaders(self.sheetID))
 
         if ckPyData[0] == "OutputSheets":
             # get this sheet
@@ -2118,7 +2121,7 @@ class SetupDatasetsPanel(wx.Panel):
             scidb.curD.execute(stSQL, (self.sheetID,))
             rec = scidb.curD.fetchone()
             stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-            self.insertPreviewGridHeaders(self.sheetID)
+            wx.CallAfter(self.insertPreviewGridHeaders(self.sheetID))
         if ckPyData[0] == "OutputColumns":
             # get this column's sheet
             stSQL = """SELECT OutputSheets.ID AS SheetID,
@@ -2134,11 +2137,11 @@ class SetupDatasetsPanel(wx.Panel):
             rec = scidb.curD.fetchone()
             stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
             self.sheetID = rec['SheetID']
-            self.insertPreviewGridHeaders(self.sheetID)
+            wx.CallAfter(self.insertPreviewGridHeaders(self.sheetID))
 
-        self.pvwLabel.SetLabel(stPvwTopMsg)
-        self.pvwGrid.AutoSize()
-        self.previewPanel.SetupScrolling()
+        wx.CallAfter(self.pvwLabel.SetLabel(stPvwTopMsg))
+        wx.CallAfter(self.pvwGrid.AutoSize())
+        wx.CallAfter(self.previewPanel.SetupScrolling())
         return
 
     def insertPreviewGridHeaders(self, sheetID):
