@@ -2164,13 +2164,15 @@ class SetupDatasetsPanel(wx.Panel):
         iRwCt = 0
         iNumRowsToPreview = 10
         for dataRow in sheetRows:
-            # yielded object is list with as many members as there grid columns
+            wx.Yield() # allow window events to happen
+            # yielded object is list with as many members as there are grid columns
             iRwCt += 1
             if iRwCt > iNumRowsToPreview:
                 break
             self.pvwGrid.AppendRows()
             iRow = self.pvwGrid.GetNumberRows() - 1 # the new row to fill in is the last row
             for iCol in range(len(dataRow)):
+                wx.Yield() # allow window events to happen
                 self.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
             self.Update()
             self.pvwGrid.ForceRefresh
