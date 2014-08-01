@@ -1885,6 +1885,8 @@ class Dialog_MakeDataset(wx.Dialog):
             iNumRowsToDo = 1000000 # improve this
             lMsg[0] = 'Total of '
         iRowCt = 0
+        # get a count
+        iNumRowsInDataset = scidb.countOfSheetRows(shDict['ID'])
         # use the row generator
         sheetRows = scidb.generateSheetRows(shDict['ID'])
         for dataRow in sheetRows:
@@ -1892,7 +1894,7 @@ class Dialog_MakeDataset(wx.Dialog):
             iRowCt += 1
             if iRowCt > iNumRowsToDo:
                 break
-            self.tcProgress.SetValue('Doing row %d' % iRowCt)
+            self.tcProgress.SetValue('Doing row %d of %d' % (iRowCt, iNumRowsInDataset))
             wx.Yield() # allow window updates to occur
             wr.writerow(dataRow)
             

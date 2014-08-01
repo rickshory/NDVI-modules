@@ -949,6 +949,42 @@ def solarCorrection(stDate, fLongitude):
     fCorr = fCorr + equationOfTime(stDate)
     return datetime.timedelta(minutes = fCorr)
 
+def countOfSheetRows(sheetID):
+    """
+    Given a record ID in the table 'OutputSheets',
+    Generates a count of the rows of the dataset
+    Everything else is determininstic based on values in the database tables
+    """
+    sFmtDateOnly = '%Y-%m-%d'
+    curD.execute('SELECT * FROM OutputSheets WHERE ID = ?;', (sheetID,))
+    rec = curD.fetchone()
+    shDict = {}
+    for recName in rec.keys():
+        shDict[recName] = rec[recName]
+    # get values from the parent Book
+    # fields: ID BookName, Longitude, HourOffset, NumberOfTimeSlicesPerDay,
+    #   OutputDataStart, OutputDataEnd, PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks
+    curD.execute('SELECT * FROM OutputBooks WHERE ID = ?;', (shDict['BookID'],))
+    rec = curD.fetchone()
+    bkDict = {}
+    for recName in rec.keys():
+        bkDict[recName] = rec[recName]
+
+    # get the list of dates to pull data for
+    lDtLimits = [] # check for any start or end limits
+    if bkDict['OutputDataStart'] != None: # any start criteria
+        lDtLimits.append(" DataDates.Date >= '" + bkDict['OutputDataStart'].strftime(sFmtDateOnly) + "' ")
+    if bkDict['OutputDataEnd'] != None: # any end criteria
+        if len(lDtLimits) > 0:
+            lDtLimits.append("AND")
+        lDtLimits.append(" DataDates.Date <= '" + bkDict['OutputDataEnd'].strftime(sFmtDateOnly) + "' ")
+    if len(lDtLimits) > 0: # complete any WHERE clause
+        lDtLimits.insert(0, "\nWHERE ")
+    stSQL = "SELECT Count(DataDates.Date) AS CtDates FROM DataDates" + "".join(lDtLimits) + ";"
+    curD.execute(stSQL)
+    rec = curD.fetchone()
+    return rec['CtDates'] * bkDict['NumberOfTimeSlicesPerDay']
+
 def generateSheetRows(sheetID, formatValues = True):
     """
     Given a record ID in the table 'OutputSheets',
