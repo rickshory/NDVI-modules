@@ -3,6 +3,8 @@ import os, sys, re, cPickle, datetime
 import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
+import thread
+
 try:
     import win32com.client
     hasCom = True
@@ -2069,6 +2071,10 @@ class SetupDatasetsPanel(wx.Panel):
         self.dsInfoPnl.correspondingTreeItem = item
         self.detailsPanel.Layout()
 
+        self.showPreview(ckPyData)
+
+
+    def showPreview(self, ckPyData):
         # set up the grid
         # first, erase it
         nR = self.pvwGrid.GetNumberRows()
@@ -2133,6 +2139,7 @@ class SetupDatasetsPanel(wx.Panel):
         self.pvwLabel.SetLabel(stPvwTopMsg)
         self.pvwGrid.AutoSize()
         self.previewPanel.SetupScrolling()
+        return
 
     def insertPreviewGridHeaders(self, sheetID):
         stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
