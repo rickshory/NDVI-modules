@@ -2145,6 +2145,9 @@ class SetupDatasetsPanel(wx.Panel):
         return
 
     def insertPreviewGridHeaders(self, sheetID):
+        wx.Yield() # allow window events to happen
+        if KeepPreviewing == 0:
+            return
         stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
             "FROM OutputColumns " \
             "WHERE WorksheetID = ?;"
@@ -2158,6 +2161,9 @@ class SetupDatasetsPanel(wx.Panel):
         self.pvwGrid.AppendRows() #1st row for headers
         self.pvwGrid.AppendCols(rec['MaxCol']) # make enough columns
         
+        wx.Yield() # allow window events to happen
+        if KeepPreviewing == 0:
+            return
         stSQL = """SELECT ID as ColID, ColumnHeading, ListingOrder
             FROM OutputColumns
             WHERE WorksheetID = ?
@@ -2167,6 +2173,9 @@ class SetupDatasetsPanel(wx.Panel):
         for rec in recs:
             # some headings may overwrite each other, that's what the preview is for
             self.pvwGrid.SetCellValue(0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
+            wx.Yield() # allow window events to happen
+            if KeepPreviewing == 0:
+                return
             
         # following is still in testing
         # first test as a generator
@@ -2175,6 +2184,8 @@ class SetupDatasetsPanel(wx.Panel):
         iNumRowsToPreview = 10
         for dataRow in sheetRows:
             wx.Yield() # allow window events to happen
+            if KeepPreviewing == 0:
+                return
             # yielded object is list with as many members as there are grid columns
             iRwCt += 1
             if iRwCt > iNumRowsToPreview:
@@ -2183,6 +2194,8 @@ class SetupDatasetsPanel(wx.Panel):
             iRow = self.pvwGrid.GetNumberRows() - 1 # the new row to fill in is the last row
             for iCol in range(len(dataRow)):
                 wx.Yield() # allow window events to happen
+                if KeepPreviewing == 0:
+                    return
                 self.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
             self.Update()
             self.pvwGrid.ForceRefresh
