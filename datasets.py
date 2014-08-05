@@ -2151,7 +2151,7 @@ class SetupDatasetsPanel(wx.Panel):
         return
 
     def insertPreviewGridHeaders(self, sheetID, DBcr):
-        curPV = scidb.getSciDataCursor()
+        curPV = scidb.getSciDataCursor() # threads need their own cursor
         KeepPreviewing = 1
         print "in 'insertPreviewGridHeaders' before wxYield, KeepPreviewing:", KeepPreviewing
         wx.Yield() # allow window events to happen
@@ -2164,12 +2164,12 @@ class SetupDatasetsPanel(wx.Panel):
         curPV.execute(stSQL, (sheetID,))
         rec = curPV.fetchone()
         if rec['MaxCol'] == None:
-            self.pvwGrid.AppendRows() # 1 row 
-            self.pvwGrid.AppendCols() # 1 column
-            self.pvwGrid.SetCellValue(0, 0, '(no columns yet)')
+            wx.CallAfter(self.pvwGrid.AppendRows) # 1 row 
+            wx.CallAfter(self.pvwGrid.AppendCols) # 1 column
+            wx.CallAfter(self.pvwGrid.SetCellValue, 0, 0, '(no columns yet)')
             return
-        self.pvwGrid.AppendRows() #1st row for headers
-        self.pvwGrid.AppendCols(rec['MaxCol']) # make enough columns
+        wx.CallAfter(self.pvwGrid.AppendRows) #1st row for headers
+        wx.CallAfter(self.pvwGrid.AppendCols, rec['MaxCol']) # make enough columns
         
         wx.Yield() # allow window events to happen
         if KeepPreviewing == 0:
@@ -2182,7 +2182,7 @@ class SetupDatasetsPanel(wx.Panel):
         recs = curPV.fetchall()
         for rec in recs:
             # some headings may overwrite each other, that's what the preview is for
-            self.pvwGrid.SetCellValue(0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
+            wx.CallAfter(self.pvwGrid.SetCellValue, 0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
             wx.Yield() # allow window events to happen
             if KeepPreviewing == 0:
                 return
@@ -2200,15 +2200,15 @@ class SetupDatasetsPanel(wx.Panel):
             iRwCt += 1
             if iRwCt > iNumRowsToPreview:
                 break
-            self.pvwGrid.AppendRows()
+            wx.CallAfter(self.pvwGrid.AppendRows)
             iRow = self.pvwGrid.GetNumberRows() - 1 # the new row to fill in is the last row
             for iCol in range(len(dataRow)):
                 wx.Yield() # allow window events to happen
                 if KeepPreviewing == 0:
                     return
-                self.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
-            self.Update()
-            self.pvwGrid.ForceRefresh
+                wx.CallAfter(self.pvwGrid.SetCellValue, iRow, iCol, dataRow[iCol])
+            wx.CallAfter(self.Update)
+            wx.CallAfter(self.pvwGrid.ForceRefresh)
 #            self.Refresh()
 #            print iRwCt, dataRow
         

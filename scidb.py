@@ -1188,7 +1188,7 @@ def generateSheetRows(sheetID, formatValues = True, cr = curD):
 def offerSeriesForChannels():
     """
     If the Series for a Channel Segment is still Null, fill in the SeriesID if one is available.
-    Presently, these are only available for Greenlogger files tha have full metadata.
+    Presently, these are only available for Greenlogger files that have full metadata.
     """
     stSQL = """
         UPDATE ChannelSegments
