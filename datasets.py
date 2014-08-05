@@ -2035,6 +2035,7 @@ class SetupDatasetsPanel(wx.Panel):
 
     def OnSelChanged(self, event):
         print "OnSelChanged"
+        KeepPreviewing.clear()
 #        self.newGridRow()
         item = event.GetItem()
         try: # event sometimes fires twice when new records created; following prevents errors caused by dead objects
@@ -2074,6 +2075,7 @@ class SetupDatasetsPanel(wx.Panel):
         self.detSiz.Add(self.dsInfoPnl, 1, wx.EXPAND)
         self.dsInfoPnl.correspondingTreeItem = item
         self.detailsPanel.Layout()
+        # start another thread to build the preview
         self.preview = Preview(self, ckPyData)
 
     def dsTreeRightClick(self, event):
@@ -2251,7 +2253,8 @@ class Preview(threading.Thread):
 
     def run(self):
         self.dp = DoPreview(self.mainFrame, self.ckPyData)
-        wxPostEvent(self.mainFrame, PreviewWork(self.dp))
+        if not KeepPreviewing.isSet(): return
+#        wxPostEvent(self.mainFrame, PreviewWork(self.dp))
 
     def abort(self):
         KeepPreviewing.clear()
@@ -2282,6 +2285,8 @@ class DoPreview:
         stPvwTopMsg = 'preview unavailable'
         if ckPyData[1] == 0: # 'DataSets' root of the tree
             stPvwTopMsg = 'Preview will appear below when you click on a tree item above'
+            self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
+            
         if ckPyData[0] == "OutputBooks":
             # look for the first sheet in this book
             stSQL = """SELECT ID as SheetID, WorksheetName, ListingOrder
@@ -2292,6 +2297,7 @@ class DoPreview:
             rec = curPV.fetchone()
             if rec == None:
                 stPvwTopMsg = 'No sheets in this book yet'
+                self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
             else:
     #                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
                 sB = 'Preview of sheet' \
@@ -2300,6 +2306,7 @@ class DoPreview:
     #                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % dFm
                 stPvwTopMsg = sB % dFm
                 self.sheetID = rec['SheetID']
+                self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
                 self.insertPreviewGrid(self.sheetID, curPV)
 
         if ckPyData[0] == "OutputSheets":
@@ -2312,6 +2319,7 @@ class DoPreview:
             curPV.execute(stSQL, (self.sheetID,))
             rec = curPV.fetchone()
             stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
+            self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
             self.insertPreviewGrid(self.sheetID, curPV)
                 
         if ckPyData[0] == "OutputColumns":
@@ -2329,16 +2337,17 @@ class DoPreview:
             rec = curPV.fetchone()
             stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
             self.sheetID = rec['SheetID']
+            self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
             self.insertPreviewGrid(self.sheetID, curPV)
 
         print 'returned from Grid sections\n'
-        self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
+        if not KeepPreviewing.isSet(): return
         self.mainFrame.pvwGrid.AutoSize()
         self.mainFrame.previewPanel.SetupScrolling()
         return
 
-
     def insertPreviewGrid(self, sheetID, DBcr):
+        if not KeepPreviewing.isSet(): return
         curPV = scidb.getSciDataCursor() # threads need their own cursor
         stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
             "FROM OutputColumns " \
@@ -2352,10 +2361,7 @@ class DoPreview:
             return
         self.mainFrame.pvwGrid.AppendRows() #1st row for headers
         self.mainFrame.pvwGrid.AppendCols(rec['MaxCol']) # make enough columns
-        
-#        wx.Yield() # allow window events to happen
-#        if KeepPreviewing == 0:
-#            return
+        if not KeepPreviewing.isSet(): return
         stSQL = """SELECT ID as ColID, ColumnHeading, ListingOrder
             FROM OutputColumns
             WHERE WorksheetID = ?
@@ -2375,19 +2381,14 @@ class DoPreview:
         iRwCt = 0
         iNumRowsToPreview = 10
         for dataRow in sheetRows:
-#            wx.Yield() # allow window events to happen
-#            if KeepPreviewing == 0:
-#                return
+            if not KeepPreviewing.isSet(): return
             # yielded object is list with as many members as there are grid columns
             iRwCt += 1
             if iRwCt > iNumRowsToPreview:
-                break
+                return
             self.mainFrame.pvwGrid.AppendRows()
             iRow = self.mainFrame.pvwGrid.GetNumberRows() - 1 # the new row to fill in is the last row
             for iCol in range(len(dataRow)):
-#                wx.Yield() # allow window events to happen
-#                if KeepPreviewing == 0:
-#                    return
                 self.mainFrame.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
             self.mainFrame.Update()
             self.mainFrame.pvwGrid.ForceRefresh()
