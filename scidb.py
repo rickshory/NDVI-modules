@@ -447,6 +447,36 @@ except sqlite3.Error, e:
     print 'Error in "tmp.db": %s' % e.args[0]
     sys.exit(1)
 
+def getSciDataCursor():
+    """
+    Utility for deliving a separate sci_data database cursor, for example when
+    using threads, which cannot share a connection. Assumes all tables have been
+    set up correctly.
+    """
+    try:
+        connection = sqlite3.connect('sci_data.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+        # importing the 'datetime' module declares some new SQLite field types: 'date' and 'timestamp'
+        # 'PARSE_DECLTYPES' acivates them
+        connection.execute('pragma foreign_keys=ON') # enforce foreign keys
+        # check that foreign keys constraint was correctly set
+        rslt = connection.execute('pragma foreign_keys')
+        # if foreign_keys is supported, should have one item that is either (1,) or (0,)
+        rl = [r for r in rslt] # comprehend it as a list
+        if len(rl) == 0:
+            print 'Foreign keys not supported in this version (' + sqlite3.sqlite_version + ') of sqlite. Not used in "sci_data.db".'
+        if rl[0] != (1,):
+            print 'Foreign keys supported, but not set in this connection to "sci_data.db"'
+        connection.execute('pragma auto_vacuum=ON')
+        connection.text_factory = str
+        connection.row_factory = sqlite3.Row
+        cursor = connection.cursor()
+        return cursor
+        
+    except sqlite3.Error, e:
+        print 'Error in "sci_data.db": %s' % e.args[0]
+        sys.exit(1)
+        return None
+
 def refreshDataDates(): # make externally callable
     curD.executescript("""
         DROP TABLE IF EXISTS "DataDates";

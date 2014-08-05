@@ -2080,21 +2080,7 @@ class SetupDatasetsPanel(wx.Panel):
 
     def showPreview(self, ckPyData):
         # need a separate database connection for this thread
-        pvConn = sqlite3.connect('sci_data.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
-        pvConn.execute('pragma foreign_keys=ON') # enforce foreign keys
-        # check that foreign keys constraint was correctly set
-        rslt = pvConn.execute('pragma foreign_keys')
-        # if foreign_keys is supported, should have one item that is either (1,) or (0,)
-        rl = [r for r in rslt] # comprehend it as a list
-        if len(rl) == 0:
-            print 'Foreign keys not supported in this version (' + sqlite3.sqlite_version + ') of sqlite. Not used in "sci_data.db".'
-        if rl[0] != (1,):
-            print 'Foreign keys supported, but not set in this connection to "sci_data.db"'
-        pvConn.execute('pragma auto_vacuum=ON')
-        pvConn.text_factory = str
-        pvConn.row_factory = sqlite3.Row
-
-        curPV = pvConn.cursor()
+        curPV = scidb.getSciDataCursor()
 
         # set up the grid
         # first, erase it
@@ -2165,15 +2151,18 @@ class SetupDatasetsPanel(wx.Panel):
         return
 
     def insertPreviewGridHeaders(self, sheetID, DBcr):
+        curPV = scidb.getSciDataCursor()
+        KeepPreviewing = 1
+        print "in 'insertPreviewGridHeaders' before wxYield, KeepPreviewing:", KeepPreviewing
         wx.Yield() # allow window events to happen
-        print "in 'insertPreviewGridHeaders', KeepPreviewing:", KeepPreviewing
+        print "in 'insertPreviewGridHeaders' after wxYield, KeepPreviewing:", KeepPreviewing
         if KeepPreviewing == 0:
             return
         stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
             "FROM OutputColumns " \
             "WHERE WorksheetID = ?;"
-        DBcr.execute(stSQL, (sheetID,))
-        rec = DBcr.fetchone()
+        curPV.execute(stSQL, (sheetID,))
+        rec = curPV.fetchone()
         if rec['MaxCol'] == None:
             self.pvwGrid.AppendRows() # 1 row 
             self.pvwGrid.AppendCols() # 1 column
@@ -2189,8 +2178,8 @@ class SetupDatasetsPanel(wx.Panel):
             FROM OutputColumns
             WHERE WorksheetID = ?
             ORDER BY ListingOrder, ID;"""
-        DBcr.execute(stSQL, (sheetID,))
-        recs = DBcr.fetchall()
+        curPV.execute(stSQL, (sheetID,))
+        recs = curPV.fetchall()
         for rec in recs:
             # some headings may overwrite each other, that's what the preview is for
             self.pvwGrid.SetCellValue(0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
@@ -2200,7 +2189,7 @@ class SetupDatasetsPanel(wx.Panel):
             
         # following is still in testing
         # first test as a generator
-        sheetRows = scidb.generateSheetRows(self.sheetID, True, DBcr)
+        sheetRows = scidb.generateSheetRows(self.sheetID, True, curPV)
         iRwCt = 0
         iNumRowsToPreview = 10
         for dataRow in sheetRows:
