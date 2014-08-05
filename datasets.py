@@ -2075,10 +2075,11 @@ class SetupDatasetsPanel(wx.Panel):
         self.dsInfoPnl.correspondingTreeItem = item
         self.detailsPanel.Layout()
         
-        KeepPreviewing = 1
+ #       KeepPreviewing = 1
         thread.start_new_thread(self.showPreview, (ckPyData,))
 
     def showPreview(self, ckPyData):
+        KeepPreviewing = 1
         # need a separate database connection for this thread
         curPV = scidb.getSciDataCursor()
 
@@ -2215,6 +2216,7 @@ class SetupDatasetsPanel(wx.Panel):
 
     def dsTreeRightClick(self, event):
         KeepPreviewing = 0
+        print "KeepPreviewing set to 0"
         self.tree_item_clicked = right_click_context = event.GetItem()
         ckPyData = self.dsTree.GetPyData(self.tree_item_clicked)
         print "PyData from Right Click:", ckPyData
@@ -2245,10 +2247,12 @@ class SetupDatasetsPanel(wx.Panel):
             #source component, passing event's GetPoint. ###
         self.PopupMenu( menu, event.GetPoint() )
         menu.Destroy() # destroy to avoid mem leak
-        KeepPreviewing = 1 # re-allow previewing
+#        KeepPreviewing = 1 # re-allow previewing
+#        print "KeepPreviewing set to 1"
 
     def MenuSelectionCb( self, event ):
         # do something
+        KeepPreviewing = 0
         opID = event.GetId()
         operation = treePopMenuItems[opID]
         print "operation:", operation
