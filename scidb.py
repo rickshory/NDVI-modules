@@ -985,20 +985,21 @@ def countOfSheetRows(sheetID):
     rec = curD.fetchone()
     return rec['CtDates'] * bkDict['NumberOfTimeSlicesPerDay']
 
-def generateSheetRows(sheetID, formatValues = True):
+def generateSheetRows(sheetID, formatValues = True, cr = curD):
     """
     Given a record ID in the table 'OutputSheets',
     Generates the rows of the dataset
     Everything else is determininstic based on values in the database tables
     Each row is returned as a list of strings, including formatted dates, times, and numbers
+    Default cursor is 'curD', but allows a different one e.g. for a separate thread
     """
     # a few format strings:
     sFmtFullDateTime = '%Y-%m-%d %H:%M:%S'
     sFmtDateOnly = '%Y-%m-%d'
     # get values for this sheet
     # fields: ID, BookID, WorksheetName, DataSetNickname, ListingOrder
-    curD.execute('SELECT * FROM OutputSheets WHERE ID = ?;', (sheetID,))
-    rec = curD.fetchone()
+    cr.execute('SELECT * FROM OutputSheets WHERE ID = ?;', (sheetID,))
+    rec = cr.fetchone()
     shDict = {}
     for recName in rec.keys():
         shDict[recName] = rec[recName]
@@ -1006,8 +1007,8 @@ def generateSheetRows(sheetID, formatValues = True):
     # get values from the parent Book
     # fields: ID BookName, Longitude, HourOffset, NumberOfTimeSlicesPerDay,
     #   OutputDataStart, OutputDataEnd, PutAllOutputRowsInOneSheet, BlankRowBetweenDataBlocks
-    curD.execute('SELECT * FROM OutputBooks WHERE ID = ?;', (shDict['BookID'],))
-    rec = curD.fetchone()
+    cr.execute('SELECT * FROM OutputBooks WHERE ID = ?;', (shDict['BookID'],))
+    rec = cr.fetchone()
     bkDict = {}
     for recName in rec.keys():
         bkDict[recName] = rec[recName]
@@ -1025,8 +1026,8 @@ def generateSheetRows(sheetID, formatValues = True):
         "OutputColumns.Format_Python, OutputColumns.Format_Excel, OutputColumns.ListingOrder\n" \
         "HAVING (((OutputColumns.WorksheetID) = ?))\n" \
         "ORDER BY OutputColumns.ListingOrder;"
-    curD.execute(stSQL, (sheetID,))
-    recs = curD.fetchall()
+    cr.execute(stSQL, (sheetID,))
+    recs = cr.fetchall()
     # store as a list of dictionaries
     clDict = {}
     lCols = []
@@ -1040,8 +1041,8 @@ def generateSheetRows(sheetID, formatValues = True):
     stSQL = "SELECT MAX(CAST(ListingOrder AS INTEGER)) AS MaxLstOrd " \
         "FROM OutputColumns " \
         "WHERE WorksheetID = ?;"
-    curD.execute(stSQL, (sheetID,))
-    rec = curD.fetchone()
+    cr.execute(stSQL, (sheetID,))
+    rec = cr.fetchone()
     iRowLen = rec['MaxLstOrd']
 
     # get the list of dates to pull data for
@@ -1055,8 +1056,8 @@ def generateSheetRows(sheetID, formatValues = True):
     if len(lDtLimits) > 0: # complete any WHERE clause
         lDtLimits.insert(0, "\nWHERE ")
     stSQL = "SELECT DataDates.Date FROM DataDates" + "".join(lDtLimits) + "\nORDER BY DataDates.Date;"
-    curD.execute(stSQL)
-    recs = curD.fetchall()
+    cr.execute(stSQL)
+    recs = cr.fetchall()
     lDates = []
     for rec in recs:
         lDates.append(rec['Date'])
@@ -1091,10 +1092,10 @@ def generateSheetRows(sheetID, formatValues = True):
 #                print "colDict:", colDict
                 # multiple table records may contribute to the same visible column, if
                 # it is type "Aggregate", and ColHead, AggType and ListingOrder are the same for all recs
-                curD.execute(stSQLVisCol, (sheetID, colDict['ListingOrder']))
+                cr.execute(stSQLVisCol, (sheetID, colDict['ListingOrder']))
                 # in most cases, there will be only one record (if > 1, only use the 1st)
                 # deal with valid multiples under if ColType = "Aggregate"
-                rec = curD.fetchone()
+                rec = cr.fetchone()
                 stFmtPy = rec['Format_Python']
                 stFmtXl = rec['Format_Excel']
                 if rec['ColType'] == "Timestamp":
@@ -1137,8 +1138,8 @@ def generateSheetRows(sheetID, formatValues = True):
                                 'AND Data.Use=1;')
                         stSQL = ''.join(lSql)
 #                        print "stSQL:", stSQL
-                        curD.execute(stSQL, (sheetID, colDict['ListingOrder'] ,dtUTTimeBegin, dtUTTimeEnd))
-                        rec = curD.fetchone()
+                        cr.execute(stSQL, (sheetID, colDict['ListingOrder'] ,dtUTTimeBegin, dtUTTimeEnd))
+                        rec = cr.fetchone()
                         if rec['Agg'] != None:
                             if formatValues == True:
                                 if stFmtPy == None:
