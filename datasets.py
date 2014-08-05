@@ -2074,8 +2074,9 @@ class SetupDatasetsPanel(wx.Panel):
         self.detSiz.Add(self.dsInfoPnl, 1, wx.EXPAND)
         self.dsInfoPnl.correspondingTreeItem = item
         self.detailsPanel.Layout()
-
-        self.showPreview(ckPyData)
+        
+        KeepPreviewing = 1
+        thread.start_new_thread(self.showPreview, (ckPyData,))
 
     def showPreview(self, ckPyData):
         # set up the grid
@@ -2122,6 +2123,7 @@ class SetupDatasetsPanel(wx.Panel):
             rec = scidb.curD.fetchone()
             stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
             wx.CallAfter(self.insertPreviewGridHeaders(self.sheetID))
+            
         if ckPyData[0] == "OutputColumns":
             # get this column's sheet
             stSQL = """SELECT OutputSheets.ID AS SheetID,
@@ -2139,6 +2141,7 @@ class SetupDatasetsPanel(wx.Panel):
             self.sheetID = rec['SheetID']
             wx.CallAfter(self.insertPreviewGridHeaders(self.sheetID))
 
+        print 'returned from Grid Headers sections'
         wx.CallAfter(self.pvwLabel.SetLabel(stPvwTopMsg))
         wx.CallAfter(self.pvwGrid.AutoSize())
         wx.CallAfter(self.previewPanel.SetupScrolling())
@@ -2204,6 +2207,7 @@ class SetupDatasetsPanel(wx.Panel):
         
 
     def dsTreeRightClick(self, event):
+        KeepPreviewing = 0
         self.tree_item_clicked = right_click_context = event.GetItem()
         ckPyData = self.dsTree.GetPyData(self.tree_item_clicked)
         print "PyData from Right Click:", ckPyData
@@ -2234,6 +2238,7 @@ class SetupDatasetsPanel(wx.Panel):
             #source component, passing event's GetPoint. ###
         self.PopupMenu( menu, event.GetPoint() )
         menu.Destroy() # destroy to avoid mem leak
+        KeepPreviewing = 1 # re-allow previewing
 
     def MenuSelectionCb( self, event ):
         # do something
