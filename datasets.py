@@ -2127,7 +2127,7 @@ class SetupDatasetsPanel(wx.Panel):
 #                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % dFm
                 stPvwTopMsg = sB % dFm
                 self.sheetID = rec['SheetID']
-                wx.CallAfter(self.insertPreviewGridHeaders(self.sheetID, curPV))
+                wx.CallAfter(self.insertPreviewGridHeaders, self.sheetID, curPV)
 
         if ckPyData[0] == "OutputSheets":
             # get this sheet
@@ -2139,7 +2139,7 @@ class SetupDatasetsPanel(wx.Panel):
             curPV.execute(stSQL, (self.sheetID,))
             rec = curPV.fetchone()
             stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-            wx.CallAfter(self.insertPreviewGridHeaders(self.sheetID, curPV))
+            wx.CallAfter(self.insertPreviewGridHeaders, self.sheetID, curPV)
             
         if ckPyData[0] == "OutputColumns":
             # get this column's sheet
@@ -2156,19 +2156,17 @@ class SetupDatasetsPanel(wx.Panel):
             rec = curPV.fetchone()
             stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
             self.sheetID = rec['SheetID']
-            wx.CallAfter(self.insertPreviewGridHeaders(self.sheetID, curPV))
+            wx.CallAfter(self.insertPreviewGridHeaders, self.sheetID, curPV)
 
         print 'returned from Grid Headers sections\n'
-        wx.CallAfter(self.pvwLabel.SetLabel(stPvwTopMsg))
-        print 'returned from SetLabel(stPvwTopMsg)\n'
-        wx.CallAfter(self.pvwGrid.AutoSize())
-        print 'returned from self.pvwGrid.AutoSize()\n'
-        wx.CallAfter(self.previewPanel.SetupScrolling())
-        print 'returned from self.previewPanel.SetupScrolling()\n'
+        wx.CallAfter(self.pvwLabel.SetLabel, stPvwTopMsg)
+        wx.CallAfter(self.pvwGrid.AutoSize)
+        wx.CallAfter(self.previewPanel.SetupScrolling)
         return
 
     def insertPreviewGridHeaders(self, sheetID, DBcr):
         wx.Yield() # allow window events to happen
+        print "in 'insertPreviewGridHeaders', KeepPreviewing:", KeepPreviewing
         if KeepPreviewing == 0:
             return
         stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
