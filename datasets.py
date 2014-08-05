@@ -2074,150 +2074,9 @@ class SetupDatasetsPanel(wx.Panel):
         self.detSiz.Add(self.dsInfoPnl, 1, wx.EXPAND)
         self.dsInfoPnl.correspondingTreeItem = item
         self.detailsPanel.Layout()
-        
- #       KeepPreviewing = 1
- #       thread.start_new_thread(self.showPreview, (ckPyData,))
         self.preview = Preview(self, ckPyData)
 
-    def showPreview(self, ckPyData):
-        KeepPreviewing = 1
-        # need a separate database connection for this thread
-        curPV = scidb.getSciDataCursor()
-
-        # set up the grid
-        # first, erase it
-        nR = self.pvwGrid.GetNumberRows()
-        nC = self.pvwGrid.GetNumberCols()
-        if nR > 0:
-            wx.CallAfter(self.pvwGrid.DeleteRows(numRows=nR))
-        if nC > 0:
-            wx.CallAfter(self.pvwGrid.DeleteCols(numCols=nC))
-
-        # build grid based on what is selected in the tree
-        stPvwTopMsg = 'preview unavailable'
-        if ckPyData[1] == 0: # 'DataSets' root of the tree
-            stPvwTopMsg = 'Preview will appear below when you click on a tree item above'
-        if ckPyData[0] == "OutputBooks":
-            # look for the first sheet in this book
-            stSQL = """SELECT ID as SheetID, WorksheetName, ListingOrder
-                FROM OutputSheets
-                WHERE BookID = ?
-                ORDER BY ListingOrder, ID;"""
-            curPV.execute(stSQL, (ckPyData[1],))
-            rec = curPV.fetchone()
-            if rec == None:
-                stPvwTopMsg = 'No sheets in this book yet'
-            else:
-#                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-                sB = 'Preview of sheet' \
-                    ' %(shNum)d, "%(shName)s".'
-                dFm = {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-#                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % dFm
-                stPvwTopMsg = sB % dFm
-                self.sheetID = rec['SheetID']
-                wx.CallAfter(self.insertPreviewGridHeaders, self.sheetID, curPV)
-
-        if ckPyData[0] == "OutputSheets":
-            # get this sheet
-            self.sheetID = ckPyData[1]
-            stSQL = """SELECT ID as SheetID, WorksheetName, ListingOrder
-                FROM OutputSheets
-                WHERE ID = ?
-                ORDER BY ListingOrder, ID;"""
-            curPV.execute(stSQL, (self.sheetID,))
-            rec = curPV.fetchone()
-            stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-            wx.CallAfter(self.insertPreviewGridHeaders, self.sheetID, curPV)
-            
-        if ckPyData[0] == "OutputColumns":
-            # get this column's sheet
-            stSQL = """SELECT OutputSheets.ID AS SheetID,
-                OutputSheets.WorksheetName,
-                OutputSheets.ListingOrder
-                FROM OutputSheets
-                WHERE (((OutputSheets.ID) In
-                (SELECT OutputColumns.WorksheetID
-                FROM OutputColumns
-                WHERE (((OutputColumns.ID)=?)))))
-                ORDER BY OutputSheets.ListingOrder, OutputSheets.ID;"""
-            curPV.execute(stSQL, (ckPyData[1],))
-            rec = curPV.fetchone()
-            stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-            self.sheetID = rec['SheetID']
-            wx.CallAfter(self.insertPreviewGridHeaders, self.sheetID, curPV)
-
-        print 'returned from Grid Headers sections\n'
-        wx.CallAfter(self.pvwLabel.SetLabel, stPvwTopMsg)
-        wx.CallAfter(self.pvwGrid.AutoSize)
-        wx.CallAfter(self.previewPanel.SetupScrolling)
-        return
-
-    def insertPreviewGridHeaders(self, sheetID, DBcr):
-        curPV = scidb.getSciDataCursor() # threads need their own cursor
-        KeepPreviewing = 1
-        print "in 'insertPreviewGridHeaders' before wxYield, KeepPreviewing:", KeepPreviewing
-        wx.Yield() # allow window events to happen
-        print "in 'insertPreviewGridHeaders' after wxYield, KeepPreviewing:", KeepPreviewing
-        if KeepPreviewing == 0:
-            return
-        stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
-            "FROM OutputColumns " \
-            "WHERE WorksheetID = ?;"
-        curPV.execute(stSQL, (sheetID,))
-        rec = curPV.fetchone()
-        if rec['MaxCol'] == None:
-            wx.CallAfter(self.pvwGrid.AppendRows) # 1 row 
-            wx.CallAfter(self.pvwGrid.AppendCols) # 1 column
-            wx.CallAfter(self.pvwGrid.SetCellValue, 0, 0, '(no columns yet)')
-            return
-        wx.CallAfter(self.pvwGrid.AppendRows) #1st row for headers
-        wx.CallAfter(self.pvwGrid.AppendCols, rec['MaxCol']) # make enough columns
-        
-        wx.Yield() # allow window events to happen
-        if KeepPreviewing == 0:
-            return
-        stSQL = """SELECT ID as ColID, ColumnHeading, ListingOrder
-            FROM OutputColumns
-            WHERE WorksheetID = ?
-            ORDER BY ListingOrder, ID;"""
-        curPV.execute(stSQL, (sheetID,))
-        recs = curPV.fetchall()
-        for rec in recs:
-            # some headings may overwrite each other, that's what the preview is for
-            wx.CallAfter(self.pvwGrid.SetCellValue, 0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
-            wx.Yield() # allow window events to happen
-            if KeepPreviewing == 0:
-                return
-            
-        # following is still in testing
-        # first test as a generator
-        sheetRows = scidb.generateSheetRows(self.sheetID, True, curPV)
-        iRwCt = 0
-        iNumRowsToPreview = 10
-        for dataRow in sheetRows:
-            wx.Yield() # allow window events to happen
-            if KeepPreviewing == 0:
-                return
-            # yielded object is list with as many members as there are grid columns
-            iRwCt += 1
-            if iRwCt > iNumRowsToPreview:
-                break
-            wx.CallAfter(self.pvwGrid.AppendRows)
-            iRow = self.pvwGrid.GetNumberRows() - 1 # the new row to fill in is the last row
-            for iCol in range(len(dataRow)):
-                wx.Yield() # allow window events to happen
-                if KeepPreviewing == 0:
-                    return
-                wx.CallAfter(self.pvwGrid.SetCellValue, iRow, iCol, dataRow[iCol])
-            wx.CallAfter(self.Update)
-            wx.CallAfter(self.pvwGrid.ForceRefresh)
-#            self.Refresh()
-#            print iRwCt, dataRow
-        
-
     def dsTreeRightClick(self, event):
-        KeepPreviewing = 0
-        print "KeepPreviewing set to 0"
         self.tree_item_clicked = right_click_context = event.GetItem()
         ckPyData = self.dsTree.GetPyData(self.tree_item_clicked)
         print "PyData from Right Click:", ckPyData
@@ -2248,8 +2107,6 @@ class SetupDatasetsPanel(wx.Panel):
             #source component, passing event's GetPoint. ###
         self.PopupMenu( menu, event.GetPoint() )
         menu.Destroy() # destroy to avoid mem leak
-#        KeepPreviewing = 1 # re-allow previewing
-#        print "KeepPreviewing set to 1"
 
     def MenuSelectionCb( self, event ):
         # do something
@@ -2383,10 +2240,6 @@ class SetupDatasetsPanel(wx.Panel):
         """"""
         print ' You clicked the button labeled "%s"' % strLabel
 
-#    def onClick_BtnNotWorkingYet(self, event, strLabel):
-#        wx.MessageBox('"Hello" is not implemented yet', 'Info', 
-#            wx.OK | wx.ICON_INFORMATION)
-
 class Preview(threading.Thread):
     def __init__ (self, mainFrame, ckPyData):
         threading.Thread.__init__(self)
@@ -2398,12 +2251,6 @@ class Preview(threading.Thread):
 
     def run(self):
         self.dp = DoPreview(self.mainFrame, self.ckPyData)
-#    self.op.AppendText('Done!\n')
-#    wxBell()
-
-    # Assuming you are following the above example somewhat, assume that this is a
-    # similar 'reporting' event class that we are calling. It carries a cargo which
-    # is in fact the 'head' WorkerBee.
         wxPostEvent(self.mainFrame, PreviewWork(self.dp))
 
     def abort(self):
@@ -2493,12 +2340,6 @@ class DoPreview:
 
     def insertPreviewGrid(self, sheetID, DBcr):
         curPV = scidb.getSciDataCursor() # threads need their own cursor
-#        KeepPreviewing = 1
-#        print "in 'insertPreviewGridHeaders' before wxYield, KeepPreviewing:", KeepPreviewing
-#        wx.Yield() # allow window events to happen
-#        print "in 'insertPreviewGridHeaders' after wxYield, KeepPreviewing:", KeepPreviewing
-#        if KeepPreviewing == 0:
-#            return
         stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
             "FROM OutputColumns " \
             "WHERE WorksheetID = ?;"
