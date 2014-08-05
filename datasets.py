@@ -2076,7 +2076,8 @@ class SetupDatasetsPanel(wx.Panel):
         self.detailsPanel.Layout()
         
  #       KeepPreviewing = 1
-        thread.start_new_thread(self.showPreview, (ckPyData,))
+ #       thread.start_new_thread(self.showPreview, (ckPyData,))
+        self.preview = Preview(self, ckPyData)
 
     def showPreview(self, ckPyData):
         KeepPreviewing = 1
@@ -2486,7 +2487,7 @@ class DoPreview:
         print 'returned from Grid sections\n'
         self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
         self.mainFrame.pvwGrid.AutoSize()
-        self.previewPanel.SetupScrolling()
+        self.mainFrame.previewPanel.SetupScrolling()
         return
 
 
@@ -2548,7 +2549,7 @@ class DoPreview:
 #                    return
                 self.mainFrame.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
             self.mainFrame.Update()
-            mainFrame.pvwGrid.ForceRefresh()
+            self.mainFrame.pvwGrid.ForceRefresh()
 #            self.Refresh()
 #            print iRwCt, dataRow
         
