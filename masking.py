@@ -23,11 +23,11 @@ class maskingPanel(wx.Panel):
         hSplit = wx.SplitterWindow(self, -1)
         self.maskingSetupPanel = scrolled.ScrolledPanel(hSplit, -1)
         self.InitMaskingSetupPanel(self.maskingSetupPanel)        
-        self.maskingSetupLabel = wx.StaticText(self.maskingSetupPanel, -1, "Set up Masking here")
+#        self.maskingSetupLabel = wx.StaticText(self.maskingSetupPanel, -1, "Set up Masking here")
 
         self.maskingPreviewPanel = wx.Panel(hSplit, -1)
         self.maskingPreviewPanel.SetBackgroundColour(wx.WHITE)
-        self.maskingPreviewLabel = wx.StaticText(self.maskingPreviewPanel, -1, "Preview will be here")
+#        self.maskingPreviewLabel = wx.StaticText(self.maskingPreviewPanel, -1, "Preview will be here")
         self.InitPreviewPanel(self.maskingPreviewPanel)
 #        hSplit.SetMinimumPaneSize(20)
         hSplit.SetSashGravity(0.5)
@@ -53,23 +53,44 @@ class maskingPanel(wx.Panel):
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
-
+        
         gRow += 1
-        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
-
-        gRow += 1
-        stpSiz.Add(wx.StaticText(pnl, -1, 'Station:'),
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Narrow Logger(s) to Station:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         stSQLStations = 'SELECT ID, StationName FROM Stations;'
-        self.cbxRefStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-        scidb.fillComboboxFromSQL(self.cbxRefStationID, stSQLStations)
-        stpSiz.Add(self.cbxRefStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        self.cbxStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxStationID, stSQLStations)
+        stpSiz.Add(self.cbxStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
-        stpSiz.Add(wx.StaticText(pnl, -1, 'For the reference station:'),
-                     pos=(gRow, 1), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Narrow Channel choices to Logger:'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
+        stSQLLoggers = 'SELECT ID, LoggerSerialNumber FROM Loggers;'
+        self.cbxLoggerID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxLoggerID, stSQLLoggers)
+        stpSiz.Add(self.cbxLoggerID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+
+    
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Data Channel:'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        
+        stSQLChan = "SELECT DataChannels.ID, " \
+            "( DataChannels.Column || ',' ||  Loggers.LoggerSerialNumber || ',' ||  " \
+            "Sensors.SensorSerialNumber || ',' ||  DataTypes.TypeText || ',' ||  " \
+            "DataUnits.UnitsText || ',' ||  DataChannels.UTC_Offset) AS Unq, " \
+            "DataSeries.DataSeriesDescription, ChannelSegments.SegmentBegin " \
+            "FROM (((((DataChannels LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID) " \
+            "LEFT JOIN Sensors ON DataChannels.SensorID = Sensors.ID) " \
+            "LEFT JOIN DataTypes ON DataChannels.DataTypeID = DataTypes.ID) " \
+            "LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID) " \
+            "LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID) " \
+            "LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID;"
+        self.cbxChanID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxChanID, stSQLChan)
+        stpSiz.Add(self.cbxChanID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
         stSQLSeries = 'SELECT ID, DataSeriesDescription FROM DataSeries;'
 
         gRow += 1
