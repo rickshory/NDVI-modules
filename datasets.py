@@ -2325,6 +2325,11 @@ class Preview(threading.Thread):
             self.insertPreviewGrid(self.sheetID, curPV)
 
         print 'returned from Grid sections\n'
+        print "Latest thread ID:", latestPreviewThreadID
+        print "This thread ID:", threading.current_thread().ident
+        if threading.current_thread().ident != latestPreviewThreadID:
+            print " -> aborted previous data Preview"
+            return
         self.mainFrame.pvwGrid.AutoSize()
         self.mainFrame.previewPanel.SetupScrolling()
         return
@@ -2375,16 +2380,8 @@ class Preview(threading.Thread):
 #            self.Refresh()
 #            print iRwCt, dataRow
         
-
-
     def abort(self):
         pass
-
- # # print to the output window.
-#  def Update(self, txt):
-#    self.op.AppendText(txt)
-#    self.op.ShowPosition(self.op.GetLastPosition()) # keeps the last line visible
-
 
 class SetupDatasetsFrame(wx.Frame):
     def __init__(self, parent, id, title):
