@@ -8,6 +8,7 @@ import threading
 # This is a global flag that we will manipulate as needed
 # to allow graceful exit from previewing
 KeepPreviewing = threading.Event()
+latestPreviewThreadID = 0
 
 try:
     import win32com.client
@@ -2244,10 +2245,12 @@ class SetupDatasetsPanel(wx.Panel):
 
 class Preview(threading.Thread):
     def __init__ (self, mainFrame, ckPyData):
+        global latestPreviewThreadID
         threading.Thread.__init__(self)
         self.mainFrame   = mainFrame
         self.ckPyData = ckPyData
         KeepPreviewing.set()
+        latestPreviewThreadID = threading.current_thread().ident
 
         self.start()
 
@@ -2266,6 +2269,7 @@ class Preview(threading.Thread):
 
 class DoPreview:
     def __init__ (self, mainFrame, ckPyData):
+        global latestPreviewThreadID
         self.mainFrame = mainFrame
         self.ckPyData = ckPyData
 
@@ -2381,7 +2385,9 @@ class DoPreview:
         iRwCt = 0
         iNumRowsToPreview = 10
         for dataRow in sheetRows:
-            print "Thread ID:", threading.current_thread().ident
+            print "Latest thread ID:", latestPreviewThreadID
+            print "This thread ID:", threading.current_thread().ident
+#            if threading.current_thread().ident != latestPreviewThreadID: return
             if not KeepPreviewing.isSet(): return
             # yielded object is list with as many members as there are grid columns
             iRwCt += 1
