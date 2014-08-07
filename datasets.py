@@ -7,7 +7,6 @@ import threading
 
 # This is a global flag that we will manipulate as needed
 # to allow graceful exit from previewing
-KeepPreviewing = threading.Event()
 latestPreviewThreadID = 0
 
 try:
@@ -2036,7 +2035,6 @@ class SetupDatasetsPanel(wx.Panel):
 
     def OnSelChanged(self, event):
         print "OnSelChanged"
-        KeepPreviewing.clear()
 #        self.newGridRow()
         item = event.GetItem()
         try: # event sometimes fires twice when new records created; following prevents errors caused by dead objects
@@ -2113,7 +2111,6 @@ class SetupDatasetsPanel(wx.Panel):
 
     def MenuSelectionCb( self, event ):
         # do something
-        KeepPreviewing = 0
         opID = event.GetId()
         operation = treePopMenuItems[opID]
         print "operation:", operation
@@ -2248,7 +2245,6 @@ class Preview(threading.Thread):
         threading.Thread.__init__(self)
         self.mainFrame   = mainFrame
         self.ckPyData = ckPyData
-        KeepPreviewing.set()
 
         self.start()
 
@@ -2256,7 +2252,6 @@ class Preview(threading.Thread):
         global latestPreviewThreadID
         latestPreviewThreadID = threading.current_thread().ident
 #        self.dp = DoPreview(self.mainFrame, self.ckPyData)
-#        if not KeepPreviewing.isSet(): return
 #        wxPostEvent(self.mainFrame, PreviewWork(self.dp))
         # need a separate database connection for this thread
         curPV = scidb.getSciDataCursor()
@@ -2330,13 +2325,11 @@ class Preview(threading.Thread):
             self.insertPreviewGrid(self.sheetID, curPV)
 
         print 'returned from Grid sections\n'
-        if not KeepPreviewing.isSet(): return
         self.mainFrame.pvwGrid.AutoSize()
         self.mainFrame.previewPanel.SetupScrolling()
         return
 
     def insertPreviewGrid(self, sheetID, DBcr):
-        if not KeepPreviewing.isSet(): return
         curPV = scidb.getSciDataCursor() # threads need their own cursor
         stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
             "FROM OutputColumns " \
@@ -2350,7 +2343,6 @@ class Preview(threading.Thread):
             return
         self.mainFrame.pvwGrid.AppendRows() #1st row for headers
         self.mainFrame.pvwGrid.AppendCols(rec['MaxCol']) # make enough columns
-        if not KeepPreviewing.isSet(): return
         stSQL = """SELECT ID as ColID, ColumnHeading, ListingOrder
             FROM OutputColumns
             WHERE WorksheetID = ?
@@ -2360,9 +2352,6 @@ class Preview(threading.Thread):
         for rec in recs:
             # some headings may overwrite each other, that's what the preview is for
             self.mainFrame.pvwGrid.SetCellValue(0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
-#            wx.Yield() # allow window events to happen
-#            if KeepPreviewing == 0:
-#                return
             
         # following is still in testing
         # first test as a generator
@@ -2373,7 +2362,6 @@ class Preview(threading.Thread):
             print "Latest thread ID:", latestPreviewThreadID
             print "This thread ID:", threading.current_thread().ident
             if threading.current_thread().ident != latestPreviewThreadID: return
-            if not KeepPreviewing.isSet(): return
             # yielded object is list with as many members as there are grid columns
             iRwCt += 1
             if iRwCt > iNumRowsToPreview:
@@ -2390,148 +2378,13 @@ class Preview(threading.Thread):
 
 
     def abort(self):
-        KeepPreviewing.clear()
+        pass
 
  # # print to the output window.
 #  def Update(self, txt):
 #    self.op.AppendText(txt)
 #    self.op.ShowPosition(self.op.GetLastPosition()) # keeps the last line visible
 
-class DoPreview:
-    def __init__ (self, mainFrame, ckPyData):
-        global latestPreviewThreadID
-        self.mainFrame = mainFrame
-        self.ckPyData = ckPyData
-
-        # need a separate database connection for this thread
-        curPV = scidb.getSciDataCursor()
-
-        # set up the grid
-        # first, erase it
-        nR = self.mainFrame.pvwGrid.GetNumberRows()
-        nC = self.mainFrame.pvwGrid.GetNumberCols()
-        if nR > 0:
-            self.mainFrame.pvwGrid.DeleteRows(numRows=nR)
-        if nC > 0:
-            self.mainFrame.pvwGrid.DeleteCols(numCols=nC)
-
-        # build grid based on what is selected in the tree
-        stPvwTopMsg = 'preview unavailable'
-        if ckPyData[1] == 0: # 'DataSets' root of the tree
-            stPvwTopMsg = 'Preview will appear below when you click on a tree item above'
-            self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
-            
-        if ckPyData[0] == "OutputBooks":
-            # look for the first sheet in this book
-            stSQL = """SELECT ID as SheetID, WorksheetName, ListingOrder
-                FROM OutputSheets
-                WHERE BookID = ?
-                ORDER BY ListingOrder, ID;"""
-            curPV.execute(stSQL, (ckPyData[1],))
-            rec = curPV.fetchone()
-            if rec == None:
-                stPvwTopMsg = 'No sheets in this book yet'
-                self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
-            else:
-    #                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-                sB = 'Preview of sheet' \
-                        ' %(shNum)d, "%(shName)s".'
-                dFm = {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-    #                stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % dFm
-                stPvwTopMsg = sB % dFm
-                self.sheetID = rec['SheetID']
-                self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
-                self.insertPreviewGrid(self.sheetID, curPV)
-
-        if ckPyData[0] == "OutputSheets":
-            # get this sheet
-            self.sheetID = ckPyData[1]
-            stSQL = """SELECT ID as SheetID, WorksheetName, ListingOrder
-                FROM OutputSheets
-                WHERE ID = ?
-                ORDER BY ListingOrder, ID;"""
-            curPV.execute(stSQL, (self.sheetID,))
-            rec = curPV.fetchone()
-            stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-            self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
-            self.insertPreviewGrid(self.sheetID, curPV)
-                
-        if ckPyData[0] == "OutputColumns":
-            # get this column's sheet
-            stSQL = """SELECT OutputSheets.ID AS SheetID,
-                OutputSheets.WorksheetName,
-                OutputSheets.ListingOrder
-                FROM OutputSheets
-                WHERE (((OutputSheets.ID) In
-                (SELECT OutputColumns.WorksheetID
-                FROM OutputColumns
-                WHERE (((OutputColumns.ID)=?)))))
-                ORDER BY OutputSheets.ListingOrder, OutputSheets.ID;"""
-            curPV.execute(stSQL, (ckPyData[1],))
-            rec = curPV.fetchone()
-            stPvwTopMsg = 'Preview of sheet %(shNum)d, "%(shName)s".' % {"shNum": rec['ListingOrder'], "shName": rec['WorksheetName']}
-            self.sheetID = rec['SheetID']
-            self.mainFrame.pvwLabel.SetLabel(stPvwTopMsg)
-            self.insertPreviewGrid(self.sheetID, curPV)
-
-        print 'returned from Grid sections\n'
-        if not KeepPreviewing.isSet(): return
-        self.mainFrame.pvwGrid.AutoSize()
-        self.mainFrame.previewPanel.SetupScrolling()
-        return
-
-    def insertPreviewGrid(self, sheetID, DBcr):
-        if not KeepPreviewing.isSet(): return
-        curPV = scidb.getSciDataCursor() # threads need their own cursor
-        stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
-            "FROM OutputColumns " \
-            "WHERE WorksheetID = ?;"
-        curPV.execute(stSQL, (sheetID,))
-        rec = curPV.fetchone()
-        if rec['MaxCol'] == None:
-            self.mainFrame.pvwGrid.AppendRows() # 1 row 
-            self.mainFrame.pvwGrid.AppendCols() # 1 column
-            self.mainFrame.pvwGrid.SetCellValue( 0, 0, '(no columns yet)')
-            return
-        self.mainFrame.pvwGrid.AppendRows() #1st row for headers
-        self.mainFrame.pvwGrid.AppendCols(rec['MaxCol']) # make enough columns
-        if not KeepPreviewing.isSet(): return
-        stSQL = """SELECT ID as ColID, ColumnHeading, ListingOrder
-            FROM OutputColumns
-            WHERE WorksheetID = ?
-            ORDER BY ListingOrder, ID;"""
-        curPV.execute(stSQL, (sheetID,))
-        recs = curPV.fetchall()
-        for rec in recs:
-            # some headings may overwrite each other, that's what the preview is for
-            self.mainFrame.pvwGrid.SetCellValue(0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
-#            wx.Yield() # allow window events to happen
-#            if KeepPreviewing == 0:
-#                return
-            
-        # following is still in testing
-        # first test as a generator
-        sheetRows = scidb.generateSheetRows(self.sheetID, True, curPV)
-        iRwCt = 0
-        iNumRowsToPreview = 10
-        for dataRow in sheetRows:
-            print "Latest thread ID:", latestPreviewThreadID
-            print "This thread ID:", threading.current_thread().ident
-#            if threading.current_thread().ident != latestPreviewThreadID: return
-            if not KeepPreviewing.isSet(): return
-            # yielded object is list with as many members as there are grid columns
-            iRwCt += 1
-            if iRwCt > iNumRowsToPreview:
-                return
-            self.mainFrame.pvwGrid.AppendRows()
-            iRow = self.mainFrame.pvwGrid.GetNumberRows() - 1 # the new row to fill in is the last row
-            for iCol in range(len(dataRow)):
-                self.mainFrame.pvwGrid.SetCellValue(iRow, iCol, dataRow[iCol])
-            self.mainFrame.Update()
-            self.mainFrame.pvwGrid.ForceRefresh()
-#            self.Refresh()
-#            print iRwCt, dataRow
-        
 
 class SetupDatasetsFrame(wx.Frame):
     def __init__(self, parent, id, title):
