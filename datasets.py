@@ -2245,16 +2245,16 @@ class SetupDatasetsPanel(wx.Panel):
 
 class Preview(threading.Thread):
     def __init__ (self, mainFrame, ckPyData):
-        global latestPreviewThreadID
         threading.Thread.__init__(self)
         self.mainFrame   = mainFrame
         self.ckPyData = ckPyData
         KeepPreviewing.set()
-        latestPreviewThreadID = threading.current_thread().ident
 
         self.start()
 
     def run(self):
+        global latestPreviewThreadID
+        latestPreviewThreadID = threading.current_thread().ident
 #        self.dp = DoPreview(self.mainFrame, self.ckPyData)
 #        if not KeepPreviewing.isSet(): return
 #        wxPostEvent(self.mainFrame, PreviewWork(self.dp))
