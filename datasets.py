@@ -2372,7 +2372,7 @@ class Preview(threading.Thread):
         for dataRow in sheetRows:
             print "Latest thread ID:", latestPreviewThreadID
             print "This thread ID:", threading.current_thread().ident
-#            if threading.current_thread().ident != latestPreviewThreadID: return
+            if threading.current_thread().ident != latestPreviewThreadID: return
             if not KeepPreviewing.isSet(): return
             # yielded object is list with as many members as there are grid columns
             iRwCt += 1
