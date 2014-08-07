@@ -2265,6 +2265,9 @@ class Preview(threading.Thread):
         if nC > 0:
             self.mainFrame.pvwGrid.DeleteCols(numCols=nC)
 
+        # exit here if new tree item clicked
+        if threading.current_thread().ident != latestPreviewThreadID: return
+
         # build grid based on what is selected in the tree
         stPvwTopMsg = 'preview unavailable'
         if self.ckPyData[1] == 0: # 'DataSets' root of the tree
@@ -2325,16 +2328,19 @@ class Preview(threading.Thread):
             self.insertPreviewGrid(self.sheetID, curPV)
 
         print 'returned from Grid sections\n'
-        print "Latest thread ID:", latestPreviewThreadID
+        print "Prev thread ID:", latestPreviewThreadID
         print "This thread ID:", threading.current_thread().ident
         if threading.current_thread().ident != latestPreviewThreadID:
             print " -> aborted previous data Preview"
             return
         self.mainFrame.pvwGrid.AutoSize()
         self.mainFrame.previewPanel.SetupScrolling()
+        print " -> Data Preview completed"
         return
 
     def insertPreviewGrid(self, sheetID, DBcr):
+        # exit here if new tree item clicked
+        if threading.current_thread().ident != latestPreviewThreadID: return
         curPV = scidb.getSciDataCursor() # threads need their own cursor
         stSQL = "SELECT Max(CAST(ListingOrder AS INTEGER)) AS MaxCol " \
             "FROM OutputColumns " \
@@ -2348,6 +2354,8 @@ class Preview(threading.Thread):
             return
         self.mainFrame.pvwGrid.AppendRows() #1st row for headers
         self.mainFrame.pvwGrid.AppendCols(rec['MaxCol']) # make enough columns
+        # exit here if new tree item clicked
+        if threading.current_thread().ident != latestPreviewThreadID: return
         stSQL = """SELECT ID as ColID, ColumnHeading, ListingOrder
             FROM OutputColumns
             WHERE WorksheetID = ?
@@ -2358,13 +2366,11 @@ class Preview(threading.Thread):
             # some headings may overwrite each other, that's what the preview is for
             self.mainFrame.pvwGrid.SetCellValue(0, rec['ListingOrder'] - 1, rec['ColumnHeading'])
             
-        # following is still in testing
-        # first test as a generator
         sheetRows = scidb.generateSheetRows(self.sheetID, True, curPV)
         iRwCt = 0
         iNumRowsToPreview = 10
         for dataRow in sheetRows:
-            print "Latest thread ID:", latestPreviewThreadID
+            print "Prev thread ID:", latestPreviewThreadID
             print "This thread ID:", threading.current_thread().ident
             if threading.current_thread().ident != latestPreviewThreadID: return
             # yielded object is list with as many members as there are grid columns
