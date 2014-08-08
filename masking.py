@@ -47,6 +47,25 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         self.lc.SetStringItem(i, 1, tuple[2])
         self.lc.SetItemData(i, tuple[0])
 
+    def FillFromSQL(self, stSQL, colWidthList = []):
+        self.lc.ClearAll()
+        colNum = 0
+        # for now, fake that we got this from a database query
+        for colName in ['State', 'Capital']:
+            self.lc.InsertColumn(colNum, colName)
+            try:
+                colWidth = colWidthList[colNum]
+            except:
+                colWidth = 100 # default, may eventually get form the field data
+            self.lc.SetColumnWidth(colNum, colWidth)
+            colNum += 1
+        # fake the data too
+        self.AddItem((1, "Alabama", "Montgomery"))
+        self.AddItem((17, "New York", "Albany"))
+        self.AddItem((28, "Nebraska", "Lincoln"))
+        self.AddItem((22, "Minnesota", "Saint Paul"))
+
+    
     def OnMotion(self, evt):
         item, flags = self.lc.HitTest(evt.GetPosition())
         if item >= 0:
@@ -233,12 +252,8 @@ class maskingPanel(wx.Panel):
         # It is important to call SetPopupControl() as soon as possible
         self.cbxSelStates.SetPopupControl(self.popupCtrl)
 
-        self.popupCtrl.AddItem((1, "Alabama", "Montgomery"))
-        self.popupCtrl.AddItem((17, "New York", "Albany"))
-        self.popupCtrl.AddItem((28, "Nebraska", "Lincoln"))
-        self.popupCtrl.AddItem((22, "Minnesota", "Saint Paul"))
-
         stpSiz.Add(self.cbxSelStates, pos=(gRow, 2), span=(1, 5), flag=wx.LEFT, border=5)
+        self.popupCtrl.FillFromSQL("will be sql", [110, 120])
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
