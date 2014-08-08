@@ -1,6 +1,6 @@
 import wx, sqlite3, datetime, copy, csv
 import os, sys, re, cPickle, datetime
-import scidb
+#$#import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
@@ -33,6 +33,7 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
 
         # Also init the ComboPopup base class.
         wx.combo.ComboPopup.__init__(self)
+#        self.UseAltPopupWindow()
 #        wx.ComboPopup.__init__(self)
 #        self.lc = None
 
@@ -188,7 +189,7 @@ class maskingPanel(wx.Panel):
 
         stSQLStations = 'SELECT ID, StationName FROM Stations;'
         self.cbxStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-        scidb.fillComboboxFromSQL(self.cbxStationID, stSQLStations)
+#$#        scidb.fillComboboxFromSQL(self.cbxStationID, stSQLStations)
         stpSiz.Add(self.cbxStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
@@ -197,7 +198,7 @@ class maskingPanel(wx.Panel):
 
         stSQLLoggers = 'SELECT ID, LoggerSerialNumber FROM Loggers;'
         self.cbxLoggerID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-        scidb.fillComboboxFromSQL(self.cbxLoggerID, stSQLLoggers)
+#$#        scidb.fillComboboxFromSQL(self.cbxLoggerID, stSQLLoggers)
         stpSiz.Add(self.cbxLoggerID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
     
@@ -217,7 +218,7 @@ class maskingPanel(wx.Panel):
             "LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID) " \
             "LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID;"
         self.cbxChanID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-        scidb.fillComboboxFromSQL(self.cbxChanID, stSQLChan)
+#$#        scidb.fillComboboxFromSQL(self.cbxChanID, stSQLChan)
         stpSiz.Add(self.cbxChanID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
         stSQLSeries = 'SELECT ID, DataSeriesDescription FROM DataSeries;'
 
@@ -302,7 +303,7 @@ class maskingPanel(wx.Panel):
     def refresh_cbxPanelsChoices(self, event):
         self.cbxGetPanel.Clear()
         stSQLPanels = 'SELECT ID, CalcName FROM maskingcalc;'
-        scidb.fillComboboxFromSQL(self.cbxGetPanel, stSQLPanels)
+#$#        scidb.fillComboboxFromSQL(self.cbxGetPanel, stSQLPanels)
 
     def onCbxTasks(self, event):
         print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
