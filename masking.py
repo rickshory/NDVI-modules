@@ -36,7 +36,12 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         self.lc = None
 
     def AddItem(self, tuple):
-#        self.lc.InsertItem(self.lc.GetItemCount(), txt)
+        if self.lc.GetColumnCount() == 0:
+            self.lc.InsertColumn(0, 'State')
+            self.lc.InsertColumn(1, 'Capital')
+            self.lc.SetColumnWidth(0, 140)
+            self.lc.SetColumnWidth(1, 153)
+            
         i = self.lc.GetItemCount()
         self.lc.InsertStringItem(i, tuple[1])
         self.lc.SetStringItem(i, 1, tuple[2])
@@ -66,20 +71,7 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
     # Create the popup child control.  Return true for success.
     def Create(self, parent):
         self.lc = wx.ListCtrl(parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.SIMPLE_BORDER)
-
-        self.lc.InsertColumn(0, 'State')
-        self.lc.InsertColumn(1, 'Capital')
-        self.lc.SetColumnWidth(0, 140)
-        self.lc.SetColumnWidth(1, 153)
-
-        num_items = self.lc.GetItemCount()
-        self.lc.InsertStringItem(num_items, 'Alabama')
-        self.lc.SetStringItem(num_items, 1, 'Montgomery')
-        self.lc.InsertStringItem(num_items, 'New York')
-        self.lc.SetStringItem(num_items, 1, 'Albany')
-        self.lc.InsertStringItem(num_items, 'Nebraska')
-        self.lc.SetStringItem(num_items, 1, 'Lincoln')
-
+        # list will be filled by other functions
         self.lc.Bind(wx.EVT_MOTION, self.OnMotion)
         self.lc.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
         return True
@@ -107,8 +99,11 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
 
     # Called when popup is dismissed
     def OnDismiss(self):
-        keyItem = self.lc.GetItemData(self.curitem)
-        print "In 'OnDismiss', GetItemData", keyItem
+        if self.curitem == -1:
+            print "In 'OnDismiss', no current item",
+        else:
+            keyItem = self.lc.GetItemData(self.curitem)
+            print "In 'OnDismiss', GetItemData", keyItem
         wx.combo.ComboPopup.OnDismiss(self)
 
     # This is called to custom paint in the combo control itself
@@ -237,8 +232,11 @@ class maskingPanel(wx.Panel):
 
         # It is important to call SetPopupControl() as soon as possible
         self.cbxSelStates.SetPopupControl(self.popupCtrl)
-        self.popupCtrl.AddItem((22, "Minnesota", "St. Paul"))
 
+        self.popupCtrl.AddItem((1, "Alabama", "Montgomery"))
+        self.popupCtrl.AddItem((17, "New York", "Albany"))
+        self.popupCtrl.AddItem((28, "Nebraska", "Lincoln"))
+        self.popupCtrl.AddItem((22, "Minnesota", "Saint Paul"))
 
         stpSiz.Add(self.cbxSelStates, pos=(gRow, 2), span=(1, 5), flag=wx.LEFT, border=5)
 
