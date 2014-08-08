@@ -221,39 +221,33 @@ class maskingPanel(wx.Panel):
 
     
         gRow += 1
+        
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
+        gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'Data Channel:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
-        
+
+        self.cbxChanID = wx.combo.ComboCtrl(pnl, wx.ID_ANY, "")
+        self.chanPopup = ListCtrlComboPopup()
+        # It is important to call SetPopupControl() as soon as possible
+        self.cbxChanID.SetPopupControl(self.chanPopup)
+
+        stpSiz.Add(self.cbxChanID, pos=(gRow, 2), span=(1, 5), flag=wx.LEFT, border=5)
         stSQLChan = "SELECT DataChannels.ID, " \
             "( DataChannels.Column || ',' ||  Loggers.LoggerSerialNumber || ',' ||  " \
             "Sensors.SensorSerialNumber || ',' ||  DataTypes.TypeText || ',' ||  " \
-            "DataUnits.UnitsText || ',' ||  DataChannels.UTC_Offset) AS Unq, " \
-            "DataSeries.DataSeriesDescription, ChannelSegments.SegmentBegin " \
+            "DataUnits.UnitsText || ',' ||  DataChannels.UTC_Offset) AS Channel, " \
+            "DataSeries.DataSeriesDescription AS Series, ChannelSegments.SegmentBegin AS Begin " \
             "FROM (((((DataChannels LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID) " \
             "LEFT JOIN Sensors ON DataChannels.SensorID = Sensors.ID) " \
             "LEFT JOIN DataTypes ON DataChannels.DataTypeID = DataTypes.ID) " \
             "LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID) " \
             "LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID) " \
             "LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID;"
-        self.cbxChanID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-#$#        scidb.fillComboboxFromSQL(self.cbxChanID, stSQLChan)
-        stpSiz.Add(self.cbxChanID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
-        stSQLSeries = 'SELECT ID, DataSeriesDescription FROM DataSeries;'
-
-        gRow += 1
-        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
-
-        gRow += 1
-        # test creating a cbxSelStates
-        self.cbxSelStates = wx.combo.ComboCtrl(pnl, wx.ID_ANY, "")
-#        self.popupCtrl = wx.combo.ListViewComboPopup()
-        self.popupCtrl = ListCtrlComboPopup()
-
-        # It is important to call SetPopupControl() as soon as possible
-        self.cbxSelStates.SetPopupControl(self.popupCtrl)
-
-        stpSiz.Add(self.cbxSelStates, pos=(gRow, 2), span=(1, 5), flag=wx.LEFT, border=5)
-        self.popupCtrl.FillFromSQL("will be sql", [110, 120])
+        self.chanPopup.FillFromSQL("will be sql", [110, 120])
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
