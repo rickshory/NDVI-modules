@@ -13,9 +13,7 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
-"""
-A simple test case for wx.ComboCtrl using a wx.ListCtrl for the popup
-"""
+
 
 #----------------------------------------------------------------------
 # This class is used to provide an interface between a ComboCtrl and the
@@ -35,7 +33,7 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         wx.combo.ComboPopup.__init__(self)
 #        self.UseAltPopupWindow()
 #        wx.ComboPopup.__init__(self)
-#        self.lc = None
+        self.lc = None
 
     def AddItem(self, txt):
         self.lc.InsertItem(self.lc.GetItemCount(), txt)
@@ -63,7 +61,7 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
 
     # Create the popup child control.  Return true for success.
     def Create(self, parent):
-        self.lc = wx.ListCtrl(parent, -1, style=wx.LC_LIST | wx.LC_SINGLE_SEL | wx.SIMPLE_BORDER)
+        self.lc = wx.ListCtrl(parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.SIMPLE_BORDER)
 
         self.lc.InsertColumn(0, 'State')
         self.lc.InsertColumn(1, 'Capital')
@@ -226,13 +224,13 @@ class maskingPanel(wx.Panel):
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
         gRow += 1
-        # test creating a comboCtrl
-        self.comboCtrl = wx.combo.ComboCtrl(pnl, wx.ID_ANY, "")
+        # test creating a cbxSelStates
+        self.cbxSelStates = wx.combo.ComboCtrl(pnl, wx.ID_ANY, "")
 #        self.popupCtrl = wx.combo.ListViewComboPopup()
         self.popupCtrl = ListCtrlComboPopup()
 
         # It is important to call SetPopupControl() as soon as possible
-        self.comboCtrl.SetPopupControl(self.popupCtrl)
+        self.cbxSelStates.SetPopupControl(self.popupCtrl)
 
         # Populate using wx.ListView methods
 #        i=self.popupCtrl.GetItemCount() # dummy variable, will change with each InsertStringItem
@@ -241,7 +239,7 @@ class maskingPanel(wx.Panel):
 #        self.popupCtrl.InsertItem(self.popupCtrl.GetItemCount(), "Second Item")
 #        self.popupCtrl.InsertItem(self.popupCtrl.GetItemCount(), "Third Item")
 
-        stpSiz.Add(self.comboCtrl, pos=(gRow, 2), span=(1, 5), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxSelStates, pos=(gRow, 2), span=(1, 5), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
