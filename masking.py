@@ -128,6 +128,8 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
     # maxHeight = max height for window, as limited by screen size
     #   and should only be rounded down, if necessary.
     def GetAdjustedSize(self, minWidth, prefHeight, maxHeight):
+        minWidth = self.lc.GetColumnWidth(0) + self.lc.GetColumnWidth(1)
+        print "minWidth", minWidth
         return wx.combo.ComboPopup.GetAdjustedSize(self, minWidth, prefHeight, maxHeight)
 
     # Return true if you want delay the call to Create until the popup
@@ -237,7 +239,8 @@ class maskingPanel(wx.Panel):
 #        self.popupCtrl.InsertItem(self.popupCtrl.GetItemCount(), "First Item")
 #        self.popupCtrl.InsertItem(self.popupCtrl.GetItemCount(), "Second Item")
 #        self.popupCtrl.InsertItem(self.popupCtrl.GetItemCount(), "Third Item")
-        stpSiz.Add(self.comboCtrl, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+
+        stpSiz.Add(self.comboCtrl, pos=(gRow, 2), span=(1, 5), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
