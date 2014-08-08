@@ -5,12 +5,138 @@ import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 from wx.lib.wordwrap import wordwrap
+import wx.combo
 
 try:
     from floatcanvas import NavCanvas, FloatCanvas, Resources
 except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
+
+"""
+A simple test case for wx.ComboCtrl using a wx.ListCtrl for the popup
+"""
+
+#----------------------------------------------------------------------
+# This class is used to provide an interface between a ComboCtrl and the
+# ListCtrl that is used as the popoup for the combo widget.
+
+class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
+
+    def __init__(self):
+        
+        # Since we are using multiple inheritance, and don't know yet
+        # which window is to be the parent, we'll do 2-phase create of
+        # the ListCtrl instead, and call its Create method later in
+        # our Create method.  (See Create below.)
+        self.PostCreate(wx.PreListCtrl())
+
+        # Also init the ComboPopup base class.
+        wx.combo.ComboPopup.__init__(self)
+#        wx.ComboPopup.__init__(self)
+#        self.lc = None
+
+    def AddItem(self, txt):
+        self.lc.InsertItem(self.lc.GetItemCount(), txt)
+
+    def OnMotion(self, evt):
+        item, flags = self.lc.HitTest(evt.GetPosition())
+        if item >= 0:
+            self.lc.Select(item)
+            self.curitem = item
+
+    def OnLeftDown(self, evt):
+        self.value = self.curitem
+        self.Dismiss()
+
+
+    # The following methods are those that are overridable from the
+    # ComboPopup base class.  Most of them are not required, but all
+    # are shown here for demonstration purposes.
+
+    # This is called immediately after construction finishes.  You can
+    # use self.GetCombo if needed to get to the ComboCtrl instance.
+    def Init(self):
+        self.value = -1
+        self.curitem = -1
+
+    # Create the popup child control.  Return true for success.
+    def Create(self, parent):
+        self.lc = wx.ListCtrl(parent, -1, style=wx.LC_LIST | wx.LC_SINGLE_SEL | wx.SIMPLE_BORDER)
+
+        self.lc.InsertColumn(0, 'State')
+        self.lc.InsertColumn(1, 'Capital')
+        self.lc.SetColumnWidth(0, 140)
+        self.lc.SetColumnWidth(1, 153)
+
+        num_items = self.lc.GetItemCount()
+        self.lc.InsertStringItem(num_items, 'Alabama')
+        self.lc.SetStringItem(num_items, 1, 'Montgomery')
+        self.lc.InsertStringItem(num_items, 'New York')
+        self.lc.SetStringItem(num_items, 1, 'Albany')
+        self.lc.InsertStringItem(num_items, 'Nebraska')
+        self.lc.SetStringItem(num_items, 1, 'Lincoln')
+
+        self.lc.Bind(wx.EVT_MOTION, self.OnMotion)
+        self.lc.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
+        return True
+
+    # Return the widget that is to be used for the popup
+    def GetControl(self):
+        return self.lc
+
+    # Called just prior to displaying the popup, you can use it to
+    # 'select' the current item.
+    def SetStringValue(self, val):
+        idx = self.lc.FindItem(-1, val)
+        if idx != wx.NOT_FOUND:
+            self.lc.Select(idx)
+
+    # Return a string representation of the current item.
+    def GetStringValue(self):
+        if self.value >= 0:
+            return self.lc.GetItemText(self.value)
+        return ""
+
+    # Called immediately after the popup is shown
+    def OnPopup(self):
+        wx.combo.ComboPopup.OnPopup(self)
+
+    # Called when popup is dismissed
+    def OnDismiss(self):
+        wx.combo.ComboPopup.OnDismiss(self)
+
+    # This is called to custom paint in the combo control itself
+    # (ie. not the popup).  Default implementation draws value as
+    # string.
+    def PaintComboControl(self, dc, rect):
+        wx.combo.ComboPopup.PaintComboControl(self, dc, rect)
+
+    # Receives key events from the parent ComboCtrl.  Events not
+    # handled should be skipped, as usual.
+    def OnComboKeyEvent(self, event):
+        wx.combo.ComboPopup.OnComboKeyEvent(self, event)
+
+    # Implement if you need to support special action when user
+    # double-clicks on the parent wxComboCtrl.
+    def OnComboDoubleClick(self):
+        wx.combo.ComboPopup.OnComboDoubleClick(self)
+
+    # Return final size of popup. Called on every popup, just prior to OnPopup.
+    # minWidth = preferred minimum width for window
+    # prefHeight = preferred height. Only applies if > 0,
+    # maxHeight = max height for window, as limited by screen size
+    #   and should only be rounded down, if necessary.
+    def GetAdjustedSize(self, minWidth, prefHeight, maxHeight):
+        return wx.combo.ComboPopup.GetAdjustedSize(self, minWidth, prefHeight, maxHeight)
+
+    # Return true if you want delay the call to Create until the popup
+    # is shown for the first time. It is more efficient, but note that
+    # it is often more convenient to have the control created
+    # immediately.
+    # Default returns false.
+    def LazyCreate(self):
+        return wx.combo.ComboPopup.LazyCreate(self)
 
 class maskingPanel(wx.Panel):
     def __init__(self, parent, id):
@@ -96,6 +222,22 @@ class maskingPanel(wx.Panel):
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
+        gRow += 1
+        # test creating a comboCtrl
+        self.comboCtrl = wx.combo.ComboCtrl(pnl, wx.ID_ANY, "")
+#        self.popupCtrl = wx.combo.ListViewComboPopup()
+        self.popupCtrl = ListCtrlComboPopup()
+
+        # It is important to call SetPopupControl() as soon as possible
+        self.comboCtrl.SetPopupControl(self.popupCtrl)
+
+        # Populate using wx.ListView methods
+#        i=self.popupCtrl.GetItemCount() # dummy variable, will change with each InsertStringItem
+#        self.popupCtrl.InsertStringItem(i, "First Item")
+#        self.popupCtrl.InsertItem(self.popupCtrl.GetItemCount(), "First Item")
+#        self.popupCtrl.InsertItem(self.popupCtrl.GetItemCount(), "Second Item")
+#        self.popupCtrl.InsertItem(self.popupCtrl.GetItemCount(), "Third Item")
+        stpSiz.Add(self.comboCtrl, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
