@@ -147,7 +147,9 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
     # maxHeight = max height for window, as limited by screen size
     #   and should only be rounded down, if necessary.
     def GetAdjustedSize(self, minWidth, prefHeight, maxHeight):
-        minWidth = self.lc.GetColumnWidth(0) + self.lc.GetColumnWidth(1)
+        minWidth = 0
+        for n in range(self.lc.GetColumnCount()):
+            minWidth += self.lc.GetColumnWidth(n)
         print "minWidth", minWidth
         return wx.combo.ComboPopup.GetAdjustedSize(self, minWidth, prefHeight, maxHeight)
 
@@ -247,7 +249,7 @@ class maskingPanel(wx.Panel):
             "LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID) " \
             "LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID) " \
             "LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID;"
-        self.chanPopup.FillFromSQL("will be sql", [110, 120])
+        self.chanPopup.FillFromSQL(stSQLChan, [300, 200, 200])
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)

@@ -853,6 +853,32 @@ def fillListctrlFromSQL(objListctrl, stSQL, keyCol=0, visibleCol=1):
         objListctrl.InsertStringItem(i, rec[visibleCol])
         objListctrl.SetItemData(i, rec[keyCol])
 
+def fillComboCtrlPopupFromSQL(popupCtrl, stSQL, colWidths = []):
+    """
+    For multi-column combo boxes:
+    Given a ComboControl Popup which has a ListCtrl as its Control,
+    empties the ListCtrl and re-fills it from the data returned by
+    the passed SQL statement. Also takes an optional list of column
+    widths. The query fields become column names, except the first
+    field should be a numerical ID that will become ItemData.
+    These ItemData keys can be retrieved using a format like the following,
+    where LC is the list control, e.g. in the pop-up's OnDismiss function:
+        if self.curitem == -1:
+            print "In 'OnDismiss', no current item",
+        else:
+            keyItem = self.LC.GetItemData(self.curitem)
+            print "In 'OnDismiss', GetItemData", keyItem
+ 
+    """
+    objListctrl = popupCtrl.GetControl()
+    objListctrl.ClearAll()
+    recs = curD.execute(stSQL).fetchall()
+    
+    i=0 # dummy variable, will change with each InsertStringItem
+    for rec in recs:
+        objListctrl.InsertStringItem(i, rec[visibleCol])
+        objListctrl.SetItemData(i, rec[keyCol])
+        
 def ckDupOutputColumnsNotAggregate():
     curD.execute('SELECT * FROM DupOutputColumnsNotAggregate;')
     # fields: BookName, WorksheetName, ListingOrder
