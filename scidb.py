@@ -853,7 +853,7 @@ def fillListctrlFromSQL(objListctrl, stSQL, keyCol=0, visibleCol=1):
         objListctrl.InsertStringItem(i, rec[visibleCol])
         objListctrl.SetItemData(i, rec[keyCol])
 
-def fillComboCtrlPopupFromSQL(popupCtrl, stSQL, colWidths = []):
+def fillComboCtrlPopupFromSQL(popupCtrl, stSQL, colWidthList = []):
     """
     For multi-column combo boxes:
     Given a ComboControl Popup which has a ListCtrl as its Control,
@@ -862,7 +862,7 @@ def fillComboCtrlPopupFromSQL(popupCtrl, stSQL, colWidths = []):
     widths. The query fields become column names, except the first
     field should be a numerical ID that will become ItemData.
     These ItemData keys can be retrieved using a format like the following,
-    where LC is the list control, e.g. in the pop-up's OnDismiss function:
+    where self.LC is the list control, e.g. in the pop-up's OnDismiss function:
         if self.curitem == -1:
             print "In 'OnDismiss', no current item",
         else:
@@ -872,12 +872,35 @@ def fillComboCtrlPopupFromSQL(popupCtrl, stSQL, colWidths = []):
     """
     objListctrl = popupCtrl.GetControl()
     objListctrl.ClearAll()
+    row = curD.execute(stSQL).fetchone()
+    colNum = -1 # skip the key field, must increment 1 before inserting 1st name
+    for fldName in row.keys():
+        if colNum >= 0: # skip the key field
+            objListctrl.InsertColumn(colNum, fldName)
+            try:
+                colWidth = colWidthList[colNum]
+            except:
+                colWidth = 100 # default, may eventually get form the field data
+            objListctrl.SetColumnWidth(colNum, colWidth)
+        print "Added column", colNum, fldName
+        colNum += 1
+    # columns set up, now insert rows
     recs = curD.execute(stSQL).fetchall()
-    
     i=0 # dummy variable, will change with each InsertStringItem
+    # based on this:
+#        lc.InsertStringItem(i, rec[1]) # 1st column
+#        lc.SetStringItem(i, 1, rec[2]) #2nd, and further, columns
+#        lc.SetStringItem(i, 2, rec[3]) ...
+#        lc.SetItemData(i, rec[0])
     for rec in recs:
-        objListctrl.InsertStringItem(i, rec[visibleCol])
-        objListctrl.SetItemData(i, rec[keyCol])
+        print " - > Adding record", i
+        objListctrl.InsertStringItem(i, str(rec[1] or ''))
+        print "Added first named field", str(rec[1] or '(empty field)')
+        for n in range(2, colNum):
+            objListctrl.SetStringItem(i, n-1, str(rec[n] or ''))
+            print "Added named field", n, str(rec[n] or '(empty field)')
+        objListctrl.SetItemData(i, rec[0])
+        print "Added key ", rec[0]
         
 def ckDupOutputColumnsNotAggregate():
     curD.execute('SELECT * FROM DupOutputColumnsNotAggregate;')
