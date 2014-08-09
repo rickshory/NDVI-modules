@@ -36,34 +36,48 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         self.lc = None
 
     def AddItem(self, tuple):
-        if self.lc.GetColumnCount() == 0:
-            self.lc.InsertColumn(0, 'State')
-            self.lc.InsertColumn(1, 'Capital')
-            self.lc.SetColumnWidth(0, 140)
-            self.lc.SetColumnWidth(1, 153)
+        # do some reasonable thing
+# generalized from this:
+#       if self.lc.GetColumnCount() == 0:           
+#            self.lc.InsertColumn(0, 'State')
+#            self.lc.InsertColumn(1, 'Capital')
+#            self.lc.SetColumnWidth(0, 140)
+#            self.lc.SetColumnWidth(1, 153)
             
-        i = self.lc.GetItemCount()
-        self.lc.InsertStringItem(i, tuple[1])
-        self.lc.SetStringItem(i, 1, tuple[2])
-        self.lc.SetItemData(i, tuple[0])
+#        i = self.lc.GetItemCount()
+#        self.lc.InsertStringItem(i, tuple[1])
+#        self.lc.SetStringItem(i, 1, tuple[2])
+#        self.lc.SetItemData(i, tuple[0])
 
-    def FillFromSQL(self, stSQL, colWidthList = []):
-        self.lc.ClearAll()
-        colNum = 0
-        # for now, fake that we got this from a database query
-        for colName in ['State', 'Capital']:
-            self.lc.InsertColumn(colNum, colName)
-            try:
-                colWidth = colWidthList[colNum]
-            except:
-                colWidth = 100 # default, may eventually get form the field data
-            self.lc.SetColumnWidth(colNum, colWidth)
-            colNum += 1
-        # fake the data too
-        self.AddItem((1, "Alabama", "Montgomery"))
-        self.AddItem((17, "New York", "Albany"))
-        self.AddItem((28, "Nebraska", "Lincoln"))
-        self.AddItem((22, "Minnesota", "Saint Paul"))
+        # expects 1st item of tuple to be a numeric key
+        if self.lc.GetColumnCount() == 0: # add columns
+            for n in range(len(tuple)):
+                if n == 0:
+                    pass
+                else:
+                    self.lc.InsertColumn(n-1, 'Col'+str(n))
+                    self.lc.SetColumnWidth(n-1, 100) # reasonable default width of 100
+        i = self.lc.GetItemCount() # so new item will add at end
+        for n in range(len(tuple)):
+            if n == 0:
+                key = tuple[n] # store for later
+            else:
+                try:
+                    if n == 1: #1st visible column
+                        self.lc.InsertStringItem(i, str(tuple[n] or ''))
+                    else: # any additional visible columns
+                        self.lc.SetStringItem(i, n-1, str(tuple[n] or ''))
+                except:
+                    pass # most likely, have run out of columns
+        # attach the key
+        try:
+            k = int(key)
+        except:
+            k = 0 # may be meaningless, but valid
+        try:
+            self.lc.SetItemData(i, k)
+        except:
+            return # one tuple of only 1 item may land here
 
     
     def OnMotion(self, evt):
@@ -249,8 +263,8 @@ class maskingPanel(wx.Panel):
             "LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID) " \
             "LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID) " \
             "LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID;"
-#        self.chanPopup.FillFromSQL(stSQLChan, [300, 200, 200])
         scidb.fillComboCtrlPopupFromSQL(self.chanPopup, stSQLChan, [300, 200, 200])
+#        self.chanPopup.AddItem(("a",None,3,4,5,6,7)) # test AddItem w /every imaginable error
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)

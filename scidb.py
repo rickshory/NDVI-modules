@@ -874,29 +874,32 @@ def fillComboCtrlPopupFromSQL(popupCtrl, stSQL, colWidthList = []):
     objListctrl.ClearAll()
     row = curD.execute(stSQL).fetchone()
     colNum = -1 # skip the key field, must increment 1 before inserting 1st name
-    for fldName in row.keys():
-        if colNum >= 0: # skip the key field
-            objListctrl.InsertColumn(colNum, fldName)
-            try:
-                colWidth = colWidthList[colNum]
-            except:
-                colWidth = 100 # default, may eventually get form the field data
-            objListctrl.SetColumnWidth(colNum, colWidth)
-        print "Added column", colNum, fldName
-        colNum += 1
+    try:
+        for fldName in row.keys():
+            if colNum >= 0: # skip the key field
+                objListctrl.InsertColumn(colNum, fldName)
+                try:
+                    colWidth = colWidthList[colNum]
+                except:
+                    colWidth = 100 # default, may eventually get form the field data
+                objListctrl.SetColumnWidth(colNum, colWidth)
+            print "Added column", colNum, fldName
+            colNum += 1
+    except:
+        return # no data, leave table empty
     # columns set up, now insert rows
     recs = curD.execute(stSQL).fetchall()
-    i=0 # dummy variable, will change with each InsertStringItem
     # based on this:
 #        lc.InsertStringItem(i, rec[1]) # 1st column
 #        lc.SetStringItem(i, 1, rec[2]) #2nd, and further, columns
 #        lc.SetStringItem(i, 2, rec[3]) ...
 #        lc.SetItemData(i, rec[0])
     for rec in recs:
+        i = objListctrl.GetItemCount() # assure inserting at end
         print " - > Adding record", i
         objListctrl.InsertStringItem(i, str(rec[1] or ''))
         print "Added first named field", str(rec[1] or '(empty field)')
-        for n in range(2, colNum):
+        for n in range(2, colNum+1):
             objListctrl.SetStringItem(i, n-1, str(rec[n] or ''))
             print "Added named field", n, str(rec[n] or '(empty field)')
         objListctrl.SetItemData(i, rec[0])
