@@ -164,6 +164,8 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         minWidth = 0
         for n in range(self.lc.GetColumnCount()):
             minWidth += self.lc.GetColumnWidth(n)
+        # add a little space for vert scrollbar or horiz scrollbar will appear
+        minWidth += 20
         print "minWidth", minWidth
         return wx.combo.ComboPopup.GetAdjustedSize(self, minWidth, prefHeight, maxHeight)
 
@@ -251,7 +253,7 @@ class maskingPanel(wx.Panel):
         # It is important to call SetPopupControl() as soon as possible
         self.cbxChanID.SetPopupControl(self.chanPopup)
 
-        stpSiz.Add(self.cbxChanID, pos=(gRow, 2), span=(1, 5), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxChanID, pos=(gRow, 2), span=(1, 7), flag=wx.LEFT, border=5)
         stSQLChan = "SELECT DataChannels.ID, " \
             "( DataChannels.Column || ',' ||  Loggers.LoggerSerialNumber || ',' ||  " \
             "Sensors.SensorSerialNumber || ',' ||  DataTypes.TypeText || ',' ||  " \
@@ -263,7 +265,7 @@ class maskingPanel(wx.Panel):
             "LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID) " \
             "LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID) " \
             "LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID;"
-        scidb.fillComboCtrlPopupFromSQL(self.chanPopup, stSQLChan, [300, 200, 200])
+        scidb.fillComboCtrlPopupFromSQL(self.chanPopup, stSQLChan, [300, 180, 140])
 #        self.chanPopup.AddItem(("a",None,3,4,5,6,7)) # test AddItem w /every imaginable error
 
         gRow += 1
