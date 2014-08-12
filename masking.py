@@ -1,11 +1,11 @@
 import wx, sqlite3, datetime, copy, csv
-import os, sys, re, cPickle, datetime
+import os, sys, re, cPickle
 import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 from wx.lib.wordwrap import wordwrap
-import wx.combo
+import wx.combo, wx.calendar
 
 try:
     from floatcanvas import NavCanvas, FloatCanvas, Resources
@@ -237,10 +237,6 @@ class maskingPanel(wx.Panel):
         scidb.fillComboboxFromSQL(self.cbxLoggerID, stSQLLoggers)
         stpSiz.Add(self.cbxLoggerID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
-    
-        gRow += 1
-        
-
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
@@ -272,19 +268,50 @@ class maskingPanel(wx.Panel):
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
         gRow += 1
-        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Start'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
-        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+#        TC_DT_START_ID = wxID_ANY
+#        self.tcDTStart = wx.TextCtrl(pnl, TC_DT_START_ID, style=wxTE_PROCESS_ENTER)
+        self.tcDTStart = wx.TextCtrl(pnl)
+#        EVT_TEXT_ENTER(self, TC_DT_START_ID, self.OnTcDTStart) 
+        stpSiz.Add(self.tcDTStart, pos=(gRow, 0), span=(1, 3), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        # for testing
+        self.tcDTStart.SetValue('2010-06-13 5am')
 
-        gRow += 1
-        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+        self.ckButton = wx.Button(pnl, -1, 'Test')
+        self.Bind(wx.EVT_BUTTON,  self.OnTest, id=self.ckButton.GetId())
+        stpSiz.Add(self.ckButton, pos=(gRow, 4), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
         pnl.SetupScrolling()
 
-
+    def OnTest(self, event):
+        print 'event reached button class of OnText button'
+        print self.tcDTStart.GetLineText(0)
+        stTryDtStart = self.tcDTStart.GetLineText(0)
+        self.dtStart = wx.DateTime() # Uninitialized datetime
+        dtStartOK = self.dtStart.ParseDateTime(stTryDtStart)
+        print "Start time is OK:", dtStartOK
+        print "dtStart", self.dtStart
+        sFmt = '%Y-%m-%d %H:%M:%S'
+#datetime.datetime.fromtimestamp(wx.DateTime.Now().GetTicks()) 
+#wx.DateTimeFromTimeT(time.mktime(datetime.datetime.now().timetuple()))
+        
+        print "self.dtStart.GetTicks()", self.dtStart.GetTicks()
+        dtStartPy = datetime.datetime.fromtimestamp(self.dtStart.GetTicks()) 
+#        stStandardizedDateTime = self.dtStart.FormatISOCombined()
+#        stStandardizedDateTime = datetime.datetime.strptime(self.dtStart, sFmt)
+        print "dtStartPy", dtStartPy
+        stStandardizedDateTime = dtStartPy.isoformat(' ')
+        print "Standardized DateTime", stStandardizedDateTime
+        self.tcDTStart.SetValue(stStandardizedDateTime)
+        event.Skip()
+        
 
     def ScalePreviewCanvas(self, center):
         """

@@ -1,5 +1,5 @@
 import wx, sqlite3, datetime, copy, csv
-import os, sys, re, cPickle, datetime
+import os, sys, re, cPickle
 import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
