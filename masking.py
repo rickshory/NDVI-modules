@@ -13,6 +13,8 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
+ID_MASKING_SETUP_PANEL = wx.NewId()
+ID_MASKING_PREVIEW_PANEL = wx.NewId()
 ID_CHAN_TEXT = wx.NewId()
 ID_CHAN_LIST = wx.NewId()
 ID_START_TIME = wx.NewId()
@@ -27,12 +29,36 @@ class MyApp(wx.App):
         self.dsFrame.Show()
         self.Bind(wx.EVT_TEXT, self.OnTextChangeApp)
         return True
+
     def OnTextChangeApp(self, event):
         event_id = event.GetId()
+        if event_id == ID_CHAN_LIST: # does not hit here
+            print "ID_CHAN_LIST Event reached the App Object"
         if event_id == ID_CHAN_TEXT:
             print "ID_CHAN_TEXT Event reached the App Object"
-        if event_id == ID_CHAN_LIST:
-            print "ID_CHAN_LIST Event reached the App Object"
+
+            tpFrame = self.GetTopWindow()
+            txChanText = tpFrame.FindWindowById(ID_CHAN_TEXT)
+#            print "txChanText", txChanText.GetValue()
+            msPnl = tpFrame.FindWindowById(ID_MASKING_SETUP_PANEL)
+#            msPnl = txChanText.GetParent() # or this, text and popup are attributes of the same panel
+
+#            pUp = tpFrame.FindWindowById(ID_POPUP_LIST) # this is wrong, gets the list instead of the popup object
+            pUp = msPnl.chanPopup # popup is an attibute of the panel, though the panel is not its parent
+            ls = pUp.GetControl() # direct handle to the popup's control, which is the list
+#            ls = tpFrame.FindWindowById(ID_POPUP_LIST) # or this
+            print "Popup list has %i columns" % ls.GetColumnCount()
+            # to retrieve the hidden key number stored in the popup list row (e.g. a DB record ID):
+            curItem = pUp.curitem
+            if curItem == -1:
+                keyVal = 0 # something to flag invalid
+            else:
+                keyVal = ls.GetItemData(curItem)
+            print "keyVal", keyVal
+# following does not work, selected item in list no longer has focus
+#            keyItem = ls.GetItemData(ls.GetFocusedItem())
+#            print "keyItem", keyItem
+
         if event_id == ID_START_TIME:
             print "ID_START_TIME Event reached the App Object"
 
@@ -124,7 +150,7 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
 
     # Create the popup child control.  Return true for success.
     def Create(self, parent):
-        self.lc = wx.ListCtrl(parent, -1, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.SIMPLE_BORDER)
+        self.lc = wx.ListCtrl(parent, ID_CHAN_LIST, style=wx.LC_REPORT | wx.LC_SINGLE_SEL | wx.SIMPLE_BORDER)
         # list will be filled by other functions
         self.lc.Bind(wx.EVT_MOTION, self.OnMotion)
         self.lc.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
@@ -158,36 +184,16 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
 
     # Called when popup is dismissed
     def OnDismiss(self):
-#        if self.curitem == -1:
-#            print "In 'OnDismiss', no current item",
-#        else:
-#            keyItem = self.lc.GetItemData(self.curitem)
-#            print "In 'OnDismiss', GetItemData", keyItem
-#        print "about to call TryThisPreview function"
-#        wx.CallAfter(TryThisPreview)
-        # this convoluted process of reaching all the way up to the
-        # App in order to post the EVT_TEXT event is necessary because
-        # the popup does not have a parent so events will not propagate up from it.
+        # Reach up to the App in order to post the
+        # EVT_TEXT event because the popup (self) does not have a
+        # parent so events will not propagate up from it.
         app = wx.GetApp()
-        print "%s" % repr(app)
-        print "\nGet the Frame from the App:"
         topFrame = app.GetTopWindow()
-        print "%s" % repr(topFrame)
-#        print "\nFrame GetChildren:"
-#        for child in frame.GetChildren():
-#            print "\t%s" % repr(child)
-#            for grchild in child.GetChildren():
-#                print "\t\t%s" % repr(grchild)
-        txbStartTime = topFrame.FindWindowById(ID_START_TIME)
-        print "txbStartTime", txbStartTime.GetValue()
         txbChanText = topFrame.FindWindowById(ID_CHAN_TEXT)
-        print "txbChanText", txbChanText.GetValue()
-#        evt = wx.PyCommandEvent(wx.EVT_TEXT.typeId, self.GetId()) 
-#        evt.SetEventObject(self) 
-#        wx.PostEvent(self,evt) 
+#        print "txbChanText", txbChanText.GetValue()
         evt = wx.PyCommandEvent(wx.EVT_TEXT.typeId, ID_CHAN_TEXT) 
-        evt.SetEventObject(topFrame) 
-        wx.PostEvent(topFrame, evt) 
+        evt.SetEventObject(txbChanText)
+        wx.PostEvent(txbChanText, evt)
         wx.combo.ComboPopup.OnDismiss(self)
 
     # This is called to custom paint in the combo control itself
@@ -237,11 +243,11 @@ class maskingPanel(wx.Panel):
         #horizontal split means the split goes across
         #vertical split means the split goes up and down
         hSplit = wx.SplitterWindow(self, -1)
-        self.maskingSetupPanel = scrolled.ScrolledPanel(hSplit, -1)
+        self.maskingSetupPanel = scrolled.ScrolledPanel(hSplit, ID_MASKING_SETUP_PANEL)
         self.InitMaskingSetupPanel(self.maskingSetupPanel)        
 #        self.maskingSetupLabel = wx.StaticText(self.maskingSetupPanel, -1, "Set up Masking here")
 
-        self.maskingPreviewPanel = wx.Panel(hSplit, -1)
+        self.maskingPreviewPanel = wx.Panel(hSplit, ID_MASKING_PREVIEW_PANEL)
         self.maskingPreviewPanel.SetBackgroundColour(wx.WHITE)
 #        self.maskingPreviewLabel = wx.StaticText(self.maskingPreviewPanel, -1, "Preview will be here")
         self.InitPreviewPanel(self.maskingPreviewPanel)
@@ -274,18 +280,18 @@ class maskingPanel(wx.Panel):
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         stSQLStations = 'SELECT ID, StationName FROM Stations;'
-        self.cbxStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-        scidb.fillComboboxFromSQL(self.cbxStationID, stSQLStations)
-        stpSiz.Add(self.cbxStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        pnl.cbxStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(pnl.cbxStationID, stSQLStations)
+        stpSiz.Add(pnl.cbxStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'Narrow Channel choices to Logger:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         stSQLLoggers = 'SELECT ID, LoggerSerialNumber FROM Loggers;'
-        self.cbxLoggerID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-        scidb.fillComboboxFromSQL(self.cbxLoggerID, stSQLLoggers)
-        stpSiz.Add(self.cbxLoggerID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        pnl.cbxLoggerID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(pnl.cbxLoggerID, stSQLLoggers)
+        stpSiz.Add(pnl.cbxLoggerID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
@@ -294,17 +300,12 @@ class maskingPanel(wx.Panel):
         stpSiz.Add(wx.StaticText(pnl, -1, 'Data Channel:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-        self.cbxChanID = wx.combo.ComboCtrl(pnl, ID_CHAN_TEXT, "", style=wx.CB_READONLY | wx.TE_PROCESS_ENTER)
-        self.chanPopup = ListCtrlComboPopup()
-        self.chanPopup.id = ID_CHAN_LIST
+        pnl.cbxChanID = wx.combo.ComboCtrl(pnl, ID_CHAN_TEXT, "", style=wx.CB_READONLY | wx.TE_PROCESS_ENTER)
+        pnl.chanPopup = ListCtrlComboPopup()
+#        pnl.chanPopup.id = ID_CHAN_LIST
         # It is important to call SetPopupControl() as soon as possible
-        self.cbxChanID.SetPopupControl(self.chanPopup)
-#Since the popup should be your own code then you can handle the
-#selection events there or even create and send EVT_COMBOBOX events and
-#send them if you want to do it that way. Otherwise you can get
-#EVT_TEXT when the value in the text portion is updated after a selection.
-#        self.cbxChanID.SetValueWithEvent(self.cbxChanID.GetValue(), withEvent=True)
-        stpSiz.Add(self.cbxChanID, pos=(gRow, 2), span=(1, 7), flag=wx.LEFT, border=5)
+        pnl.cbxChanID.SetPopupControl(pnl.chanPopup)
+        stpSiz.Add(pnl.cbxChanID, pos=(gRow, 2), span=(1, 7), flag=wx.LEFT, border=5)
         stSQLChan = "SELECT DataChannels.ID, " \
             "( DataChannels.Column || ',' ||  Loggers.LoggerSerialNumber || ',' ||  " \
             "Sensors.SensorSerialNumber || ',' ||  DataTypes.TypeText || ',' ||  " \
@@ -316,8 +317,8 @@ class maskingPanel(wx.Panel):
             "LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID) " \
             "LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID) " \
             "LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID;"
-        scidb.fillComboCtrlPopupFromSQL(self.chanPopup, stSQLChan, [300, 180, 140])
-#        self.chanPopup.AddItem(("a",None,3,4,5,6,7)) # test AddItem w /every imaginable error
+        scidb.fillComboCtrlPopupFromSQL(pnl.chanPopup, stSQLChan, [300, 180, 140])
+#        pnl.chanPopup.AddItem(("a",None,3,4,5,6,7)) # test AddItem w /every imaginable error
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
@@ -406,8 +407,8 @@ class maskingPanel(wx.Panel):
 #                print "\t\t%s" % repr(grchild)
         txbStartTime = frame.FindWindowById(ID_START_TIME)
         print "txbStartTime", txbStartTime.GetValue()
-        txbChanText = frame.FindWindowById(ID_CHAN_TEXT)
-        print "txbChanText", txbChanText.GetValue()
+#        txbChanText = frame.FindWindowById(ID_CHAN_TEXT)
+#        print "txbChanText", txbChanText.GetValue()
         
     def ScalePreviewCanvas(self, center):
         """
@@ -468,13 +469,6 @@ class maskingFrame(wx.Frame):
 
     def InitUI(self):
         framePanel = maskingPanel(self, wx.ID_ANY)
-
-
-            
-    def OnMessage(self, on, msg):
-        if not on:
-            msg = ""
-        self.SetStatusText(msg)
 
 
 def main():
