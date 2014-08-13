@@ -13,7 +13,11 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
+ID_START_TIME = wx.NewId()
 
+def TryThisPreview():
+    print "in TryThisPreview function"
+    
 
 #----------------------------------------------------------------------
 # This class is used to provide an interface between a ComboCtrl and the
@@ -137,6 +141,8 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         else:
             keyItem = self.lc.GetItemData(self.curitem)
             print "In 'OnDismiss', GetItemData", keyItem
+        print "about to call TryThisPreview function"
+        wx.CallAfter(TryThisPreview)
         wx.combo.ComboPopup.OnDismiss(self)
 
     # This is called to custom paint in the combo control itself
@@ -274,8 +280,9 @@ class maskingPanel(wx.Panel):
         gRow += 1
 #        TC_DT_START_ID = wxID_ANY
 #        self.tcDTStart = wx.TextCtrl(pnl, TC_DT_START_ID, style=wxTE_PROCESS_ENTER)
-        self.tcDTStart = wx.TextCtrl(pnl)
-#        EVT_TEXT_ENTER(self, TC_DT_START_ID, self.OnTcDTStart) 
+        self.tcDTStart = wx.TextCtrl(pnl, ID_START_TIME)
+#        EVT_TEXT_ENTER(self, TC_DT_START_ID, self.OnTcDTStart)
+        self.tcDTStart.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
         stpSiz.Add(self.tcDTStart, pos=(gRow, 0), span=(1, 3), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
         # for testing
@@ -289,6 +296,11 @@ class maskingPanel(wx.Panel):
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
         pnl.SetupScrolling()
+
+    def OnKillFocus(self, event):
+        print 'event reached OnKillFocus'
+        print 'in OnKillFocus handler, eventID', event.GetId()
+        self.TryPreview(event.GetId())
 
     def OnTest(self, event):
         print 'event reached button class of OnText button'
@@ -312,7 +324,40 @@ class maskingPanel(wx.Panel):
         self.tcDTStart.SetValue(stStandardizedDateTime)
         event.Skip()
         
+    def TryPreview(self, ctrlID):
+        """
+        Generic function that sees if there is enough inforation to display
+        a preview, and if so does.
+        ctrlID is from the textbox that lost focus, or the combobox that was updated,
+        to feed into this function; may or may not use.
+        """
+        print 'in TryPreview function'
+        print 'eventID', ctrlID
 
+        print 'self.chanPopup.value', self.chanPopup.value
+        print 'self.chanPopup.curitem', self.chanPopup.curitem
+        ls = self.chanPopup.GetControl()
+        if self.chanPopup.curitem == -1:
+            keyItem = None
+        else:
+            keyItem = ls.GetItemData(self.chanPopup.curitem)
+        print "keyItem", keyItem
+ #       print 'self.cbxChanID.value', self.cbxChanID.value
+ #       print 'self.cbxChanID.curitem', self.cbxChanID.curitem
+        print "\nGet the Application Object:"
+        app = wx.GetApp()
+        print "%s" % repr(app)
+        print "\nGet the Frame from the App:"
+        frame = app.GetTopWindow()
+        print "%s" % repr(frame)
+#        print "\nFrame GetChildren:"
+#        for child in frame.GetChildren():
+#            print "\t%s" % repr(child)
+#            for grchild in child.GetChildren():
+#                print "\t\t%s" % repr(grchild)
+        txbStartTime = frame.FindWindowById(ID_START_TIME)
+        print "txbStartTime", txbStartTime.GetValue()
+        
     def ScalePreviewCanvas(self, center):
         """
         function that returns a scaling vector to scale y and x relative to each other
