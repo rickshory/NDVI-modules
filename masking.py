@@ -13,11 +13,28 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
+ID_CHAN_TEXT = wx.NewId()
+ID_CHAN_LIST = wx.NewId()
 ID_START_TIME = wx.NewId()
 
 def TryThisPreview():
     print "in TryThisPreview function"
     
+class MyApp(wx.App):
+    def OnInit(self):
+        self.dsFrame = maskingFrame(None, wx.ID_ANY, 'Data Masking')
+        self.SetTopWindow(self.dsFrame)
+        self.dsFrame.Show()
+        self.Bind(wx.EVT_TEXT, self.OnTextChangeApp)
+        return True
+    def OnTextChangeApp(self, event):
+        event_id = event.GetId()
+        if event_id == ID_CHAN_TEXT:
+            print "ID_CHAN_TEXT Event reached the App Object"
+        if event_id == ID_CHAN_LIST:
+            print "ID_CHAN_LIST Event reached the App Object"
+        if event_id == ID_START_TIME:
+            print "ID_START_TIME Event reached the App Object"
 
 #----------------------------------------------------------------------
 # This class is used to provide an interface between a ComboCtrl and the
@@ -124,6 +141,11 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         if idx != wx.NOT_FOUND:
             self.lc.Select(idx)
 
+#    def SetValueWithEvent(self, val, withEvent=True):
+#        idx = self.lc.FindItem(-1, val)
+#        if idx != wx.NOT_FOUND:
+#            self.lc.Select(idx)
+
     # Return a string representation of the current item.
     def GetStringValue(self):
         if self.value >= 0:
@@ -136,13 +158,36 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
 
     # Called when popup is dismissed
     def OnDismiss(self):
-        if self.curitem == -1:
-            print "In 'OnDismiss', no current item",
-        else:
-            keyItem = self.lc.GetItemData(self.curitem)
-            print "In 'OnDismiss', GetItemData", keyItem
-        print "about to call TryThisPreview function"
-        wx.CallAfter(TryThisPreview)
+#        if self.curitem == -1:
+#            print "In 'OnDismiss', no current item",
+#        else:
+#            keyItem = self.lc.GetItemData(self.curitem)
+#            print "In 'OnDismiss', GetItemData", keyItem
+#        print "about to call TryThisPreview function"
+#        wx.CallAfter(TryThisPreview)
+        # this convoluted process of reaching all the way up to the
+        # App in order to post the EVT_TEXT event is necessary because
+        # the popup does not have a parent so events will not propagate up from it.
+        app = wx.GetApp()
+        print "%s" % repr(app)
+        print "\nGet the Frame from the App:"
+        topFrame = app.GetTopWindow()
+        print "%s" % repr(topFrame)
+#        print "\nFrame GetChildren:"
+#        for child in frame.GetChildren():
+#            print "\t%s" % repr(child)
+#            for grchild in child.GetChildren():
+#                print "\t\t%s" % repr(grchild)
+        txbStartTime = topFrame.FindWindowById(ID_START_TIME)
+        print "txbStartTime", txbStartTime.GetValue()
+        txbChanText = topFrame.FindWindowById(ID_CHAN_TEXT)
+        print "txbChanText", txbChanText.GetValue()
+#        evt = wx.PyCommandEvent(wx.EVT_TEXT.typeId, self.GetId()) 
+#        evt.SetEventObject(self) 
+#        wx.PostEvent(self,evt) 
+        evt = wx.PyCommandEvent(wx.EVT_TEXT.typeId, ID_CHAN_TEXT) 
+        evt.SetEventObject(topFrame) 
+        wx.PostEvent(topFrame, evt) 
         wx.combo.ComboPopup.OnDismiss(self)
 
     # This is called to custom paint in the combo control itself
@@ -208,12 +253,11 @@ class maskingPanel(wx.Panel):
         self.SetSizer(vSiz)
         return
     
-
     def InitMaskingSetupPanel(self, pnl):
         self.LayoutMaskingSetupPanel(pnl)
 
-
     def LayoutMaskingSetupPanel(self, pnl):
+
         pnl.SetBackgroundColour(wx.WHITE)
         iLinespan = 5
         stpSiz = wx.GridBagSizer(1, 1)
@@ -250,11 +294,16 @@ class maskingPanel(wx.Panel):
         stpSiz.Add(wx.StaticText(pnl, -1, 'Data Channel:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-        self.cbxChanID = wx.combo.ComboCtrl(pnl, wx.ID_ANY, "")
+        self.cbxChanID = wx.combo.ComboCtrl(pnl, ID_CHAN_TEXT, "", style=wx.CB_READONLY | wx.TE_PROCESS_ENTER)
         self.chanPopup = ListCtrlComboPopup()
+        self.chanPopup.id = ID_CHAN_LIST
         # It is important to call SetPopupControl() as soon as possible
         self.cbxChanID.SetPopupControl(self.chanPopup)
-
+#Since the popup should be your own code then you can handle the
+#selection events there or even create and send EVT_COMBOBOX events and
+#send them if you want to do it that way. Otherwise you can get
+#EVT_TEXT when the value in the text portion is updated after a selection.
+#        self.cbxChanID.SetValueWithEvent(self.cbxChanID.GetValue(), withEvent=True)
         stpSiz.Add(self.cbxChanID, pos=(gRow, 2), span=(1, 7), flag=wx.LEFT, border=5)
         stSQLChan = "SELECT DataChannels.ID, " \
             "( DataChannels.Column || ',' ||  Loggers.LoggerSerialNumber || ',' ||  " \
@@ -300,7 +349,7 @@ class maskingPanel(wx.Panel):
     def OnKillFocus(self, event):
         print 'event reached OnKillFocus'
         print 'in OnKillFocus handler, eventID', event.GetId()
-        self.TryPreview(event.GetId())
+#        self.TryPreview(event.GetId())
 
     def OnTest(self, event):
         print 'event reached button class of OnText button'
@@ -357,6 +406,8 @@ class maskingPanel(wx.Panel):
 #                print "\t\t%s" % repr(grchild)
         txbStartTime = frame.FindWindowById(ID_START_TIME)
         print "txbStartTime", txbStartTime.GetValue()
+        txbChanText = frame.FindWindowById(ID_CHAN_TEXT)
+        print "txbChanText", txbChanText.GetValue()
         
     def ScalePreviewCanvas(self, center):
         """
@@ -397,13 +448,13 @@ class maskingPanel(wx.Panel):
         pnl.SetSizer(pvSiz)
         pnl.SetAutoLayout(1)
 
-    def refresh_cbxPanelsChoices(self, event):
-        self.cbxGetPanel.Clear()
-        stSQLPanels = 'SELECT ID, CalcName FROM maskingcalc;'
-        scidb.fillComboboxFromSQL(self.cbxGetPanel, stSQLPanels)
+#    def refresh_cbxPanelsChoices(self, event):
+#        self.cbxGetPanel.Clear()
+#        stSQLPanels = 'SELECT ID, CalcName FROM maskingcalc;'
+#        scidb.fillComboboxFromSQL(self.cbxGetPanel, stSQLPanels)
 
-    def onCbxTasks(self, event):
-        print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
+#    def onCbxTasks(self, event):
+#        print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
 
 
 
@@ -427,8 +478,9 @@ class maskingFrame(wx.Frame):
 
 
 def main():
-    app = wx.App(redirect=False)
-    dsFrame = maskingFrame(None, wx.ID_ANY, 'Data Masking')
+#    app = wx.App(redirect=False)
+    app = MyApp(redirect=False)
+#    dsFrame = maskingFrame(None, wx.ID_ANY, 'Data Masking')
     app.MainLoop() 
 
 if __name__ == '__main__':
