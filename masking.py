@@ -330,8 +330,9 @@ class maskingPanel(wx.Panel):
         gRow += 1
 #        TC_DT_START_ID = wxID_ANY
 #        self.tcDTStart = wx.TextCtrl(pnl, TC_DT_START_ID, style=wxTE_PROCESS_ENTER)
-        self.tcDTStart = wx.TextCtrl(pnl, ID_START_TIME)
+        self.tcDTStart = wx.TextCtrl(pnl, ID_START_TIME, style=wx.TE_PROCESS_ENTER)
 #        EVT_TEXT_ENTER(self, TC_DT_START_ID, self.OnTcDTStart)
+        self.tcDTStart.Bind(wx.EVT_TEXT_ENTER, self.OnEnterKey)
         self.tcDTStart.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
         stpSiz.Add(self.tcDTStart, pos=(gRow, 0), span=(1, 3), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
@@ -351,6 +352,11 @@ class maskingPanel(wx.Panel):
         print 'event reached OnKillFocus'
         print 'in OnKillFocus handler, eventID', event.GetId()
 #        self.TryPreview(event.GetId())
+
+    def OnEnterKey(self, event):
+        print 'event reached OnEnterKey'
+        print 'in OnEnterKey handler, eventID', event.GetId()
+
 
     def OnTest(self, event):
         print 'event reached button class of OnText button'
