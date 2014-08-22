@@ -20,16 +20,34 @@ ID_CHAN_LIST = wx.NewId()
 ID_START_TIME = wx.NewId()
 ID_END_TIME = wx.NewId()
 
-def TryThisPreview():
-    print "in TryThisPreview function"
+CkMaskingPreviewEventType = wx.NewEventType()
+EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
     
+class CkMaskingPreviewEvent(wx.PyCommandEvent):
+    def __init__(self, evtType, id):
+        wx.PyCommandEvent.__init__(self, evtType, id)
+        self.ck = None
+
+    def SetMyCk(self, ck):
+        self.ck = ck
+
+    def GetMyCk(self):
+        return self.ck
+
+
 class MyApp(wx.App):
     def OnInit(self):
         self.dsFrame = maskingFrame(None, wx.ID_ANY, 'Data Masking')
         self.SetTopWindow(self.dsFrame)
         self.dsFrame.Show()
         self.Bind(wx.EVT_TEXT, self.OnTextChangeApp)
+        self.Bind(EVT_CK_MASKING_PREVIEW, self.CkMaskingPreview)
         return True
+
+    def CkMaskingPreview(self, event):
+        event_id = event.GetId()
+        ck = event.GetMyCk() # retrieve a parameter
+        print "in CkMaskingPreview; event Check:", ck
 
     def OnTextChangeApp(self, event):
         event_id = event.GetId()
@@ -199,6 +217,14 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         evt = wx.PyCommandEvent(wx.EVT_TEXT.typeId, ID_CHAN_TEXT) 
         evt.SetEventObject(txbChanText)
         wx.PostEvent(txbChanText, evt)
+
+        # Create the custom Check Masking Preview event
+        CPevt = CkMaskingPreviewEvent(CkMaskingPreviewEventType, -1)
+        # set a parameter
+        CPevt.SetMyCk(-999)
+        # Post the event
+        self.GetEventHandler().ProcessEvent(CPevt)
+
         wx.combo.ComboPopup.OnDismiss(self)
 
     # This is called to custom paint in the combo control itself
