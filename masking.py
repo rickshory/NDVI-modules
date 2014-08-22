@@ -18,6 +18,7 @@ ID_MASKING_PREVIEW_PANEL = wx.NewId()
 ID_CHAN_TEXT = wx.NewId()
 ID_CHAN_LIST = wx.NewId()
 ID_START_TIME = wx.NewId()
+ID_END_TIME = wx.NewId()
 
 def TryThisPreview():
     print "in TryThisPreview function"
@@ -32,6 +33,13 @@ class MyApp(wx.App):
 
     def OnTextChangeApp(self, event):
         event_id = event.GetId()
+
+        if event_id == ID_START_TIME:
+            print "ID_START_TIME Event reached the App Object"
+
+        if event_id == ID_END_TIME:
+            print "ID_END_TIME Event reached the App Object"
+
         if event_id == ID_CHAN_LIST: # does not hit here
             print "ID_CHAN_LIST Event reached the App Object"
         if event_id == ID_CHAN_TEXT:
@@ -58,9 +66,6 @@ class MyApp(wx.App):
 # following does not work, selected item in list no longer has focus
 #            keyItem = ls.GetItemData(ls.GetFocusedItem())
 #            print "keyItem", keyItem
-
-        if event_id == ID_START_TIME:
-            print "ID_START_TIME Event reached the App Object"
 
 #----------------------------------------------------------------------
 # This class is used to provide an interface between a ComboCtrl and the
@@ -324,21 +329,32 @@ class maskingPanel(wx.Panel):
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
         gRow += 1
-        stpSiz.Add(wx.StaticText(pnl, -1, 'Start'),
-                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Universal Time'),
+                     pos=(gRow, 1), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
-#        TC_DT_START_ID = wxID_ANY
-#        self.tcDTStart = wx.TextCtrl(pnl, TC_DT_START_ID, style=wxTE_PROCESS_ENTER)
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Start'),
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcDTStart = wx.TextCtrl(pnl, ID_START_TIME, style=wx.TE_PROCESS_ENTER)
-#        EVT_TEXT_ENTER(self, TC_DT_START_ID, self.OnTcDTStart)
         self.tcDTStart.Bind(wx.EVT_TEXT_ENTER, self.OnEnterKey)
         self.tcDTStart.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
-        stpSiz.Add(self.tcDTStart, pos=(gRow, 0), span=(1, 3), 
+        stpSiz.Add(self.tcDTStart, pos=(gRow, 1), span=(1, 3), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
         # for testing
         self.tcDTStart.SetValue('2010-06-13 5am')
 
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'End'),
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcDTEnd = wx.TextCtrl(pnl, ID_END_TIME, style=wx.TE_PROCESS_ENTER)
+        self.tcDTEnd.Bind(wx.EVT_TEXT_ENTER, self.OnEnterKey)
+        self.tcDTEnd.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+        stpSiz.Add(self.tcDTEnd, pos=(gRow, 1), span=(1, 3), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        # for testing
+        self.tcDTEnd.SetValue('2010-06-14 5pm')
+
+        gRow += 1
         self.ckButton = wx.Button(pnl, -1, 'Test')
         self.Bind(wx.EVT_BUTTON,  self.OnTest, id=self.ckButton.GetId())
         stpSiz.Add(self.ckButton, pos=(gRow, 4), span=(1, 1), 
