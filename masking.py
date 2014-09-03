@@ -52,11 +52,45 @@ class MyApp(wx.App):
         # or any KillFocus of any of the timestamp fields
         event_id = event.GetId()
         ck = event.GetMyCk() # retrieve a parameter
-        print "in CkMaskingPreview; event Check:", ck
+        print "in CkMaskingPreview; event Check:", ck # may not use this
         self.dsFrame.statusBar.SetStatusText('in CkMaskingPreview event handler')
+        event_id=ck[2]
+        if event_id == ID_START_TIME:
+            print "ID_START_TIME Event reached CkMaskingPreview"
+
+        if event_id == ID_END_TIME:
+            print "ID_END_TIME Event reached CkMaskingPreview"
+
+        if event_id == ID_CHAN_LIST: # does not hit here
+            print "ID_CHAN_LIST Event reached CkMaskingPreview"
+        if event_id == ID_CHAN_TEXT:
+            print "ID_CHAN_TEXT Event reached CkMaskingPreview"
+
+            tpFrame = self.GetTopWindow()
+            txChanText = tpFrame.FindWindowById(ID_CHAN_TEXT)
+#            print "txChanText", txChanText.GetValue()
+            msPnl = tpFrame.FindWindowById(ID_MASKING_SETUP_PANEL)
+#            msPnl = txChanText.GetParent() # or this, text and popup are attributes of the same panel
+
+#            pUp = tpFrame.FindWindowById(ID_POPUP_LIST) # this is wrong, gets the list instead of the popup object
+            pUp = msPnl.chanPopup # popup is an attibute of the panel, though the panel is not its parent
+            ls = pUp.GetControl() # direct handle to the popup's control, which is the list
+#            ls = tpFrame.FindWindowById(ID_POPUP_LIST) # or this
+            print "Popup list has %i columns" % ls.GetColumnCount()
+            # to retrieve the hidden key number stored in the popup list row (e.g. a DB record ID):
+            curItem = pUp.curitem
+            if curItem == -1:
+                keyVal = 0 # something to flag invalid
+            else:
+                keyVal = ls.GetItemData(curItem)
+            print "keyVal", keyVal
+# following does not work, selected item in list no longer has focus
+#            keyItem = ls.GetItemData(ls.GetFocusedItem())
+#            print "keyItem", keyItem
 
 
     def OnTextChangeApp(self, event):
+        return
         event_id = event.GetId()
 
         if event_id == ID_START_TIME:
