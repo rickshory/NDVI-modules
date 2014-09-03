@@ -42,12 +42,15 @@ class MyApp(wx.App):
         self.dsFrame.Show()
         self.Bind(wx.EVT_TEXT, self.OnTextChangeApp)
         self.Bind(EVT_CK_MASKING_PREVIEW, self.CkMaskingPreview)
+        self.dsFrame.statusBar.SetStatusText('Select Data Channel, and Start and End timestamps')
         return True
 
     def CkMaskingPreview(self, event):
         event_id = event.GetId()
         ck = event.GetMyCk() # retrieve a parameter
         print "in CkMaskingPreview; event Check:", ck
+        self.dsFrame.statusBar.SetStatusText('in CkMaskingPreview event handler')
+
 
     def OnTextChangeApp(self, event):
         event_id = event.GetId()
@@ -510,6 +513,7 @@ class maskingPanel(wx.Panel):
 class maskingFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title)
+        self.statusBar = self.CreateStatusBar()
         self.InitUI()
         self.SetSize((750, 600))
 #        self.Centre()
