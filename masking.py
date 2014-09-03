@@ -46,6 +46,10 @@ class MyApp(wx.App):
         return True
 
     def CkMaskingPreview(self, event):
+        # This is the general purpose function that tests whether
+        # ChannelID, Start and End times are valid, and if so initates a preview.
+        # It is called by any change to the channel selector, or
+        # or any KillFocus of any of the timestamp fields
         event_id = event.GetId()
         ck = event.GetMyCk() # retrieve a parameter
         print "in CkMaskingPreview; event Check:", ck
@@ -224,7 +228,7 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         # Create the custom Check Masking Preview event
         CPevt = CkMaskingPreviewEvent(CkMaskingPreviewEventType, -1)
         # set a parameter
-        CPevt.SetMyCk(-999)
+        CPevt.SetMyCk('Channel')
         # Post the event
         self.GetEventHandler().ProcessEvent(CPevt)
 
