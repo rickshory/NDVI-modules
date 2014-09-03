@@ -228,7 +228,7 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
         # Create the custom Check Masking Preview event
         CPevt = CkMaskingPreviewEvent(CkMaskingPreviewEventType, -1)
         # set a parameter
-        CPevt.SetMyCk('Channel')
+        CPevt.SetMyCk(['Channel', 'OnDismiss', ID_CHAN_TEXT])
         # Post the event
         self.GetEventHandler().ProcessEvent(CPevt)
 
@@ -398,9 +398,10 @@ class maskingPanel(wx.Panel):
         pnl.SetupScrolling()
 
     def OnKillFocus(self, event):
-        print 'event reached OnKillFocus'
-        print 'in OnKillFocus handler, eventID', event.GetId()
-#        self.TryPreview(event.GetId())
+        # send an event on to the general Check Masking Preview function
+        CPevt = CkMaskingPreviewEvent(CkMaskingPreviewEventType, -1)
+        CPevt.SetMyCk(['TimeStamp', 'OnKillFocus', event.GetId()])
+        self.GetEventHandler().ProcessEvent(CPevt)
 
     def OnEnterKey(self, event):
         print 'event reached OnEnterKey'
