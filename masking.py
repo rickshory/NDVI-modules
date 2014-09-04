@@ -113,7 +113,13 @@ class MyApp(wx.App):
             stItem = ls.GetItemText(curItem)
             txChanText.SetValue(stItem)
 #            print "Current list item", ls.GetItemText(curItem)
-
+        if not boolStartIsValid:
+            self.dsFrame.statusBar.SetStatusText('Start time is not valid')
+            return
+        if not boolEndIsValid:
+            self.dsFrame.statusBar.SetStatusText('End time is not valid')
+            return
+        self.dsFrame.statusBar.SetStatusText('Creating preview for ' + stItem)
 
 #----------------------------------------------------------------------
 # This class is used to provide an interface between a ComboCtrl and the
