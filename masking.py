@@ -79,6 +79,20 @@ class MyApp(wx.App):
                 stDTStart = dtStart.Format('%Y-%m-%d %H:%M:%S')
                 txStartTime.SetValue(stDTStart)
 
+        txEndTime = tpFrame.FindWindowById(ID_END_TIME)
+        stDTEnd = txEndTime.GetValue()
+        if stDTEnd.strip() == '':
+            boolEndIsValid = True # empty is valid, meaning 'everything after
+            stDTEnd = '' # distinguish from explict date
+            txEndTime.SetValue(stDTEnd)
+        else:
+            dtEnd = wx.DateTime() # Uninitialized datetime
+            boolEndIsValid = dtEnd.ParseDateTime(stDTEnd)
+            if boolEndIsValid:
+                # remember the timestamp and write it back to the control in standard format
+                stDTEnd = dtEnd.Format('%Y-%m-%d %H:%M:%S')
+                txEndTime.SetValue(stDTEnd)
+
         # get ChannelID, if selected
         txChanText = tpFrame.FindWindowById(ID_CHAN_TEXT)
         msPnl = tpFrame.FindWindowById(ID_MASKING_SETUP_PANEL)
