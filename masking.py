@@ -67,11 +67,17 @@ class MyApp(wx.App):
         # validate timestamps
         txStartTime = tpFrame.FindWindowById(ID_START_TIME)
         stDTStart = txStartTime.GetValue()
-        dtStart = wx.DateTime() # Uninitialized datetime
-        boolStartIsValid = dtStart.ParseDateTime(stDTStart)
-        if boolStartIsValid:
-            # write the timestamp back in standard format
-            txStartTime.SetValue(dtStart.Format('%Y-%m-%d %H:%M:%S'))
+        if stDTStart.strip() == '':
+            boolStartIsValid = True # empty is valid, meaning 'everything before'
+            stDTStart = '' # distinguish from explict date
+            txStartTime.SetValue(stDTStart)
+        else:
+            dtStart = wx.DateTime() # Uninitialized datetime
+            boolStartIsValid = dtStart.ParseDateTime(stDTStart)
+            if boolStartIsValid:
+                # remember the timestamp and write it back to the control in standard format
+                stDTStart = dtStart.Format('%Y-%m-%d %H:%M:%S')
+                txStartTime.SetValue(stDTStart)
 
         # get ChannelID, if selected
         txChanText = tpFrame.FindWindowById(ID_CHAN_TEXT)
