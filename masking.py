@@ -97,7 +97,7 @@ class MyApp(wx.App):
         txChanText = tpFrame.FindWindowById(ID_CHAN_TEXT)
         msPnl = tpFrame.FindWindowById(ID_MASKING_SETUP_PANEL)
         pUp = msPnl.chanPopup # popup is an attibute of the panel, though the panel is not its parent
-        ls = pUp.GetControl() # direct handle to the popup's control, which is the list
+        ls = pUp.GetControl() # direct handle to the popup's control, which is the listCtrl
         # to retrieve the hidden key number stored in the popup list row (e.g. a DB record ID):
         curItem = pUp.curitem
         if curItem == -1:
@@ -109,6 +109,10 @@ class MyApp(wx.App):
             return
         else:
             self.dsFrame.statusBar.SetStatusText('Data Channel ' + str(ChanID) + ' selected')
+            # the selection may happen without filling the textbox; explicitly fill textbox
+            stItem = ls.GetItemText(curItem)
+            txChanText.SetValue(stItem)
+#            print "Current list item", ls.GetItemText(curItem)
 
 
 #----------------------------------------------------------------------
