@@ -48,9 +48,9 @@ class MyApp(wx.App):
         # This is the general purpose function that tests whether
         # ChannelID, Start and End times are valid, and if so initates a preview.
         # It is called by any change to the channel selector, or
-        # or any KillFocus of any of the timestamp fields
+        # KillFocus of any of the timestamp fields
         event_id = event.GetId()
-        ck = event.GetMyCk() # retrieve a parameter
+        ck = event.GetMyCk() # retrieve parameters list
         print "in CkMaskingPreview; event Check:", ck # may not use this
         self.dsFrame.statusBar.SetStatusText('in CkMaskingPreview event handler')
         event_id=ck[2]
@@ -63,8 +63,17 @@ class MyApp(wx.App):
         if event_id == ID_CHAN_LIST: # does not hit here
             print "ID_CHAN_LIST Event reached CkMaskingPreview"
 
-        # get ChannelID, if selected
         tpFrame = self.GetTopWindow()
+        # validate timestamps
+        txStartTime = tpFrame.FindWindowById(ID_START_TIME)
+        stDTStart = txStartTime.GetValue()
+        dtStart = wx.DateTime() # Uninitialized datetime
+        boolStartIsValid = dtStart.ParseDateTime(stDTStart)
+        if boolStartIsValid:
+            # write the timestamp back in standard format
+            txStartTime.SetValue(dtStart.Format('%Y-%m-%d %H:%M:%S'))
+
+        # get ChannelID, if selected
         txChanText = tpFrame.FindWindowById(ID_CHAN_TEXT)
         msPnl = tpFrame.FindWindowById(ID_MASKING_SETUP_PANEL)
         pUp = msPnl.chanPopup # popup is an attibute of the panel, though the panel is not its parent
