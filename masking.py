@@ -120,6 +120,17 @@ class MyApp(wx.App):
             self.dsFrame.statusBar.SetStatusText('End time is not valid')
             return
         self.dsFrame.statusBar.SetStatusText('Creating preview for ' + stItem)
+        pvPnl = tpFrame.FindWindowById(ID_MASKING_PREVIEW_PANEL)
+        # test of drawing one line
+#        self.UnBindAllMouseEvents()
+        pvPnl.Canvas.InitAll()
+        pvPnl.Canvas.Draw()
+        points = [(-100,-100),(100,100), (100,-100), (-100,100)]
+        pvPnl.Canvas.AddLine(points, LineWidth = 1, LineColor = 'BLUE')
+        pvPnl.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
+        # then the "Zoom To Fit" button correctly expands it to the whole space
+
+        
 
 #----------------------------------------------------------------------
 # This class is used to provide an interface between a ComboCtrl and the
@@ -475,16 +486,16 @@ class maskingPanel(wx.Panel):
         pvSiz.AddGrowableCol(0)
         
         gRow = 0
-        self.pvLabel = wx.StaticText(pnl, -1, "Red is Masked data")
-        pvSiz.Add(self.pvLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        pnl.pvLabel = wx.StaticText(pnl, -1, "Red is Masked data")
+        pvSiz.Add(pnl.pvLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
         gRow += 1
         # Add the FloatCanvas canvas
-        self.NC = NavCanvas.NavCanvas(pnl,
+        pnl.NC = NavCanvas.NavCanvas(pnl,
              ProjectionFun = self.ScalePreviewCanvas,
              Debug = 0,
              BackgroundColor = "WHITE")
-        self.Canvas = self.NC.Canvas # reference the contained FloatCanvas
+        pnl.Canvas = pnl.NC.Canvas # reference the contained FloatCanvas
         # test of drawing one line
 #        self.UnBindAllMouseEvents()
 #        self.Canvas.InitAll()
@@ -494,7 +505,7 @@ class maskingPanel(wx.Panel):
 #        self.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
 
-        pvSiz.Add(self.NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
+        pvSiz.Add(pnl.NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         pvSiz.AddGrowableRow(gRow)
         pnl.SetSizer(pvSiz)
         pnl.SetAutoLayout(1)
