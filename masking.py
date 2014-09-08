@@ -459,41 +459,6 @@ class maskingPanel(wx.Panel):
         self.tcDTStart.SetValue(stStandardizedDateTime)
         event.Skip()
         
-    def TryPreview(self, ctrlID):
-        """
-        Generic function that sees if there is enough inforation to display
-        a preview, and if so does.
-        ctrlID is from the textbox that lost focus, or the combobox that was updated,
-        to feed into this function; may or may not use.
-        """
-        print 'in TryPreview function'
-        print 'eventID', ctrlID
-
-        print 'self.chanPopup.value', self.chanPopup.value
-        print 'self.chanPopup.curitem', self.chanPopup.curitem
-        ls = self.chanPopup.GetControl()
-        if self.chanPopup.curitem == -1:
-            keyItem = None
-        else:
-            keyItem = ls.GetItemData(self.chanPopup.curitem)
-        print "keyItem", keyItem
- #       print 'self.cbxChanID.value', self.cbxChanID.value
- #       print 'self.cbxChanID.curitem', self.cbxChanID.curitem
-        print "\nGet the Application Object:"
-        app = wx.GetApp()
-        print "%s" % repr(app)
-        print "\nGet the Frame from the App:"
-        frame = app.GetTopWindow()
-        print "%s" % repr(frame)
-#        print "\nFrame GetChildren:"
-#        for child in frame.GetChildren():
-#            print "\t%s" % repr(child)
-#            for grchild in child.GetChildren():
-#                print "\t\t%s" % repr(grchild)
-        txbStartTime = frame.FindWindowById(ID_START_TIME)
-        print "txbStartTime", txbStartTime.GetValue()
-#        txbChanText = frame.FindWindowById(ID_CHAN_TEXT)
-#        print "txbChanText", txbChanText.GetValue()
         
     def ScalePreviewCanvas(self, center):
         """
