@@ -123,8 +123,8 @@ class MyApp(wx.App):
         pvPnl = tpFrame.FindWindowById(ID_MASKING_PREVIEW_PANEL)
         # SELECT MIN(UTTimestamp) AS DataFirst FROM Data WHERE Data.ChannelID = 2;
         # SELECT MAX(UTTimestamp) AS DataLast FROM Data WHERE Data.ChannelID = 2;
-        # SELECT UTTimestamp, Value FROM Data WHERE Data.ChannelID = 2 AND Data.UTTimestamp >= '2010-06-13 05:00:00' AND Data.UTTimestamp <= '2010-06-14 17:00:00';
-
+        # SELECT UTTimestamp, Value FROM Data WHERE Data.ChannelID = 2 AND Data.UTTimestamp >= '2010-06-13 05:00:00' AND Data.UTTimestamp <= '2010-06-14 17:00:00' AND Data.Use = 1;
+        # SELECT UTTimestamp, Value FROM Data WHERE Data.ChannelID = 2 AND Data.UTTimestamp >= '2010-06-13 05:00:00' AND Data.UTTimestamp <= '2010-06-14 17:00:00' AND Data.Use = 0;
         # test of drawing one line
 #        self.UnBindAllMouseEvents()
         pvPnl.Canvas.InitAll()
