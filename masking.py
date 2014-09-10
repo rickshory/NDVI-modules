@@ -121,13 +121,15 @@ class MyApp(wx.App):
             return
         self.dsFrame.statusBar.SetStatusText('Creating preview for ' + stItem)
         pvPnl = tpFrame.FindWindowById(ID_MASKING_PREVIEW_PANEL)
-        if boolStartIsValid:
-            stUseStart = stDTStart
-        else: # get the earliest timestamp for this channel
+        # start is valid or we would not be to this point
+        if stDTStart == '': # this distinguishes blank meaning "all before"
+            # get the earliest timestamp for this channel
             stSQLmin = """SELECT MIN(UTTimestamp) AS DataFirst FROM Data 
                 WHERE Data.ChannelID = {iCh};
                 """.format(iCh=ChanID)
             stUseStart = scidb.curD.execute(stSQLmin).fetchone()['DataFirst']
+        else:
+            stUseStart = stDTStart
         print "stUseStart", stUseStart
 
 
