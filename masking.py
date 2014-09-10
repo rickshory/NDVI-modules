@@ -74,7 +74,8 @@ class MyApp(wx.App):
         else:
             dtStart = wx.DateTime() # Uninitialized datetime
             boolStartIsValid = dtStart.ParseDateTime(stDTStart)
-            if boolStartIsValid:
+#            print "boolStartIsValid", boolStartIsValid
+            if boolStartIsValid != -1:
                 # remember the timestamp and write it back to the control in standard format
                 stDTStart = dtStart.Format('%Y-%m-%d %H:%M:%S')
                 txStartTime.SetValue(stDTStart)
@@ -88,7 +89,7 @@ class MyApp(wx.App):
         else:
             dtEnd = wx.DateTime() # Uninitialized datetime
             boolEndIsValid = dtEnd.ParseDateTime(stDTEnd)
-            if boolEndIsValid:
+            if boolEndIsValid != -1:
                 # remember the timestamp and write it back to the control in standard format
                 stDTEnd = dtEnd.Format('%Y-%m-%d %H:%M:%S')
                 txEndTime.SetValue(stDTEnd)
@@ -113,10 +114,10 @@ class MyApp(wx.App):
             stItem = ls.GetItemText(curItem)
             txChanText.SetValue(stItem)
 #            print "Current list item", ls.GetItemText(curItem)
-        if not boolStartIsValid:
+        if boolStartIsValid == -1:
             self.dsFrame.statusBar.SetStatusText('Start time is not valid')
             return
-        if not boolEndIsValid:
+        if boolEndIsValid == -1:
             self.dsFrame.statusBar.SetStatusText('End time is not valid')
             return
         self.dsFrame.statusBar.SetStatusText('Creating preview for ' + stItem)
@@ -131,6 +132,17 @@ class MyApp(wx.App):
         else:
             stUseStart = stDTStart
         print "stUseStart", stUseStart
+
+        # end is valid or we would not be to this point
+        if stDTEnd == '': # this distinguishes blank meaning "all after
+            # get the earliest timestamp for this channel
+            stSQLmax = """SELECT MAX(UTTimestamp) AS DataLast FROM Data 
+                WHERE Data.ChannelID = {iCh};
+                """.format(iCh=ChanID)
+            stUseEnd = scidb.curD.execute(stSQLmax).fetchone()['DataLast']
+        else:
+            stUseEnd = stDTEnd
+        print "stUseEnd", stUseEnd
 
 
         # SELECT MIN(UTTimestamp) AS DataFirst FROM Data WHERE Data.ChannelID = 2;
