@@ -143,6 +143,17 @@ class MyApp(wx.App):
         else:
             stUseEnd = stDTEnd
         print "stUseEnd", stUseEnd
+        stSQLMinMax = """SELECT MIN(CAST(Data.Value AS FLOAT)) AS MinData,
+            MAX(CAST(Data.Value AS FLOAT)) AS MaxData
+            FROM Data
+            WHERE Data.ChannelID = {iCh}
+            AND Data.UTTimestamp >= '{sDs}'
+            AND Data.UTTimestamp <= '{sDe}';
+            """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd)
+        MnMxRec = scidb.curD.execute(stSQLMinMax).fetchone()
+        fDataMin = MnMxRec['MinData']
+        fDataMax = MnMxRec['MaxData']
+        print "Min", fDataMin, "Max", fDataMax
 
         stSQL = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
             strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
