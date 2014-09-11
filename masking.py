@@ -134,8 +134,8 @@ class MyApp(wx.App):
         print "stUseStart", stUseStart
 
         # end is valid or we would not be to this point
-        if stDTEnd == '': # this distinguishes blank meaning "all after
-            # get the earliest timestamp for this channel
+        if stDTEnd == '': # this distinguishes blank meaning "all after"
+            # get the latest timestamp for this channel
             stSQLmax = """SELECT MAX(UTTimestamp) AS DataLast FROM Data 
                 WHERE Data.ChannelID = {iCh};
                 """.format(iCh=ChanID)
@@ -144,21 +144,31 @@ class MyApp(wx.App):
             stUseEnd = stDTEnd
         print "stUseEnd", stUseEnd
 
+        stSQL = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
+            strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
+            Data.Value
+            FROM Data
+            WHERE Data.ChannelID = {iCh} 
+            AND Data.UTTimestamp >= '{sDs}'
+            AND Data.UTTimestamp <= '{sDe}'
+            ORDER BY UTTime;
+            """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd)
+        ptRecs = scidb.curD.execute(stSQL).fetchall()
+        if len(ptRecs) == 0:
+#            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
+            return
+        pts = []
+        for ptRec in ptRecs:
+#                print ptRec['Secs'], ptRec['Value']
+            pts.append((ptRec['Secs'], ptRec['Value']))
 
-        # SELECT MIN(UTTimestamp) AS DataFirst FROM Data WHERE Data.ChannelID = 2;
-        # SELECT MAX(UTTimestamp) AS DataLast FROM Data WHERE Data.ChannelID = 2;
-        # SELECT UTTimestamp, Value FROM Data WHERE Data.ChannelID = 2 AND Data.UTTimestamp >= '2010-06-13 05:00:00' AND Data.UTTimestamp <= '2010-06-14 17:00:00' AND Data.Use = 1;
-        # SELECT UTTimestamp, Value FROM Data WHERE Data.ChannelID = 2 AND Data.UTTimestamp >= '2010-06-13 05:00:00' AND Data.UTTimestamp <= '2010-06-14 17:00:00' AND Data.Use = 0;
         # test of drawing one line
 #        self.UnBindAllMouseEvents()
         pvPnl.Canvas.InitAll()
         pvPnl.Canvas.Draw()
-        points = [(-100,-100),(100,100), (100,-100), (-100,100)]
-        pvPnl.Canvas.AddLine(points, LineWidth = 1, LineColor = 'BLUE')
+        pvPnl.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
         pvPnl.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
-
-        
 
 #----------------------------------------------------------------------
 # This class is used to provide an interface between a ComboCtrl and the
