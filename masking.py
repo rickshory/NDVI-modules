@@ -22,6 +22,20 @@ ID_END_TIME = wx.NewId()
 
 CkMaskingPreviewEventType = wx.NewEventType()
 EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
+
+# global floats for scaling canvas x/y data
+gXRange = 1.0 # defaults
+gYRange = 1.0
+
+def ScaleCanvas(center):
+    """
+    function that returns a scaling vector to scale y and x relative to each other
+    """
+    # center gets ignored in this case
+    # returns a vector that multiplies X and Y
+#    return [200,1] # rule of thumb
+    return [gYRange, gXRange] # try this
+
     
 class CkMaskingPreviewEvent(wx.PyCommandEvent):
     def __init__(self, evtType, id):
@@ -172,11 +186,16 @@ class MyApp(wx.App):
         for ptRec in ptRecs:
 #                print ptRec['Secs'], ptRec['Value']
             pts.append((ptRec['Secs'], ptRec['Value']))
+        gXRange = pts[-1][0] # last element in list, then 1st element in that tuple
+        print "gXRange", gXRange
+        gYRange = fDataMax - fDataMin
+        print "gYRange", gYRange
 
-        # test of drawing one line
+        # test of drawing lines
 #        self.UnBindAllMouseEvents()
         pvPnl.Canvas.InitAll()
         pvPnl.Canvas.Draw()
+        pvPnl.Canvas.SetProjectionFun(ScaleCanvas)
         pvPnl.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
         pvPnl.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
@@ -518,16 +537,6 @@ class maskingPanel(wx.Panel):
         print "Standardized DateTime", stStandardizedDateTime
         self.tcDTStart.SetValue(stStandardizedDateTime)
         event.Skip()
-        
-        
-    def ScalePreviewCanvas(self, center):
-        """
-        function that returns a scaling vector to scale y and x relative to each other
-
-        """
-        # center gets ignored in this case
-        # returns a vector that multiplies X and Y
-        return [20,1] # rule of thumb
 
     def InitPreviewPanel(self, pnl):
         pnl.SetBackgroundColour('#FFFFFF')
@@ -541,7 +550,7 @@ class maskingPanel(wx.Panel):
         gRow += 1
         # Add the FloatCanvas canvas
         pnl.NC = NavCanvas.NavCanvas(pnl,
-             ProjectionFun = self.ScalePreviewCanvas,
+             ProjectionFun = ScaleCanvas,
              Debug = 0,
              BackgroundColor = "WHITE")
         pnl.Canvas = pnl.NC.Canvas # reference the contained FloatCanvas
