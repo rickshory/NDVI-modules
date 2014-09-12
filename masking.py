@@ -13,6 +13,11 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
+try:
+    import numpy as N
+except ImportError:
+    raise ImportError("I could not import numpy")
+
 ID_MASKING_SETUP_PANEL = wx.NewId()
 ID_MASKING_PREVIEW_PANEL = wx.NewId()
 ID_CHAN_TEXT = wx.NewId()
@@ -23,6 +28,7 @@ ID_END_TIME = wx.NewId()
 CkMaskingPreviewEventType = wx.NewEventType()
 EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
 
+sFmt = '%Y-%m-%d %H:%M:%S'
 # global floats for scaling canvas x/y data
 gXRange = 1.0 # defaults
 gYRange = 1.0
@@ -34,9 +40,11 @@ def ScaleCanvas(center):
     # center gets ignored in this case
     # returns a vector that multiplies X and Y
 #    return [200,1] # rule of thumb
-    return [gYRange, gXRange] # try this
+#    s = gYRange, gXRange
+#    return s # try this
+    return N.array( (gYRange, gXRange), N.float)
 
-    
+
 class CkMaskingPreviewEvent(wx.PyCommandEvent):
     def __init__(self, evtType, id):
         wx.PyCommandEvent.__init__(self, evtType, id)
@@ -91,7 +99,7 @@ class MyApp(wx.App):
 #            print "boolStartIsValid", boolStartIsValid
             if boolStartIsValid != -1:
                 # remember the timestamp and write it back to the control in standard format
-                stDTStart = dtStart.Format('%Y-%m-%d %H:%M:%S')
+                stDTStart = dtStart.Format(sFmt)
                 txStartTime.SetValue(stDTStart)
 
         txEndTime = tpFrame.FindWindowById(ID_END_TIME)
@@ -105,7 +113,7 @@ class MyApp(wx.App):
             boolEndIsValid = dtEnd.ParseDateTime(stDTEnd)
             if boolEndIsValid != -1:
                 # remember the timestamp and write it back to the control in standard format
-                stDTEnd = dtEnd.Format('%Y-%m-%d %H:%M:%S')
+                stDTEnd = dtEnd.Format(sFmt)
                 txEndTime.SetValue(stDTEnd)
 
         # get ChannelID, if selected
@@ -168,6 +176,8 @@ class MyApp(wx.App):
         fDataMin = MnMxRec['MinData']
         fDataMax = MnMxRec['MaxData']
         print "Min", fDataMin, "Max", fDataMax
+        totSecs = (datetime.datetime.strptime(stUseEnd, sFmt)-datetime.datetime.strptime(stUseStart, sFmt)).total_seconds()
+        print 'totSecs', totSecs
 
         stSQL = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
             strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
