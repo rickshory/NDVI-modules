@@ -200,17 +200,14 @@ class MyApp(wx.App):
         for ptRec in ptRecs:
 #                print ptRec['Secs'], ptRec['Value']
             pts.append((ptRec['Secs'], ptRec['Val']))
-        gXRange = pts[-1][0] # last element in list, then 1st element in that tuple
-        print "gXRange", gXRange
-        gYRange = fDataMax - fDataMin
-        print "gYRange", gYRange
 
         # test of drawing lines
 #        self.UnBindAllMouseEvents()
         pvPnl.Canvas.InitAll()
         pvPnl.Canvas.Draw()
 #        pvPnl.Canvas.SetProjectionFun(ScaleCanvas)
-        pvPnl.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
+#        pvPnl.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
+        pvPnl.Canvas.AddPointSet(pts, Color = 'BLUE', Diameter = 1)
         pvPnl.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
 
