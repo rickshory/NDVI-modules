@@ -24,6 +24,7 @@ ID_CHAN_TEXT = wx.NewId()
 ID_CHAN_LIST = wx.NewId()
 ID_START_TIME = wx.NewId()
 ID_END_TIME = wx.NewId()
+ID_APPLY_BTN = wx.NewId()
 
 CkMaskingPreviewEventType = wx.NewEventType()
 EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
@@ -194,9 +195,6 @@ class MyApp(wx.App):
             ORDER BY UTTime;
             """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd, fSy=scaleY)
         ptRecs = scidb.curD.execute(stSQLUsed).fetchall()
-#        if len(ptRecs) == 0:
-##            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
-#            return
         ptsUsed = []
         for ptRec in ptRecs:
 #                print ptRec['Secs'], ptRec['Value']
@@ -213,9 +211,6 @@ class MyApp(wx.App):
             ORDER BY UTTime;
             """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd, fSy=scaleY)
         ptRecs = scidb.curD.execute(stSQLMasked).fetchall()
-#        if len(ptRecs) == 0:
-##            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
-#            return
         ptsMasked = []
         for ptRec in ptRecs:
 #                print ptRec['Secs'], ptRec['Value']
@@ -224,7 +219,7 @@ class MyApp(wx.App):
         print "Points used:", len(ptsUsed)
         print "Points masked:", len(ptsMasked)
         if iLU + iLM == 0:
-#            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
+            self.dsFrame.statusBar.SetStatusText('no data for this time range')
             return
             
 #        self.UnBindAllMouseEvents()
@@ -535,9 +530,9 @@ class maskingPanel(wx.Panel):
         self.tcDTEnd.SetValue('2010-06-14 5pm')
 
         gRow += 1
-        self.ckButton = wx.Button(pnl, -1, 'Test')
-        self.Bind(wx.EVT_BUTTON,  self.OnTest, id=self.ckButton.GetId())
-        stpSiz.Add(self.ckButton, pos=(gRow, 4), span=(1, 1), 
+        self.applyButton = wx.Button(pnl, ID_APPLY_BTN, 'Apply')
+        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
+        stpSiz.Add(self.applyButton, pos=(gRow, 4), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         pnl.SetSizer(stpSiz)
@@ -554,6 +549,9 @@ class maskingPanel(wx.Panel):
         print 'event reached OnEnterKey'
         print 'in OnEnterKey handler, eventID', event.GetId()
 
+    def OnApplyBtn(self, event):
+        print 'event reached button class of Apply button'
+        event.Skip()
 
     def OnTest(self, event):
         print 'event reached button class of OnText button'
