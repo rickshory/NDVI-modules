@@ -529,11 +529,21 @@ class maskingPanel(wx.Panel):
         # for testing
         self.tcDTEnd.SetValue('2010-06-14 5pm')
 
+        iRBLeftBorderWd = 30
         gRow += 1
+        self.rbMask = wx.RadioButton(self, label='Mask', style=wx.RB_GROUP)
+        stpSiz.Add(self.rbMask, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbMask.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
+
         self.applyButton = wx.Button(pnl, ID_APPLY_BTN, 'Apply')
         self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
         stpSiz.Add(self.applyButton, pos=(gRow, 4), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        self.rbUnmask = wx.RadioButton(self, label='Unmask')
+        stpSiz.Add(self.rbUnmask, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbUnmask.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
@@ -613,7 +623,18 @@ class maskingPanel(wx.Panel):
 #    def onCbxTasks(self, event):
 #        print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
 
-
+    def giveRBInfo(self, event):
+        """
+        Give the user some information about this option
+        """
+        stMsg = ''
+        if self.rbMask.GetValue():
+            stMsg = ' Data will be masked.'
+        if self.rbUnmask.GetValue():
+            stMsg = ' Data will be unmasked.'
+        # maybe implement message in status bar
+        print stMsg
+#        self.tcOutputOptInfo.SetValue(stMsg)
 
 class maskingFrame(wx.Frame):
     def __init__(self, parent, id, title):
