@@ -194,21 +194,48 @@ class MyApp(wx.App):
             ORDER BY UTTime;
             """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd, fSy=scaleY)
         ptRecs = scidb.curD.execute(stSQLUsed).fetchall()
-        if len(ptRecs) == 0:
-#            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
-            return
+#        if len(ptRecs) == 0:
+##            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
+#            return
         ptsUsed = []
         for ptRec in ptRecs:
 #                print ptRec['Secs'], ptRec['Value']
             ptsUsed.append((ptRec['Secs'], ptRec['Val']))
-
-        # test of drawing lines
+        iLU = len(ptsUsed)
+        stSQLMasked = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
+            strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
+            Data.Value * {fSy} AS Val
+            FROM Data
+            WHERE Data.ChannelID = {iCh} 
+            AND Data.UTTimestamp >= '{sDs}'
+            AND Data.UTTimestamp <= '{sDe}'
+            AND Data.Use = 0
+            ORDER BY UTTime;
+            """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd, fSy=scaleY)
+        ptRecs = scidb.curD.execute(stSQLMasked).fetchall()
+#        if len(ptRecs) == 0:
+##            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
+#            return
+        ptsMasked = []
+        for ptRec in ptRecs:
+#                print ptRec['Secs'], ptRec['Value']
+            ptsMasked.append((ptRec['Secs'], ptRec['Val']))
+        iLM = len(ptsMasked)
+        print "Points used:", len(ptsUsed)
+        print "Points masked:", len(ptsMasked)
+        if iLU + iLM == 0:
+#            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
+            return
+            
 #        self.UnBindAllMouseEvents()
         pvPnl.Canvas.InitAll()
         pvPnl.Canvas.Draw()
 #        pvPnl.Canvas.SetProjectionFun(ScaleCanvas)
 #        pvPnl.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
-        pvPnl.Canvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
+        if iLU > 0:
+            pvPnl.Canvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
+        if iLM > 0:
+            pvPnl.Canvas.AddPointSet(ptsMasked, Color = 'RED', Diameter = 1)
         pvPnl.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
 
