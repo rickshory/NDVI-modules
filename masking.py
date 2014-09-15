@@ -181,7 +181,7 @@ class MyApp(wx.App):
         if fDataMax == fDataMin:
             scaleY = 0
         else:
-            scaleY = totSecs / (fDataMax - fDataMin)
+            scaleY = (totSecs * 0.618) / (fDataMax - fDataMin)
 
         stSQL = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
             strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
