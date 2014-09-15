@@ -25,6 +25,8 @@ ID_CHAN_LIST = wx.NewId()
 ID_START_TIME = wx.NewId()
 ID_END_TIME = wx.NewId()
 ID_APPLY_BTN = wx.NewId()
+ID_RB_MASK = wx.NewId()
+ID_RB_UNMASK = wx.NewId()
 
 CkMaskingPreviewEventType = wx.NewEventType()
 EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
@@ -528,22 +530,28 @@ class maskingPanel(wx.Panel):
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
         # for testing
         self.tcDTEnd.SetValue('2010-06-14 5pm')
+        
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
         iRBLeftBorderWd = 30
         gRow += 1
-        self.rbMask = wx.RadioButton(self, label='Mask', style=wx.RB_GROUP)
-        stpSiz.Add(self.rbMask, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbMask = wx.RadioButton(self, ID_RB_MASK, label='Mask', style=wx.RB_GROUP)
+        stpSiz.Add(self.rbMask, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbMask.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
-        self.applyButton = wx.Button(pnl, ID_APPLY_BTN, 'Apply')
-        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
-        stpSiz.Add(self.applyButton, pos=(gRow, 4), span=(1, 1), 
-            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        gRow += 1
+        self.rbUnmask = wx.RadioButton(self, ID_RB_UNMASK, label='Unmask')
+        stpSiz.Add(self.rbUnmask, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbUnmask.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
-        self.rbUnmask = wx.RadioButton(self, label='Unmask')
-        stpSiz.Add(self.rbUnmask, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
-        self.rbUnmask.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
+        self.applyButton = wx.Button(pnl, ID_APPLY_BTN, 'Apply')
+        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
+        stpSiz.Add(self.applyButton, pos=(gRow, 3), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        self.giveRBInfo(-1) # have to explictly call this 1st time; -1 is dummy value for event
 
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
@@ -635,6 +643,7 @@ class maskingPanel(wx.Panel):
         # maybe implement message in status bar
         print stMsg
 #        self.tcOutputOptInfo.SetValue(stMsg)
+        return
 
 class maskingFrame(wx.Frame):
     def __init__(self, parent, id, title):
