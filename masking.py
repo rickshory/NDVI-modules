@@ -183,23 +183,24 @@ class MyApp(wx.App):
         else:
             scaleY = (totSecs * 0.618) / (fDataMax - fDataMin)
 
-        stSQL = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
+        stSQLUsed = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
             strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
             Data.Value * {fSy} AS Val
             FROM Data
             WHERE Data.ChannelID = {iCh} 
             AND Data.UTTimestamp >= '{sDs}'
             AND Data.UTTimestamp <= '{sDe}'
+            AND Data.Use = 1
             ORDER BY UTTime;
             """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd, fSy=scaleY)
-        ptRecs = scidb.curD.execute(stSQL).fetchall()
+        ptRecs = scidb.curD.execute(stSQLUsed).fetchall()
         if len(ptRecs) == 0:
 #            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
             return
-        pts = []
+        ptsUsed = []
         for ptRec in ptRecs:
 #                print ptRec['Secs'], ptRec['Value']
-            pts.append((ptRec['Secs'], ptRec['Val']))
+            ptsUsed.append((ptRec['Secs'], ptRec['Val']))
 
         # test of drawing lines
 #        self.UnBindAllMouseEvents()
@@ -207,7 +208,7 @@ class MyApp(wx.App):
         pvPnl.Canvas.Draw()
 #        pvPnl.Canvas.SetProjectionFun(ScaleCanvas)
 #        pvPnl.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
-        pvPnl.Canvas.AddPointSet(pts, Color = 'BLUE', Diameter = 1)
+        pvPnl.Canvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
         pvPnl.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
 
