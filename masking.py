@@ -536,12 +536,12 @@ class maskingPanel(wx.Panel):
 
         iRBLeftBorderWd = 30
         gRow += 1
-        self.rbMask = wx.RadioButton(self, ID_RB_MASK, label='Mask', style=wx.RB_GROUP)
+        self.rbMask = wx.RadioButton(pnl, ID_RB_MASK, label='Mask', style=wx.RB_GROUP)
         stpSiz.Add(self.rbMask, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbMask.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
-        self.rbUnmask = wx.RadioButton(self, ID_RB_UNMASK, label='Unmask')
+        self.rbUnmask = wx.RadioButton(pnl, ID_RB_UNMASK, label='Unmask')
         stpSiz.Add(self.rbUnmask, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbUnmask.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
