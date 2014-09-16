@@ -66,8 +66,15 @@ class MyApp(wx.App):
         self.SetTopWindow(self.dsFrame)
         self.dsFrame.Show()
         self.Bind(EVT_CK_MASKING_PREVIEW, self.CkMaskingPreview)
+        self.Bind(wx.EVT_BUTTON, self.OnApplyMaskButton)
         self.dsFrame.statusBar.SetStatusText('Select Data Channel, and Start and End timestamps')
         return True
+
+    def OnApplyMaskButton(self, event):
+        event_id = event.GetId()
+        if event_id == ID_APPLY_BTN: #
+            print "ID_APPLY_BTN Event reached OnApplyMaskButton at App level"
+        
 
     def CkMaskingPreview(self, event):
         # This is the general purpose function that tests whether
@@ -87,6 +94,10 @@ class MyApp(wx.App):
 
         if event_id == ID_CHAN_LIST: # does not hit here
             print "ID_CHAN_LIST Event reached CkMaskingPreview"
+
+        if event_id == ID_APPLY_BTN: # does not hit here
+            print "ID_APPLY_BTN Event reached CkMaskingPreview at App level"
+        
 
         tpFrame = self.GetTopWindow()
         # validate timestamps
