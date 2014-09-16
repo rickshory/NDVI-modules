@@ -236,6 +236,64 @@ class MyApp(wx.App):
         pvPnl.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
 
+    def ShowMaskingPreview(self):
+        """
+        Shows the points (red=masked, blue=unmasked) for the channel for the time frame
+        selected. Requires that self.ChanID, self.stUseStart, self.stUseEnd, and self.scaleY
+        be validated before entering this function. Also, should have previously assigned
+        self.statusBar = self.dsFrame.statusBar
+        self.Canvas = pvPnl.Canvas
+        """
+        
+        stSQLUsed = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
+            strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
+            Data.Value * {fSy} AS Val
+            FROM Data
+            WHERE Data.ChannelID = {iCh} 
+            AND Data.UTTimestamp >= '{sDs}'
+            AND Data.UTTimestamp <= '{sDe}'
+            AND Data.Use = 1
+            ORDER BY UTTime;
+            """.format(iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd, fSy=self.scaleY)
+        ptRecs = scidb.curD.execute(stSQLUsed).fetchall()
+        ptsUsed = []
+        for ptRec in ptRecs:
+#                print ptRec['Secs'], ptRec['Value']
+            ptsUsed.append((ptRec['Secs'], ptRec['Val']))
+        iLU = len(ptsUsed)
+        stSQLMasked = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
+            strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
+            Data.Value * {fSy} AS Val
+            FROM Data
+            WHERE Data.ChannelID = {iCh} 
+            AND Data.UTTimestamp >= '{sDs}'
+            AND Data.UTTimestamp <= '{sDe}'
+            AND Data.Use = 0
+            ORDER BY UTTime;
+            """.format(iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd, fSy=self.scaleY)
+        ptRecs = scidb.curD.execute(stSQLMasked).fetchall()
+        ptsMasked = []
+        for ptRec in ptRecs:
+#                print ptRec['Secs'], ptRec['Value']
+            ptsMasked.append((ptRec['Secs'], ptRec['Val']))
+        iLM = len(ptsMasked)
+        print "Points used:", len(ptsUsed)
+        print "Points masked:", len(ptsMasked)
+        if iLU + iLM == 0:
+            self.statusBar.SetStatusText('no data for this time range')
+            return
+            
+#        self.UnBindAllMouseEvents()
+        self.Canvas.InitAll()
+        self.Canvas.Draw()
+        if iLU > 0:
+            self.Canvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
+        if iLM > 0:
+            self.Canvas.AddPointSet(ptsMasked, Color = 'RED', Diameter = 1)
+        self.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
+        # then the "Zoom To Fit" button correctly expands it to the whole space
+        
+
 #----------------------------------------------------------------------
 # This class is used to provide an interface between a ComboCtrl and the
 # ListCtrl that is used as the popoup for the combo widget.
