@@ -534,18 +534,21 @@ class maskingPanel(wx.Panel):
         gRow += 1
         stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
-        iRBLeftBorderWd = 30
         gRow += 1
+        mrbVertSizer = wx.BoxSizer(wx.VERTICAL)
+        
         self.rbMask = wx.RadioButton(pnl, ID_RB_MASK, label='Mask', style=wx.RB_GROUP)
-        stpSiz.Add(self.rbMask, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        mrbVertSizer.Add(self.rbMask, proportion=0, flag=wx.ALIGN_LEFT|wx.LEFT)
         self.rbMask.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
-        gRow += 1
         self.rbUnmask = wx.RadioButton(pnl, ID_RB_UNMASK, label='Unmask')
-        stpSiz.Add(self.rbUnmask, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        mrbVertSizer.Add(self.rbUnmask, proportion=0, flag=wx.ALIGN_LEFT|wx.LEFT)
         self.rbUnmask.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
-        gRow += 1
+        iRBLeftBorderWd = 30
+        stpSiz.Add(mrbVertSizer, pos=(gRow, 0), span=(1, 2), 
+            flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+
         self.applyButton = wx.Button(pnl, ID_APPLY_BTN, 'Apply')
         self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
         stpSiz.Add(self.applyButton, pos=(gRow, 3), span=(1, 1), 
