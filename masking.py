@@ -186,6 +186,16 @@ class MyApp(wx.App):
         else:
             scaleY = (totSecs * 0.618) / (fDataMax - fDataMin)
 
+        self.ChanID = ChanID
+        self.stUseStart = stUseStart
+        self.stUseEnd = stUseEnd
+        self.scaleY = scaleY
+        self.statusBar = self.dsFrame.statusBar
+        self.Canvas = pvPnl.Canvas
+
+        self.ShowMaskingPreview()
+        return
+
         stSQLUsed = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
             strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
             Data.Value * {fSy} AS Val
