@@ -78,7 +78,12 @@ class MyApp(wx.App):
             if not self.PreviewControlsValid():
                 return
             else:
-                iSense = 0
+                tpFrame = self.GetTopWindow()
+                radioButtonMask = tpFrame.FindWindowById(ID_RB_MASK)
+                if radioButtonMask.GetValue():
+                    iSense = 0
+                else:
+                    iSense = 1
 
                 stSQLMask = """UPDATE Data SET Use = {iS}
                 WHERE Data.ChannelID = {iCh}
