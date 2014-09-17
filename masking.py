@@ -32,12 +32,6 @@ CkMaskingPreviewEventType = wx.NewEventType()
 EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
 
 sFmt = '%Y-%m-%d %H:%M:%S'
-ChanID = 0 # after testing, 0 means invalid
-StartTimeValid = 0 # after testing, -1 means invalid
-EndTimeValid = 0 # after testing, -1 means invalid
-# global floats for scaling canvas x/y data
-gXRange = 1.0 # defaults
-gYRange = 1.0
 
 def ScaleCanvas(center):
     """
@@ -68,6 +62,9 @@ class MyApp(wx.App):
         self.dsFrame = maskingFrame(None, wx.ID_ANY, 'Data Masking')
         self.SetTopWindow(self.dsFrame)
         self.dsFrame.Show()
+        tpFrame = self.GetTopWindow()
+        pvPnl = tpFrame.FindWindowById(ID_MASKING_PREVIEW_PANEL)
+        self.pvCanvas = pvPnl.Canvas
         self.Bind(EVT_CK_MASKING_PREVIEW, self.CkMaskingPreview)
         self.Bind(wx.EVT_BUTTON, self.OnApplyMaskButton)
         self.statBar = self.dsFrame.statusBar
@@ -78,15 +75,10 @@ class MyApp(wx.App):
         event_id = event.GetId()
         if event_id == ID_APPLY_BTN: #
             print "ID_APPLY_BTN Event reached OnApplyMaskButton at App level"
-        if ChanID == 0:
-            self.statBar.SetStatusText('Select a Data Channel for a masking preview')
-            return
-        if StartTimeValid == -1:
-            self.statBar.SetStatusText('Start time is not valid')
-            return
-        if EndTimeValid == -1:
-            self.statBar.SetStatusText('End time is not valid')
-            return
+        if self.PreviewControlsValid():
+            print "data valid for preview, OK to Mask/Unmask"
+        else:
+            print "preview data not valid, skip Mask/Unmask"
 
 
     def CkMaskingPreview(self, event):
@@ -111,38 +103,22 @@ class MyApp(wx.App):
         if event_id == ID_APPLY_BTN: # does not hit here
             print "ID_APPLY_BTN Event reached CkMaskingPreview at App level"
         
+        if self.PreviewControlsValid():
+            self.dsFrame.statusBar.SetStatusText('Creating preview for ' + self.stItem)
+            self.ShowMaskingPreview()
 
+    def PreviewControlsValid(self):
+        """
+         This function tests whether the variables needed for a preview are valid
+        These are ChannelID, and Start and End times
+        If they all are, returns True, otherwise False
+        Any error messages appear in the statusbar
+        If all are valid, these class variables are set:
+        - ChanID, stUseStart, and stUseEnd
+        - scaleY, the scaling factor for Y data
+        - stItem, the verbose information about the channel
+        """
         tpFrame = self.GetTopWindow()
-        # validate timestamps
-        txStartTime = tpFrame.FindWindowById(ID_START_TIME)
-        stDTStart = txStartTime.GetValue()
-        if stDTStart.strip() == '':
-            StartTimeValid = 1 # empty timestamp is valid, meaning 'everything before'
-            stDTStart = '' # distinguish from explict date
-            txStartTime.SetValue(stDTStart)
-        else:
-            dtStart = wx.DateTime() # Uninitialized datetime
-            StartTimeValid = dtStart.ParseDateTime(stDTStart)
-#            print "StartTimeValid", StartTimeValid
-            if StartTimeValid != -1:
-                # remember the timestamp and write it back to the control in standard format
-                stDTStart = dtStart.Format(sFmt)
-                txStartTime.SetValue(stDTStart)
-
-        txEndTime = tpFrame.FindWindowById(ID_END_TIME)
-        stDTEnd = txEndTime.GetValue()
-        if stDTEnd.strip() == '':
-            EndTimeValid = True # empty timestamp is valid, meaning 'everything after
-            stDTEnd = '' # distinguish from explict date
-            txEndTime.SetValue(stDTEnd)
-        else:
-            dtEnd = wx.DateTime() # Uninitialized datetime
-            EndTimeValid = dtEnd.ParseDateTime(stDTEnd)
-            if EndTimeValid != -1:
-                # remember the timestamp and write it back to the control in standard format
-                stDTEnd = dtEnd.Format(sFmt)
-                txEndTime.SetValue(stDTEnd)
-
         # get ChannelID, if selected
         txChanText = tpFrame.FindWindowById(ID_CHAN_TEXT)
         msPnl = tpFrame.FindWindowById(ID_MASKING_SETUP_PANEL)
@@ -151,83 +127,91 @@ class MyApp(wx.App):
         # to retrieve the hidden key number stored in the popup list row (e.g. a DB record ID):
         curItem = pUp.curitem
         if curItem == -1:
-            ChanID = 0 # something to flag invalid
-        else:
-            ChanID = ls.GetItemData(curItem)
-        if ChanID == 0:
+            self.ChanID = 0 # something to flag invalid
             self.dsFrame.statusBar.SetStatusText('Select a Data Channel for a masking preview')
-            return
+            self.stItem = ''
+            return False
         else:
-            self.dsFrame.statusBar.SetStatusText('Data Channel ' + str(ChanID) + ' selected')
+            self.ChanID = ls.GetItemData(curItem)
+            self.dsFrame.statusBar.SetStatusText('Data Channel ' + str(self.ChanID) + ' selected')
             # the selection may happen without filling the textbox; explicitly fill textbox
-            stItem = ls.GetItemText(curItem)
-            txChanText.SetValue(stItem)
+            self.stItem = ls.GetItemText(curItem)
+            txChanText.SetValue(self.stItem)
 #            print "Current list item", ls.GetItemText(curItem)
-        if StartTimeValid == -1:
-            self.dsFrame.statusBar.SetStatusText('Start time is not valid')
-            return
-        if EndTimeValid == -1:
-            self.dsFrame.statusBar.SetStatusText('End time is not valid')
-            return
 
-        self.dsFrame.statusBar.SetStatusText('Creating preview for ' + stItem)
-        # start is valid or we would not be to this point
-        if stDTStart == '': # this distinguishes blank meaning "all before"
+        # validate timestamps
+        txStartTime = tpFrame.FindWindowById(ID_START_TIME)
+        stDTStart = txStartTime.GetValue()
+        if stDTStart.strip() == '': # empty timestamp is valid, meaning 'everything before
+            txStartTime.SetValue('') # blank the control, for simplicity
             # get the earliest timestamp for this channel
             stSQLmin = """SELECT MIN(UTTimestamp) AS DataFirst FROM Data 
                 WHERE Data.ChannelID = {iCh};
-                """.format(iCh=ChanID)
-            stUseStart = scidb.curD.execute(stSQLmin).fetchone()['DataFirst']
-        else:
-            stUseStart = stDTStart
-        print "stUseStart", stUseStart
+                """.format(iCh=self.ChanID)
+            self.stUseStart = scidb.curD.execute(stSQLmin).fetchone()['DataFirst']
+        else: # test the control for valid date/time
+            dtStart = wx.DateTime() # Uninitialized datetime
+            StartTimeValid = dtStart.ParseDateTime(stDTStart)
+#            print "StartTimeValid", StartTimeValid
+            if StartTimeValid == -1:
+                self.dsFrame.statusBar.SetStatusText('Start time is not valid')
+                self.stUseStart = ''
+                return False
+            else:
+                # remember the timestamp and write it back to the control in standard format
+                self.stUseStart = dtStart.Format(sFmt)
+                txStartTime.SetValue(self.stUseStart)
 
-        # end is valid or we would not be to this point
-        if stDTEnd == '': # this distinguishes blank meaning "all after"
+        txEndTime = tpFrame.FindWindowById(ID_END_TIME)
+        stDTEnd = txEndTime.GetValue()
+        if stDTEnd.strip() == '': # empty timestamp is valid, meaning 'everything after
+            txEndTime.SetValue('') # blank the control, for simplicity
             # get the latest timestamp for this channel
             stSQLmax = """SELECT MAX(UTTimestamp) AS DataLast FROM Data 
                 WHERE Data.ChannelID = {iCh};
-                """.format(iCh=ChanID)
-            stUseEnd = scidb.curD.execute(stSQLmax).fetchone()['DataLast']
-        else:
-            stUseEnd = stDTEnd
-        print "stUseEnd", stUseEnd
+                """.format(iCh=self.ChanID)
+            self.stUseEnd = scidb.curD.execute(stSQLmax).fetchone()['DataLast']
+        else: # test the control for valid date/time
+            dtEnd = wx.DateTime() # Uninitialized datetime
+            EndTimeValid = dtEnd.ParseDateTime(stDTEnd)
+            if EndTimeValid == -1:
+                self.dsFrame.statusBar.SetStatusText('End time is not valid')
+                self.stUseEnd = ''
+                return False
+            else:
+                # remember the timestamp and write it back to the control in standard format
+                self.stUseEnd = dtEnd.Format(sFmt)
+                txEndTime.SetValue(self.stUseEnd)
+
+        self.dsFrame.statusBar.SetStatusText('Getting data range for ' + self.stItem)
         stSQLMinMax = """SELECT MIN(CAST(Data.Value AS FLOAT)) AS MinData,
             MAX(CAST(Data.Value AS FLOAT)) AS MaxData
             FROM Data
             WHERE Data.ChannelID = {iCh}
             AND Data.UTTimestamp >= '{sDs}'
             AND Data.UTTimestamp <= '{sDe}';
-            """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd)
+            """.format(iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd)
         MnMxRec = scidb.curD.execute(stSQLMinMax).fetchone()
         fDataMin = MnMxRec['MinData']
         fDataMax = MnMxRec['MaxData']
         print "Min", fDataMin, "Max", fDataMax
-        totSecs = (datetime.datetime.strptime(stUseEnd, sFmt)-datetime.datetime.strptime(stUseStart, sFmt)).total_seconds()
+        dStart = datetime.datetime.strptime(self.stUseStart, sFmt)
+        dEnd = datetime.datetime.strptime(self.stUseEnd, sFmt)
+        totSecs = (dEnd-dStart).total_seconds()
         print 'totSecs', totSecs
         if fDataMax == fDataMin:
-            scaleY = 0
+            self.scaleY = 0
         else:
-            scaleY = (totSecs * 0.618) / (fDataMax - fDataMin)
-
-        pvPnl = tpFrame.FindWindowById(ID_MASKING_PREVIEW_PANEL)
-
-        self.ChanID = ChanID
-        self.stUseStart = stUseStart
-        self.stUseEnd = stUseEnd
-        self.scaleY = scaleY
-        self.Canvas = pvPnl.Canvas
-
-        self.ShowMaskingPreview()
-        return
-
+            self.scaleY = (totSecs * 0.618) / (fDataMax - fDataMin)
+        return True
+        
     def ShowMaskingPreview(self):
         """
         Shows the points (red=masked, blue=unmasked) for the channel for the time frame
         selected. Requires that self.ChanID, self.stUseStart, self.stUseEnd, and self.scaleY
         be validated before entering this function. Also, should have previously assigned
         self.statBar = self.dsFrame.statusBar
-        self.Canvas = pvPnl.Canvas
+        self.pvCanvas = pvPnl.Canvas
         """
         
         stSQLUsed = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
@@ -269,13 +253,14 @@ class MyApp(wx.App):
             return
             
 #        self.UnBindAllMouseEvents()
-        self.Canvas.InitAll()
-        self.Canvas.Draw()
+# self.pvCanvas
+        self.pvCanvas.InitAll()
+        self.pvCanvas.Draw()
         if iLU > 0:
-            self.Canvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
+            self.pvCanvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
         if iLM > 0:
-            self.Canvas.AddPointSet(ptsMasked, Color = 'RED', Diameter = 1)
-        self.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
+            self.pvCanvas.AddPointSet(ptsMasked, Color = 'RED', Diameter = 1)
+        self.pvCanvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
         # then the "Zoom To Fit" button correctly expands it to the whole space
         
 
@@ -455,7 +440,7 @@ class ListCtrlComboPopup(wx.ListCtrl, wx.combo.ComboPopup):
     # is shown for the first time. It is more efficient, but note that
     # it is often more convenient to have the control created
     # immediately.
-    # Default returns false.
+    # Default returns False.
     def LazyCreate(self):
         return wx.combo.ComboPopup.LazyCreate(self)
 
