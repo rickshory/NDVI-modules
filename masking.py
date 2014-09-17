@@ -32,7 +32,7 @@ CkMaskingPreviewEventType = wx.NewEventType()
 EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
 
 sFmt = '%Y-%m-%d %H:%M:%S'
-ChanID = 0
+ChanID = 0 # after testing, 0 means invalid
 StartTimeValid = 0 # after testing, -1 means invalid
 EndTimeValid = 0 # after testing, -1 means invalid
 # global floats for scaling canvas x/y data
@@ -70,14 +70,24 @@ class MyApp(wx.App):
         self.dsFrame.Show()
         self.Bind(EVT_CK_MASKING_PREVIEW, self.CkMaskingPreview)
         self.Bind(wx.EVT_BUTTON, self.OnApplyMaskButton)
-        self.dsFrame.statusBar.SetStatusText('Select Data Channel, and Start and End timestamps')
+        self.statBar = self.dsFrame.statusBar
+        self.statBar.SetStatusText('Select Data Channel, and Start and End timestamps')
         return True
 
     def OnApplyMaskButton(self, event):
         event_id = event.GetId()
         if event_id == ID_APPLY_BTN: #
             print "ID_APPLY_BTN Event reached OnApplyMaskButton at App level"
-        
+        if ChanID == 0:
+            self.statBar.SetStatusText('Select a Data Channel for a masking preview')
+            return
+        if StartTimeValid == -1:
+            self.statBar.SetStatusText('Start time is not valid')
+            return
+        if EndTimeValid == -1:
+            self.statBar.SetStatusText('End time is not valid')
+            return
+
 
     def CkMaskingPreview(self, event):
         # This is the general purpose function that tests whether
@@ -206,7 +216,6 @@ class MyApp(wx.App):
         self.stUseStart = stUseStart
         self.stUseEnd = stUseEnd
         self.scaleY = scaleY
-        self.statusBar = self.dsFrame.statusBar
         self.Canvas = pvPnl.Canvas
 
         self.ShowMaskingPreview()
@@ -217,7 +226,7 @@ class MyApp(wx.App):
         Shows the points (red=masked, blue=unmasked) for the channel for the time frame
         selected. Requires that self.ChanID, self.stUseStart, self.stUseEnd, and self.scaleY
         be validated before entering this function. Also, should have previously assigned
-        self.statusBar = self.dsFrame.statusBar
+        self.statBar = self.dsFrame.statusBar
         self.Canvas = pvPnl.Canvas
         """
         
@@ -256,7 +265,7 @@ class MyApp(wx.App):
         print "Points used:", len(ptsUsed)
         print "Points masked:", len(ptsMasked)
         if iLU + iLM == 0:
-            self.statusBar.SetStatusText('no data for this time range')
+            self.statBar.SetStatusText('no data for this time range')
             return
             
 #        self.UnBindAllMouseEvents()
