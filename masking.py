@@ -75,11 +75,20 @@ class MyApp(wx.App):
         event_id = event.GetId()
         if event_id == ID_APPLY_BTN: #
             print "ID_APPLY_BTN Event reached OnApplyMaskButton at App level"
-        if self.PreviewControlsValid():
-            print "data valid for preview, OK to Mask/Unmask"
-        else:
-            print "preview data not valid, skip Mask/Unmask"
+            if not self.PreviewControlsValid():
+                return
+            else:
+                iSense = 0
 
+                stSQLMask = """UPDATE Data SET Use = {iS}
+                WHERE Data.ChannelID = {iCh}
+                AND Data.UTTimestamp >= '{sDs}'
+                AND Data.UTTimestamp <= '{sDe}'
+                """.format(iS=iSense, iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd)
+
+                scidb.curD.execute(stSQLMask)
+                self.statBar.SetStatusText('Showing mask results')
+                self.ShowMaskingPreview()
 
     def CkMaskingPreview(self, event):
         # This is the general purpose function that tests whether
