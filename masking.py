@@ -32,6 +32,9 @@ CkMaskingPreviewEventType = wx.NewEventType()
 EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
 
 sFmt = '%Y-%m-%d %H:%M:%S'
+ChanID = 0
+StartTimeValid = 0 # after testing, -1 means invalid
+EndTimeValid = 0 # after testing, -1 means invalid
 # global floats for scaling canvas x/y data
 gXRange = 1.0 # defaults
 gYRange = 1.0
@@ -104,14 +107,14 @@ class MyApp(wx.App):
         txStartTime = tpFrame.FindWindowById(ID_START_TIME)
         stDTStart = txStartTime.GetValue()
         if stDTStart.strip() == '':
-            boolStartIsValid = True # empty is valid, meaning 'everything before'
+            StartTimeValid = 1 # empty timestamp is valid, meaning 'everything before'
             stDTStart = '' # distinguish from explict date
             txStartTime.SetValue(stDTStart)
         else:
             dtStart = wx.DateTime() # Uninitialized datetime
-            boolStartIsValid = dtStart.ParseDateTime(stDTStart)
-#            print "boolStartIsValid", boolStartIsValid
-            if boolStartIsValid != -1:
+            StartTimeValid = dtStart.ParseDateTime(stDTStart)
+#            print "StartTimeValid", StartTimeValid
+            if StartTimeValid != -1:
                 # remember the timestamp and write it back to the control in standard format
                 stDTStart = dtStart.Format(sFmt)
                 txStartTime.SetValue(stDTStart)
@@ -119,13 +122,13 @@ class MyApp(wx.App):
         txEndTime = tpFrame.FindWindowById(ID_END_TIME)
         stDTEnd = txEndTime.GetValue()
         if stDTEnd.strip() == '':
-            boolEndIsValid = True # empty is valid, meaning 'everything after
+            EndTimeValid = True # empty timestamp is valid, meaning 'everything after
             stDTEnd = '' # distinguish from explict date
             txEndTime.SetValue(stDTEnd)
         else:
             dtEnd = wx.DateTime() # Uninitialized datetime
-            boolEndIsValid = dtEnd.ParseDateTime(stDTEnd)
-            if boolEndIsValid != -1:
+            EndTimeValid = dtEnd.ParseDateTime(stDTEnd)
+            if EndTimeValid != -1:
                 # remember the timestamp and write it back to the control in standard format
                 stDTEnd = dtEnd.Format(sFmt)
                 txEndTime.SetValue(stDTEnd)
@@ -150,14 +153,14 @@ class MyApp(wx.App):
             stItem = ls.GetItemText(curItem)
             txChanText.SetValue(stItem)
 #            print "Current list item", ls.GetItemText(curItem)
-        if boolStartIsValid == -1:
+        if StartTimeValid == -1:
             self.dsFrame.statusBar.SetStatusText('Start time is not valid')
             return
-        if boolEndIsValid == -1:
+        if EndTimeValid == -1:
             self.dsFrame.statusBar.SetStatusText('End time is not valid')
             return
+
         self.dsFrame.statusBar.SetStatusText('Creating preview for ' + stItem)
-        pvPnl = tpFrame.FindWindowById(ID_MASKING_PREVIEW_PANEL)
         # start is valid or we would not be to this point
         if stDTStart == '': # this distinguishes blank meaning "all before"
             # get the earliest timestamp for this channel
@@ -197,6 +200,8 @@ class MyApp(wx.App):
         else:
             scaleY = (totSecs * 0.618) / (fDataMax - fDataMin)
 
+        pvPnl = tpFrame.FindWindowById(ID_MASKING_PREVIEW_PANEL)
+
         self.ChanID = ChanID
         self.stUseStart = stUseStart
         self.stUseEnd = stUseEnd
@@ -206,56 +211,6 @@ class MyApp(wx.App):
 
         self.ShowMaskingPreview()
         return
-
-        stSQLUsed = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
-            strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
-            Data.Value * {fSy} AS Val
-            FROM Data
-            WHERE Data.ChannelID = {iCh} 
-            AND Data.UTTimestamp >= '{sDs}'
-            AND Data.UTTimestamp <= '{sDe}'
-            AND Data.Use = 1
-            ORDER BY UTTime;
-            """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd, fSy=scaleY)
-        ptRecs = scidb.curD.execute(stSQLUsed).fetchall()
-        ptsUsed = []
-        for ptRec in ptRecs:
-#                print ptRec['Secs'], ptRec['Value']
-            ptsUsed.append((ptRec['Secs'], ptRec['Val']))
-        iLU = len(ptsUsed)
-        stSQLMasked = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
-            strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
-            Data.Value * {fSy} AS Val
-            FROM Data
-            WHERE Data.ChannelID = {iCh} 
-            AND Data.UTTimestamp >= '{sDs}'
-            AND Data.UTTimestamp <= '{sDe}'
-            AND Data.Use = 0
-            ORDER BY UTTime;
-            """.format(iCh=ChanID, sDs=stUseStart, sDe=stUseEnd, fSy=scaleY)
-        ptRecs = scidb.curD.execute(stSQLMasked).fetchall()
-        ptsMasked = []
-        for ptRec in ptRecs:
-#                print ptRec['Secs'], ptRec['Value']
-            ptsMasked.append((ptRec['Secs'], ptRec['Val']))
-        iLM = len(ptsMasked)
-        print "Points used:", len(ptsUsed)
-        print "Points masked:", len(ptsMasked)
-        if iLU + iLM == 0:
-            self.dsFrame.statusBar.SetStatusText('no data for this time range')
-            return
-            
-#        self.UnBindAllMouseEvents()
-        pvPnl.Canvas.InitAll()
-        pvPnl.Canvas.Draw()
-#        pvPnl.Canvas.SetProjectionFun(ScaleCanvas)
-#        pvPnl.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
-        if iLU > 0:
-            pvPnl.Canvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
-        if iLM > 0:
-            pvPnl.Canvas.AddPointSet(ptsMasked, Color = 'RED', Diameter = 1)
-        pvPnl.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
-        # then the "Zoom To Fit" button correctly expands it to the whole space
 
     def ShowMaskingPreview(self):
         """
