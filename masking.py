@@ -230,17 +230,17 @@ class MyApp(wx.App):
         self.statBar = self.dsFrame.statusBar
         self.pvCanvas = pvPnl.Canvas
         """
-        
+        secsExtra = self.totSecs
         stSQLUsed = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
             strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
             Data.Value * {fSy} AS Val
             FROM Data
             WHERE Data.ChannelID = {iCh} 
-            AND Data.UTTimestamp >= '{sDs}'
+            AND UTTime >= DATETIME('{sDs}', '-{iSe} seconds')
             AND Data.UTTimestamp <= '{sDe}'
             AND Data.Use = 1
             ORDER BY UTTime;
-            """.format(iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd, fSy=self.scaleY)
+            """.format(iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd, fSy=self.scaleY, iSe=secsExtra)
         ptRecs = scidb.curD.execute(stSQLUsed).fetchall()
         ptsUsed = []
         for ptRec in ptRecs:
