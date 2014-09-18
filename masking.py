@@ -276,11 +276,13 @@ class MyApp(wx.App):
             stNoData = "No data for this time range"
             pt = (0,0)
             self.pvCanvas.AddScaledText(stNoData, pt, Size = 10, Color = 'BLACK', Position = "cc")
-        else: # show the preview points
+        else: # show the preview
+            # draw the bounding box
             yExtra = 0.1 * (self.fDataMax - self.fDataMin) * self.scaleY
             xy = (-0.5, (self.fDataMin * self.scaleY) - yExtra)
-            wh = (self.totSecs + 1, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra))
+            wh = (self.totSecs + 2.5, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra))
             self.pvCanvas.AddRectangle(xy, wh, LineWidth = 1, LineColor = 'BLACK', FillColor = None, FillStyle = 'Transparent')
+            # display the points
             if iLU > 0:
                 self.pvCanvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
             if iLM > 0:
