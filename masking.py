@@ -131,6 +131,9 @@ class MyApp(wx.App):
         - ChanID, stUseStart, and stUseEnd
         - scaleY, the scaling factor for Y data
         - stItem, the verbose information about the channel
+        - fDataMin
+        - fDataMax
+        - totSecs
         """
         tpFrame = self.GetTopWindow()
         # get ChannelID, if selected
@@ -178,7 +181,7 @@ class MyApp(wx.App):
 
         txEndTime = tpFrame.FindWindowById(ID_END_TIME)
         stDTEnd = txEndTime.GetValue()
-        if stDTEnd.strip() == '': # empty timestamp is valid, meaning 'everything after
+        if stDTEnd.strip() == '': # empty timestamp is valid, meaning 'everything after'
             txEndTime.SetValue('') # blank the control, for simplicity
             # get the latest timestamp for this channel
             stSQLmax = """SELECT MAX(UTTimestamp) AS DataLast FROM Data 
@@ -206,17 +209,17 @@ class MyApp(wx.App):
             AND Data.UTTimestamp <= '{sDe}';
             """.format(iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd)
         MnMxRec = scidb.curD.execute(stSQLMinMax).fetchone()
-        fDataMin = MnMxRec['MinData']
-        fDataMax = MnMxRec['MaxData']
-        print "Min", fDataMin, "Max", fDataMax
+        self.fDataMin = MnMxRec['MinData']
+        self.fDataMax = MnMxRec['MaxData']
+        print "Min", self.fDataMin, "Max", self.fDataMax
         dStart = datetime.datetime.strptime(self.stUseStart, sFmt)
         dEnd = datetime.datetime.strptime(self.stUseEnd, sFmt)
-        totSecs = (dEnd-dStart).total_seconds()
-        print 'totSecs', totSecs
-        if fDataMax == fDataMin:
+        self.totSecs = (dEnd-dStart).total_seconds()
+        print 'totSecs', self.totSecs
+        if self.fDataMax == self.fDataMin:
             self.scaleY = 0
         else:
-            self.scaleY = (totSecs * 0.618) / (fDataMax - fDataMin)
+            self.scaleY = (self.totSecs * 0.618) / (self.fDataMax - self.fDataMin)
         return True
         
     def ShowMaskingPreview(self):
@@ -270,6 +273,11 @@ class MyApp(wx.App):
 # self.pvCanvas
         self.pvCanvas.InitAll()
         self.pvCanvas.Draw()
+        yExtra = 0.1 * (self.fDataMax - self.fDataMin) * self.scale
+        xy = (-0.5, (self.fDataMin * self.scaleY) - yExtra)
+        wh = (self.totSecs + 1, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra))
+        self.pvCanvas.AddRectangle(xy, wh, LineWidth = 1, LineColor = 'BLACK', FillColor = None, FillStyle = 'Transparent')
+
         if iLU > 0:
             self.pvCanvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
         if iLM > 0:
