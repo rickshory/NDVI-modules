@@ -267,23 +267,25 @@ class MyApp(wx.App):
         print "Points masked:", len(ptsMasked)
         if iLU + iLM == 0:
             self.statBar.SetStatusText('no data for this time range')
-            return
-            
+
 #        self.UnBindAllMouseEvents()
 # self.pvCanvas
         self.pvCanvas.InitAll()
         self.pvCanvas.Draw()
-        yExtra = 0.1 * (self.fDataMax - self.fDataMin) * self.scale
-        xy = (-0.5, (self.fDataMin * self.scaleY) - yExtra)
-        wh = (self.totSecs + 1, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra))
-        self.pvCanvas.AddRectangle(xy, wh, LineWidth = 1, LineColor = 'BLACK', FillColor = None, FillStyle = 'Transparent')
-
-        if iLU > 0:
-            self.pvCanvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
-        if iLM > 0:
-            self.pvCanvas.AddPointSet(ptsMasked, Color = 'RED', Diameter = 1)
-        self.pvCanvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
-        # then the "Zoom To Fit" button correctly expands it to the whole space
+        if iLU + iLM == 0:
+            stNoData = "No data for this time range"
+            pt = (0,0)
+            self.pvCanvas.AddScaledText(stNoData, pt, Size = 10, Color = 'BLACK', Position = "cc")
+        else: # show the preview points
+            yExtra = 0.1 * (self.fDataMax - self.fDataMin) * self.scaleY
+            xy = (-0.5, (self.fDataMin * self.scaleY) - yExtra)
+            wh = (self.totSecs + 1, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra))
+            self.pvCanvas.AddRectangle(xy, wh, LineWidth = 1, LineColor = 'BLACK', FillColor = None, FillStyle = 'Transparent')
+            if iLU > 0:
+                self.pvCanvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
+            if iLM > 0:
+                self.pvCanvas.AddPointSet(ptsMasked, Color = 'RED', Diameter = 1)
+        self.pvCanvas.ZoomToBB() # fit the whole space
         
 
 #----------------------------------------------------------------------
