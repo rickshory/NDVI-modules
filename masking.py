@@ -590,6 +590,12 @@ class maskingPanel(wx.Panel):
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
         # for testing
         self.tcDTStart.SetValue('2010-06-13 5am')
+        # add timestamp adjustment buttons
+        sbHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
+        self.stMaxDnButton = wx.Button(pnl, -1, '<<')
+#        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
+        sbHorizSizer.Add(self.stMaxDnButton)
+        stpSiz.Add(sbHorizSizer, pos=(gRow, 4), span=(1, 1))
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'End'),
@@ -603,7 +609,7 @@ class maskingPanel(wx.Panel):
         self.tcDTEnd.SetValue('2010-06-14 5pm')
         
         gRow += 1
-        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
         gRow += 1
         mrbVertSizer = wx.BoxSizer(wx.VERTICAL)
