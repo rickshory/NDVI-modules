@@ -231,15 +231,14 @@ class MyApp(wx.App):
         self.pvCanvas = pvPnl.Canvas
         """
         secsExtra = 0.9 * self.totSecs
-        stSQLUsed = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
-            strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
+        stSQLUsed = """SELECT strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
             Data.Value * {fSy} AS Val
             FROM Data
             WHERE Data.ChannelID = {iCh} 
             AND Data.UTTimestamp >= DATETIME('{sDs}', '-{iSe} seconds')
             AND Data.UTTimestamp <= DATETIME('{sDe}', '+{iSe} seconds')
             AND Data.Use = 1
-            ORDER BY UTTime;
+            ORDER BY Secs;
             """.format(iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd, fSy=self.scaleY, iSe=secsExtra)
         ptRecs = scidb.curD.execute(stSQLUsed).fetchall()
         ptsUsed = []
@@ -247,15 +246,14 @@ class MyApp(wx.App):
 #                print ptRec['Secs'], ptRec['Value']
             ptsUsed.append((ptRec['Secs'], ptRec['Val']))
         iLU = len(ptsUsed)
-        stSQLMasked = """SELECT DATETIME(Data.UTTimestamp) AS UTTime, 
-            strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
+        stSQLMasked = """SELECT strftime('%s', Data.UTTimestamp) - strftime('%s', '{sDs}') AS Secs,
             Data.Value * {fSy} AS Val
             FROM Data
             WHERE Data.ChannelID = {iCh} 
             AND Data.UTTimestamp >= DATETIME('{sDs}', '-{iSe} seconds')
             AND Data.UTTimestamp <= DATETIME('{sDe}', '+{iSe} seconds')
             AND Data.Use = 0
-            ORDER BY UTTime;
+            ORDER BY Secs;
             """.format(iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd, fSy=self.scaleY, iSe=secsExtra)
         ptRecs = scidb.curD.execute(stSQLMasked).fetchall()
         ptsMasked = []
