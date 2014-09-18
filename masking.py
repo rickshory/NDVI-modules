@@ -281,7 +281,7 @@ class MyApp(wx.App):
             yExtra = 0.1 * (self.fDataMax - self.fDataMin) * self.scaleY
             xy = (-0.5, (self.fDataMin * self.scaleY) - yExtra)
             wh = (self.totSecs + 2.5, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra))
-#            self.pvCanvas.AddRectangle(xy, wh, LineWidth = 1, LineColor = 'BLACK', FillColor = None, FillStyle = 'Transparent')
+            self.pvCanvas.AddRectangle(xy, wh, LineWidth = 1, LineColor = 'GREEN', FillColor = None, FillStyle = 'Transparent')
             # draw bounding brackets
             bracketPtLen = 0.1 * self.totSecs
             ptsLBracket = []
