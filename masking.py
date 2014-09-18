@@ -592,9 +592,15 @@ class maskingPanel(wx.Panel):
         self.tcDTStart.SetValue('2010-06-13 5am')
         # add timestamp adjustment buttons
         sbHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.stMaxDnButton = wx.Button(pnl, -1, '<<')
+        self.stMaxDnButton = wx.Button(pnl, -1, '<<', style=wx.BU_EXACTFIT)
 #        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
         sbHorizSizer.Add(self.stMaxDnButton)
+        self.stDayDnButton = wx.Button(pnl, -1, '<Da', style=wx.BU_EXACTFIT)
+#        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
+        sbHorizSizer.Add(self.stDayDnButton)
+        self.stHourDnButton = wx.Button(pnl, -1, '<Hr', style=wx.BU_EXACTFIT)
+#        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
+        sbHorizSizer.Add(self.stHourDnButton)
         stpSiz.Add(sbHorizSizer, pos=(gRow, 4), span=(1, 1))
 
         gRow += 1
