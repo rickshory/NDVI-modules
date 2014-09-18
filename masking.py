@@ -290,6 +290,15 @@ class MyApp(wx.App):
             ptsLBracket.append((-0.5, (self.fDataMin * self.scaleY) - yExtra))
             ptsLBracket.append((bracketPtLen - 0.5, (self.fDataMin * self.scaleY) - yExtra))
             self.pvCanvas.AddLine(ptsLBracket, LineWidth = 1, LineColor = 'BLACK')
+
+            ptsRBracket = []
+            ptsRBracket.append((self.totSecs + 0.5 - bracketPtLen, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra)))
+            ptsRBracket.append((self.totSecs + 0.5, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra)))
+            ptsRBracket.append((self.totSecs + 0.5, (self.fDataMin * self.scaleY) - yExtra))
+            ptsRBracket.append((self.totSecs + 0.5 - bracketPtLen, (self.fDataMin * self.scaleY) - yExtra))
+            self.pvCanvas.AddLine(ptsRBracket, LineWidth = 1, LineColor = 'BLACK')
+
+
             # display the points
             if iLU > 0:
                 self.pvCanvas.AddPointSet(ptsUsed, Color = 'BLUE', Diameter = 1)
