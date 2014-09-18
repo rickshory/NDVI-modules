@@ -281,21 +281,23 @@ class MyApp(wx.App):
             yExtra = 0.1 * (self.fDataMax - self.fDataMin) * self.scaleY
             xy = (-0.5, (self.fDataMin * self.scaleY) - yExtra)
             wh = (self.totSecs + 2.5, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra))
-            self.pvCanvas.AddRectangle(xy, wh, LineWidth = 1, LineColor = 'GREEN', FillColor = None, FillStyle = 'Transparent')
+#            self.pvCanvas.AddRectangle(xy, wh, LineWidth = 1, LineColor = 'GREEN', FillColor = None, FillStyle = 'Transparent')
             # draw bounding brackets
-            bracketPtLen = 0.1 * self.totSecs
+            bracketPtLen = 0.2 * self.totSecs
+            yBase = (self.fDataMin * self.scaleY) - yExtra
+            yHt = ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra)
             ptsLBracket = []
-            ptsLBracket.append((bracketPtLen - 0.5, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra)))
-            ptsLBracket.append((-0.5, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra)))
-            ptsLBracket.append((-0.5, (self.fDataMin * self.scaleY) - yExtra))
-            ptsLBracket.append((bracketPtLen - 0.5, (self.fDataMin * self.scaleY) - yExtra))
+            ptsLBracket.append((bracketPtLen - 0.5, yBase + yHt))
+            ptsLBracket.append((-0.5, yBase + yHt))
+            ptsLBracket.append((-0.5, yBase))
+            ptsLBracket.append((bracketPtLen - 0.5, yBase))
             self.pvCanvas.AddLine(ptsLBracket, LineWidth = 1, LineColor = 'BLACK')
 
             ptsRBracket = []
-            ptsRBracket.append((self.totSecs + 0.5 - bracketPtLen, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra)))
-            ptsRBracket.append((self.totSecs + 0.5, ((self.fDataMax - self.fDataMin) * self.scaleY) + (2 * yExtra)))
-            ptsRBracket.append((self.totSecs + 0.5, (self.fDataMin * self.scaleY) - yExtra))
-            ptsRBracket.append((self.totSecs + 0.5 - bracketPtLen, (self.fDataMin * self.scaleY) - yExtra))
+            ptsRBracket.append((self.totSecs + 0.5 - bracketPtLen, yBase + yHt))
+            ptsRBracket.append((self.totSecs + 0.5, yBase + yHt))
+            ptsRBracket.append((self.totSecs + 0.5, yBase))
+            ptsRBracket.append((self.totSecs + 0.5 - bracketPtLen, yBase))
             self.pvCanvas.AddLine(ptsRBracket, LineWidth = 1, LineColor = 'BLACK')
 
 
