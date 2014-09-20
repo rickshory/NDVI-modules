@@ -90,28 +90,52 @@ class MyApp(wx.App):
             self.SvcApplyMaskButton()
         if event_id == ID_ST_DAY_DN_BTN:
             print "ID_ST_DAY_DN_BTN Event reached OnButton at App level"
+            self.SvcStartDayDown()
 
+    def SvcStartDayDown(self):
+        if not self.PreviewControlsValid():
+            return
+        self.statBar.SetStatusText('Start time down by one day')
+        self.dStart = self.dStart - datetime.timedelta(days=1)
+        self.stUseStart = self.dStart.strftime(sFmt)
+        tpFrame = self.GetTopWindow()
+        txStartTime = tpFrame.FindWindowById(ID_START_TIME)
+        txStartTime.SetValue(self.stUseStart)
+        self.PreviewControlsValid() # re-fetch parameters
+        self.ShowMaskingPreview()
+
+#ID_ST_MAX_DN_BTN = wx.NewId()
+#ID_ST_DAY_DN_BTN = wx.NewId()
+#ID_ST_HOUR_DN_BTN = wx.NewId()
+#ID_ST_HOUR_UP_BTN = wx.NewId()
+#ID_ST_DAY_UP_BTN = wx.NewId()
+#ID_ST_MAX_UP_BTN = wx.NewId()
+#ID_EN_MAX_DN_BTN = wx.NewId()
+#ID_EN_DAY_DN_BTN = wx.NewId()
+#ID_EN_HOUR_DN_BTN = wx.NewId()
+#ID_EN_HOUR_UP_BTN = wx.NewId()
+#ID_EN_DAY_UP_BTN = wx.NewId()
+#ID_EN_MAX_UP_BTN = wx.NewId()
 
     def SvcApplyMaskButton(self):
         if not self.PreviewControlsValid():
             return
+        tpFrame = self.GetTopWindow()
+        radioButtonMask = tpFrame.FindWindowById(ID_RB_MASK)
+        if radioButtonMask.GetValue():
+            iSense = 0
         else:
-            tpFrame = self.GetTopWindow()
-            radioButtonMask = tpFrame.FindWindowById(ID_RB_MASK)
-            if radioButtonMask.GetValue():
-                iSense = 0
-            else:
-                iSense = 1
+            iSense = 1
 
-            stSQLMask = """UPDATE Data SET Use = {iS}
-            WHERE Data.ChannelID = {iCh}
-            AND Data.UTTimestamp >= '{sDs}'
-            AND Data.UTTimestamp <= '{sDe}'
-            """.format(iS=iSense, iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd)
+        stSQLMask = """UPDATE Data SET Use = {iS}
+        WHERE Data.ChannelID = {iCh}
+        AND Data.UTTimestamp >= '{sDs}'
+        AND Data.UTTimestamp <= '{sDe}'
+        """.format(iS=iSense, iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd)
 
-            scidb.curD.execute(stSQLMask)
-            self.statBar.SetStatusText('Showing mask results')
-            self.ShowMaskingPreview()
+        scidb.curD.execute(stSQLMask)
+        self.statBar.SetStatusText('Showing mask results')
+        self.ShowMaskingPreview()
 
     def CkMaskingPreview(self, event):
         # This is the general purpose function that tests whether
@@ -230,9 +254,9 @@ class MyApp(wx.App):
         self.fDataMin = MnMxRec['MinData']
         self.fDataMax = MnMxRec['MaxData']
         print "Min", self.fDataMin, "Max", self.fDataMax
-        dStart = datetime.datetime.strptime(self.stUseStart, sFmt)
-        dEnd = datetime.datetime.strptime(self.stUseEnd, sFmt)
-        self.totSecs = (dEnd-dStart).total_seconds()
+        self.dStart = datetime.datetime.strptime(self.stUseStart, sFmt)
+        self.dEnd = datetime.datetime.strptime(self.stUseEnd, sFmt)
+        self.totSecs = (self.dEnd - self.dStart).total_seconds()
         print 'totSecs', self.totSecs
         if self.fDataMax == self.fDataMin:
             self.scaleY = 0
