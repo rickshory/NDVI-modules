@@ -90,17 +90,18 @@ class MyApp(wx.App):
             self.SvcApplyMaskButton()
         if event_id == ID_ST_DAY_DN_BTN:
             print "ID_ST_DAY_DN_BTN Event reached OnButton at App level"
-            self.SvcStartDayDown()
+            self.AdjustTimeRange(event_id)
 
-    def SvcStartDayDown(self):
+    def AdjustTimeRange(self, event_id):
         if not self.PreviewControlsValid():
             return
-        self.statBar.SetStatusText('Start time down by one day')
-        self.dStart = self.dStart - datetime.timedelta(days=1)
-        self.stUseStart = self.dStart.strftime(sFmt)
-        tpFrame = self.GetTopWindow()
-        txStartTime = tpFrame.FindWindowById(ID_START_TIME)
-        txStartTime.SetValue(self.stUseStart)
+        if event_id == ID_ST_DAY_DN_BTN:
+            self.statBar.SetStatusText('Start time down by one day')
+            self.dStart = self.dStart - datetime.timedelta(days=1)
+            self.stUseStart = self.dStart.strftime(sFmt)
+            tpFrame = self.GetTopWindow()
+            txStartTime = tpFrame.FindWindowById(ID_START_TIME)
+            txStartTime.SetValue(self.stUseStart)
         self.PreviewControlsValid() # re-fetch parameters
         self.ShowMaskingPreview()
 
