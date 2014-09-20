@@ -640,15 +640,31 @@ class maskingPanel(wx.Panel):
         self.tcDTStart.SetValue('2010-06-13 5am')
         # add timestamp adjustment buttons
         sbHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
+
         self.StartMaxDnButton = wx.Button(pnl, ID_ST_MAX_DN_BTN, '<<', style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_MAX_DN_BTN)
         sbHorizSizer.Add(self.StartMaxDnButton)
+
         self.StartDayDnButton = wx.Button(pnl, ID_ST_DAY_DN_BTN, '<Da', style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_DAY_DN_BTN)
         sbHorizSizer.Add(self.StartDayDnButton)
+
         self.StartHourDnButton = wx.Button(pnl, ID_ST_HOUR_DN_BTN, '<Hr', style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_HOUR_DN_BTN)
         sbHorizSizer.Add(self.StartHourDnButton)
+
+        self.StartHourUpButton = wx.Button(pnl, ID_ST_HOUR_UP_BTN, 'Hr>', style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_HOUR_UP_BTN)
+        sbHorizSizer.Add(self.StartHourUpButton)
+
+        self.StartDayUpButton = wx.Button(pnl, ID_ST_DAY_UP_BTN, 'Da>', style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_DAY_UP_BTN)
+        sbHorizSizer.Add(self.StartDayUpButton)
+
+        self.StartMaxUpButton = wx.Button(pnl, ID_ST_MAX_UP_BTN, '>>', style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_MAX_UP_BTN)
+        sbHorizSizer.Add(self.StartMaxUpButton)
+
         stpSiz.Add(sbHorizSizer, pos=(gRow, 4), span=(1, 1))
 #ID_ST_MAX_DN_BTN = wx.NewId()
 #ID_ST_DAY_DN_BTN = wx.NewId()
