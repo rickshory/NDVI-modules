@@ -40,6 +40,14 @@ ID_EN_HOUR_UP_BTN = wx.NewId()
 ID_EN_DAY_UP_BTN = wx.NewId()
 ID_EN_MAX_UP_BTN = wx.NewId()
 
+ID_Starts_Down = [ID_ST_MAX_DN_BTN, ID_ST_DAY_DN_BTN, ID_ST_HOUR_DN_BTN]
+ID_Starts_Up = [ID_ST_HOUR_UP_BTN, ID_ST_DAY_UP_BTN, ID_ST_MAX_UP_BTN]
+ID_Starts = ID_Starts_Down + ID_Starts_Up
+ID_Ends_Down = [ID_EN_MAX_DN_BTN, ID_EN_DAY_DN_BTN, ID_EN_HOUR_DN_BTN]
+ID_Ends_Up = [ID_EN_HOUR_UP_BTN, ID_EN_DAY_UP_BTN, ID_EN_MAX_UP_BTN]
+ID_Ends = ID_Ends_Down + ID_Ends_Up
+ID_TimeAdjusts = ID_Starts + ID_Ends
+
 CkMaskingPreviewEventType = wx.NewEventType()
 EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
 
@@ -90,13 +98,13 @@ class MyApp(wx.App):
             self.SvcApplyMaskButton()
         if event_id == ID_ST_DAY_DN_BTN:
             print "ID_ST_DAY_DN_BTN Event reached OnButton at App level"
-        if (event_id == ID_ST_DAY_DN_BTN) or (event_id == ID_ST_HOUR_DN_BTN):
+        if event_id in ID_TimeAdjusts:
             self.AdjustTimeRange(event_id)
 
     def AdjustTimeRange(self, event_id):
         if not self.PreviewControlsValid():
             return
-        if (event_id == ID_ST_DAY_DN_BTN) or (event_id == ID_ST_HOUR_DN_BTN):
+        if event_id in ID_Starts:
             if event_id == ID_ST_DAY_DN_BTN:
                 self.statBar.SetStatusText('Start time down by one day')
                 self.dStart = self.dStart - datetime.timedelta(days=1)
