@@ -666,8 +666,8 @@ class maskingPanel(wx.Panel):
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
         gRow += 1
-        stpSiz.Add(wx.StaticText(pnl, -1, 'Universal Time'),
-                     pos=(gRow, 1), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Time interval to view, in Universal Time'),
+                     pos=(gRow, 1), span=(1, 5), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'Start'),
@@ -677,8 +677,8 @@ class maskingPanel(wx.Panel):
         self.tcDTStart.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
         stpSiz.Add(self.tcDTStart, pos=(gRow, 1), span=(1, 3), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
-        # for testing
-        self.tcDTStart.SetValue('2010-06-13 5am')
+#        self.tcDTStart.SetValue('2010-06-13 5pm') # for testing
+        self.tcDTStart.SetValue('timestamp, or blank for "beginning"')
 
         # add StartTime adjustment buttons
         sbHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -717,8 +717,9 @@ class maskingPanel(wx.Panel):
         self.tcDTEnd.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
         stpSiz.Add(self.tcDTEnd, pos=(gRow, 1), span=(1, 3), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
-        # for testing
-        self.tcDTEnd.SetValue('2010-06-14 5pm')
+        
+#        self.tcDTEnd.SetValue('2010-06-14 5pm') # for testing
+        self.tcDTEnd.SetValue('timestamp, or blank for "end"')
 
         # add EndTime adjustment buttons
         ebHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
