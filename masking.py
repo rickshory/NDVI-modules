@@ -27,6 +27,18 @@ ID_END_TIME = wx.NewId()
 ID_APPLY_BTN = wx.NewId()
 ID_RB_MASK = wx.NewId()
 ID_RB_UNMASK = wx.NewId()
+ID_ST_MAX_DN_BTN = wx.NewId()
+ID_ST_DAY_DN_BTN = wx.NewId()
+ID_ST_HOUR_DN_BTN = wx.NewId()
+ID_ST_HOUR_UP_BTN = wx.NewId()
+ID_ST_DAY_UP_BTN = wx.NewId()
+ID_ST_MAX_UP_BTN = wx.NewId()
+ID_EN_MAX_DN_BTN = wx.NewId()
+ID_EN_DAY_DN_BTN = wx.NewId()
+ID_EN_HOUR_DN_BTN = wx.NewId()
+ID_EN_HOUR_UP_BTN = wx.NewId()
+ID_EN_DAY_UP_BTN = wx.NewId()
+ID_EN_MAX_UP_BTN = wx.NewId()
 
 CkMaskingPreviewEventType = wx.NewEventType()
 EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
@@ -66,34 +78,40 @@ class MyApp(wx.App):
         pvPnl = tpFrame.FindWindowById(ID_MASKING_PREVIEW_PANEL)
         self.pvCanvas = pvPnl.Canvas
         self.Bind(EVT_CK_MASKING_PREVIEW, self.CkMaskingPreview)
-        self.Bind(wx.EVT_BUTTON, self.OnApplyMaskButton)
+        self.Bind(wx.EVT_BUTTON, self.OnButton)
         self.statBar = self.dsFrame.statusBar
         self.statBar.SetStatusText('Select Data Channel, and Start and End timestamps')
         return True
 
-    def OnApplyMaskButton(self, event):
+    def OnButton(self, event):
         event_id = event.GetId()
         if event_id == ID_APPLY_BTN: #
-            print "ID_APPLY_BTN Event reached OnApplyMaskButton at App level"
-            if not self.PreviewControlsValid():
-                return
+            print "ID_APPLY_BTN Event reached OnButton at App level"
+            self.SvcApplyMaskButton()
+        if event_id == ID_ST_DAY_DN_BTN:
+            print "ID_ST_DAY_DN_BTN Event reached OnButton at App level"
+
+
+    def SvcApplyMaskButton(self):
+        if not self.PreviewControlsValid():
+            return
+        else:
+            tpFrame = self.GetTopWindow()
+            radioButtonMask = tpFrame.FindWindowById(ID_RB_MASK)
+            if radioButtonMask.GetValue():
+                iSense = 0
             else:
-                tpFrame = self.GetTopWindow()
-                radioButtonMask = tpFrame.FindWindowById(ID_RB_MASK)
-                if radioButtonMask.GetValue():
-                    iSense = 0
-                else:
-                    iSense = 1
+                iSense = 1
 
-                stSQLMask = """UPDATE Data SET Use = {iS}
-                WHERE Data.ChannelID = {iCh}
-                AND Data.UTTimestamp >= '{sDs}'
-                AND Data.UTTimestamp <= '{sDe}'
-                """.format(iS=iSense, iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd)
+            stSQLMask = """UPDATE Data SET Use = {iS}
+            WHERE Data.ChannelID = {iCh}
+            AND Data.UTTimestamp >= '{sDs}'
+            AND Data.UTTimestamp <= '{sDe}'
+            """.format(iS=iSense, iCh=self.ChanID, sDs=self.stUseStart, sDe=self.stUseEnd)
 
-                scidb.curD.execute(stSQLMask)
-                self.statBar.SetStatusText('Showing mask results')
-                self.ShowMaskingPreview()
+            scidb.curD.execute(stSQLMask)
+            self.statBar.SetStatusText('Showing mask results')
+            self.ShowMaskingPreview()
 
     def CkMaskingPreview(self, event):
         # This is the general purpose function that tests whether
@@ -592,17 +610,28 @@ class maskingPanel(wx.Panel):
         self.tcDTStart.SetValue('2010-06-13 5am')
         # add timestamp adjustment buttons
         sbHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.stMaxDnButton = wx.Button(pnl, -1, '<<', style=wx.BU_EXACTFIT)
+        self.StartMaxDnButton = wx.Button(pnl, -1, '<<', style=wx.BU_EXACTFIT)
 #        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
-        sbHorizSizer.Add(self.stMaxDnButton)
-        self.stDayDnButton = wx.Button(pnl, -1, '<Da', style=wx.BU_EXACTFIT)
+        sbHorizSizer.Add(self.StartMaxDnButton)
+        self.StartDayDnButton = wx.Button(pnl, ID_ST_DAY_DN_BTN, '<Da', style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_DAY_DN_BTN)
+        sbHorizSizer.Add(self.StartDayDnButton)
+        self.StartHourDnButton = wx.Button(pnl, -1, '<Hr', style=wx.BU_EXACTFIT)
 #        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
-        sbHorizSizer.Add(self.stDayDnButton)
-        self.stHourDnButton = wx.Button(pnl, -1, '<Hr', style=wx.BU_EXACTFIT)
-#        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
-        sbHorizSizer.Add(self.stHourDnButton)
+        sbHorizSizer.Add(self.StartHourDnButton)
         stpSiz.Add(sbHorizSizer, pos=(gRow, 4), span=(1, 1))
-
+#ID_ST_MAX_DN_BTN = wx.NewId()
+#ID_ST_DAY_DN_BTN = wx.NewId()
+#ID_ST_HOUR_DN_BTN = wx.NewId()
+#ID_ST_HOUR_UP_BTN = wx.NewId()
+#ID_ST_DAY_UP_BTN = wx.NewId()
+#ID_ST_MAX_UP_BTN = wx.NewId()
+#ID_EN_MAX_DN_BTN = wx.NewId()
+#ID_EN_DAY_DN_BTN = wx.NewId()
+#ID_EN_HOUR_DN_BTN = wx.NewId()
+#ID_EN_HOUR_UP_BTN = wx.NewId()
+#ID_EN_DAY_UP_BTN = wx.NewId()
+#ID_EN_MAX_UP_BTN = wx.NewId()
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'End'),
                      pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
@@ -643,6 +672,24 @@ class maskingPanel(wx.Panel):
         pnl.SetAutoLayout(1)
         pnl.SetupScrolling()
 
+    def OnTimeAdjustButton(self, event):
+        event_id = event.GetId()
+        if event_id == ID_ST_DAY_DN_BTN:
+            print "ID_ST_DAY_DN_BTN Event reached OnTimeAdjustButton"
+        event.Skip()
+        
+#ID_ST_MAX_DN_BTN = wx.NewId()
+#ID_ST_DAY_DN_BTN = wx.NewId()
+#ID_ST_HOUR_DN_BTN = wx.NewId()
+#ID_ST_HOUR_UP_BTN = wx.NewId()
+#ID_ST_DAY_UP_BTN = wx.NewId()
+#ID_ST_MAX_UP_BTN = wx.NewId()
+#ID_EN_MAX_DN_BTN = wx.NewId()
+#ID_EN_DAY_DN_BTN = wx.NewId()
+#ID_EN_HOUR_DN_BTN = wx.NewId()
+#ID_EN_HOUR_UP_BTN = wx.NewId()
+#ID_EN_DAY_UP_BTN = wx.NewId()
+#ID_EN_MAX_UP_BTN = wx.NewId()
     def OnKillFocus(self, event):
         # send an event on to the general Check Masking Preview function
         CPevt = CkMaskingPreviewEvent(CkMaskingPreviewEventType, -1)
