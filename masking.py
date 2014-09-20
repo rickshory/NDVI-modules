@@ -90,14 +90,19 @@ class MyApp(wx.App):
             self.SvcApplyMaskButton()
         if event_id == ID_ST_DAY_DN_BTN:
             print "ID_ST_DAY_DN_BTN Event reached OnButton at App level"
+        if (event_id == ID_ST_DAY_DN_BTN) or (event_id == ID_ST_HOUR_DN_BTN):
             self.AdjustTimeRange(event_id)
 
     def AdjustTimeRange(self, event_id):
         if not self.PreviewControlsValid():
             return
-        if event_id == ID_ST_DAY_DN_BTN:
-            self.statBar.SetStatusText('Start time down by one day')
-            self.dStart = self.dStart - datetime.timedelta(days=1)
+        if (event_id == ID_ST_DAY_DN_BTN) or (event_id == ID_ST_HOUR_DN_BTN):
+            if event_id == ID_ST_DAY_DN_BTN:
+                self.statBar.SetStatusText('Start time down by one day')
+                self.dStart = self.dStart - datetime.timedelta(days=1)
+            if event_id == ID_ST_HOUR_DN_BTN:
+                self.statBar.SetStatusText('Start time down by one hour')
+                self.dStart = self.dStart - datetime.timedelta(hours=1)
             self.stUseStart = self.dStart.strftime(sFmt)
             tpFrame = self.GetTopWindow()
             txStartTime = tpFrame.FindWindowById(ID_START_TIME)
@@ -635,14 +640,14 @@ class maskingPanel(wx.Panel):
         self.tcDTStart.SetValue('2010-06-13 5am')
         # add timestamp adjustment buttons
         sbHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.StartMaxDnButton = wx.Button(pnl, -1, '<<', style=wx.BU_EXACTFIT)
-#        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
+        self.StartMaxDnButton = wx.Button(pnl, ID_ST_MAX_DN_BTN, '<<', style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_MAX_DN_BTN)
         sbHorizSizer.Add(self.StartMaxDnButton)
         self.StartDayDnButton = wx.Button(pnl, ID_ST_DAY_DN_BTN, '<Da', style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_DAY_DN_BTN)
         sbHorizSizer.Add(self.StartDayDnButton)
-        self.StartHourDnButton = wx.Button(pnl, -1, '<Hr', style=wx.BU_EXACTFIT)
-#        self.Bind(wx.EVT_BUTTON,  self.OnApplyBtn, id=ID_APPLY_BTN)
+        self.StartHourDnButton = wx.Button(pnl, ID_ST_HOUR_DN_BTN, '<Hr', style=wx.BU_EXACTFIT)
+        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_HOUR_DN_BTN)
         sbHorizSizer.Add(self.StartHourDnButton)
         stpSiz.Add(sbHorizSizer, pos=(gRow, 4), span=(1, 1))
 #ID_ST_MAX_DN_BTN = wx.NewId()
