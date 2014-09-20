@@ -125,6 +125,29 @@ class MyApp(wx.App):
             tpFrame = self.GetTopWindow()
             txStartTime = tpFrame.FindWindowById(ID_START_TIME)
             txStartTime.SetValue(self.stUseStart)
+
+        if event_id in ID_Ends:
+            if event_id == ID_EN_DAY_DN_BTN:
+                self.statBar.SetStatusText('End time down by one day')
+                self.dEnd = self.dEnd - datetime.timedelta(days=1)
+
+            if event_id == ID_EN_HOUR_DN_BTN:
+                self.statBar.SetStatusText('End time down by one hour')
+                self.dEnd = self.dEnd - datetime.timedelta(hours=1)
+
+            if event_id == ID_EN_HOUR_UP_BTN:
+                self.statBar.SetStatusText('End time up by one hour')
+                self.dEnd = self.dEnd + datetime.timedelta(hours=1)
+
+            if event_id == ID_EN_DAY_UP_BTN:
+                self.statBar.SetStatusText('End time up by one day')
+                self.dEnd = self.dEnd + datetime.timedelta(days=1)
+
+            self.stUseEnd = self.dEnd.strftime(sFmt)
+            tpFrame = self.GetTopWindow()
+            txEndTime = tpFrame.FindWindowById(ID_END_TIME)
+            txEndTime.SetValue(self.stUseEnd)
+
         self.PreviewControlsValid() # re-fetch parameters
         self.ShowMaskingPreview()
 
