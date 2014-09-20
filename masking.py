@@ -108,9 +108,19 @@ class MyApp(wx.App):
             if event_id == ID_ST_DAY_DN_BTN:
                 self.statBar.SetStatusText('Start time down by one day')
                 self.dStart = self.dStart - datetime.timedelta(days=1)
+
             if event_id == ID_ST_HOUR_DN_BTN:
                 self.statBar.SetStatusText('Start time down by one hour')
                 self.dStart = self.dStart - datetime.timedelta(hours=1)
+
+            if event_id == ID_ST_HOUR_UP_BTN:
+                self.statBar.SetStatusText('Start time up by one hour')
+                self.dStart = self.dStart + datetime.timedelta(hours=1)
+
+            if event_id == ID_ST_DAY_UP_BTN:
+                self.statBar.SetStatusText('Start time up by one day')
+                self.dStart = self.dStart + datetime.timedelta(days=1)
+
             self.stUseStart = self.dStart.strftime(sFmt)
             tpFrame = self.GetTopWindow()
             txStartTime = tpFrame.FindWindowById(ID_START_TIME)
