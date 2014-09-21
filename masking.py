@@ -18,6 +18,7 @@ try:
 except ImportError:
     raise ImportError("I could not import numpy")
 
+ID_CBX_SEL_STATION= wx.NewId()
 ID_MASKING_SETUP_PANEL = wx.NewId()
 ID_MASKING_PREVIEW_PANEL = wx.NewId()
 ID_CHAN_TEXT = wx.NewId()
@@ -595,8 +596,9 @@ class maskingPanel(wx.Panel):
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         stSQLStations = 'SELECT ID, StationName FROM Stations;'
-        pnl.cbxStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        pnl.cbxStationID = wx.ComboBox(pnl, ID_CBX_SEL_STATION, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(pnl.cbxStationID, stSQLStations)
+        self.Bind(wx.EVT_COMBOBOX, self.OnSelect)
         stpSiz.Add(pnl.cbxStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
@@ -735,6 +737,10 @@ class maskingPanel(wx.Panel):
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
         pnl.SetupScrolling()
+
+    def OnSelect(self, event):
+        item = event.GetSelection()
+        print item, 'in OnSelect, eventID', event.GetId()
 
     def OnTimeAdjustButton(self, event):
         event.Skip()
