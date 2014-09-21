@@ -19,6 +19,7 @@ except ImportError:
     raise ImportError("I could not import numpy")
 
 ID_CBX_SEL_STATION= wx.NewId()
+ID_CBX_SEL_LOGGER= wx.NewId()
 ID_MASKING_SETUP_PANEL = wx.NewId()
 ID_MASKING_PREVIEW_PANEL = wx.NewId()
 ID_CHAN_TEXT = wx.NewId()
@@ -596,19 +597,20 @@ class maskingPanel(wx.Panel):
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         stSQLStations = 'SELECT ID, StationName FROM Stations;'
-        pnl.cbxStationID = wx.ComboBox(pnl, ID_CBX_SEL_STATION, style=wx.CB_READONLY)
-        scidb.fillComboboxFromSQL(pnl.cbxStationID, stSQLStations)
-        self.Bind(wx.EVT_COMBOBOX, self.OnSelect)
-        stpSiz.Add(pnl.cbxStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        self.cbxStationID = wx.ComboBox(pnl, ID_CBX_SEL_STATION, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxStationID, stSQLStations)
+        stpSiz.Add(self.cbxStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'Narrow Channel choices to Logger:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         stSQLLoggers = 'SELECT ID, LoggerSerialNumber FROM Loggers;'
-        pnl.cbxLoggerID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
+        pnl.cbxLoggerID = wx.ComboBox(pnl, ID_CBX_SEL_LOGGER, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(pnl.cbxLoggerID, stSQLLoggers)
         stpSiz.Add(pnl.cbxLoggerID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+
+        self.Bind(wx.EVT_COMBOBOX, self.OnSelect)
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
@@ -740,7 +742,13 @@ class maskingPanel(wx.Panel):
 
     def OnSelect(self, event):
         item = event.GetSelection()
-        print item, 'in OnSelect, eventID', event.GetId()
+        event_id = event.GetId()
+        if event_id == ID_CBX_SEL_STATION:
+            keyItem = self.cbxStationID.GetClientData(item)
+            print 'Station cbx, item ', item, 'key', keyItem
+        if event_id == ID_CBX_SEL_LOGGER:
+            print 'Logger cbx, item ', item
+
 
     def OnTimeAdjustButton(self, event):
         event.Skip()
