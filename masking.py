@@ -780,8 +780,24 @@ class maskingPanel(wx.Panel):
             scidb.fillComboCtrlPopupFromSQL(self.chanPopup, stSQLChan, [300, 180, 140])
 
         if event_id == ID_CBX_SEL_LOGGER:
-            print 'Logger cbx, item ', item
-
+            keyItem = self.cbxLoggerID.GetClientData(item)
+            print 'Logger cbx, item ', item, 'key', keyItem
+            stSQLChan = """SELECT DataChannels.ID, ( DataChannels.Column || ',' ||
+            Loggers.LoggerSerialNumber || ',' ||  Sensors.SensorSerialNumber || ',' ||
+            DataTypes.TypeText || ',' ||  DataUnits.UnitsText || ',' ||
+            DataChannels.UTC_Offset) AS Channel,
+            DataSeries.DataSeriesDescription AS Series,
+            ChannelSegments.SegmentBegin AS Begin
+            FROM (((((DataChannels
+            LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID)
+            LEFT JOIN Sensors ON DataChannels.SensorID = Sensors.ID)
+             LEFT JOIN DataTypes ON DataChannels.DataTypeID = DataTypes.ID)
+            LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID)
+            LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID)
+            LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID
+            WHERE Loggers.ID = {iSe}
+            """.format(iSe=keyItem)
+            scidb.fillComboCtrlPopupFromSQL(self.chanPopup, stSQLChan, [300, 180, 140])
 
     def OnTimeAdjustButton(self, event):
         event.Skip()
