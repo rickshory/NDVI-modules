@@ -223,13 +223,17 @@ class MyApp(wx.App):
         # validate timestamps
         txStartTime = tpFrame.FindWindowById(ID_START_TIME)
         stDTStart = txStartTime.GetValue()
-        if stDTStart.strip() == '': # empty timestamp is valid, meaning 'everything before
-            txStartTime.SetValue('') # blank the control, for simplicity
+        if stDTStart.strip() == '': # empty timestamp is valid, meaning first in channel
             # get the earliest timestamp for this channel
             stSQLmin = """SELECT MIN(UTTimestamp) AS DataFirst FROM Data 
                 WHERE Data.ChannelID = {iCh};
                 """.format(iCh=self.ChanID)
             self.stUseStart = scidb.curD.execute(stSQLmin).fetchone()['DataFirst']
+            txStartTime.SetValue(self.stUseStart)
+            stMsg = 'Season-long previews may take several seconds to display.'
+            dlg = wx.MessageDialog(msPnl, stMsg, 'Note', wx.OK)
+            result = dlg.ShowModal()
+            dlg.Destroy()
         else: # test the control for valid date/time
             dtStart = wx.DateTime() # Uninitialized datetime
             StartTimeValid = dtStart.ParseDateTime(stDTStart)
