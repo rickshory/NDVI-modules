@@ -803,14 +803,15 @@ def autofixChannelSegments():
     
 def fillComboboxFromSQL(objComboBox, stSQL, keyCol=0, visibleCol=1):
     """
-    Given a combobox with it's list currently empty and
-    an SQL statement that returns at least two columns
-    Returns the combobox with the records appended as it's selection entries
+    Given a combobox and an SQL statement that returns at least two columns;
+    First, clears the combobox's list, then returns the combobox with the
+    records appended as it's selection entries.
     The visible items are from 'visibleCol' in the results set.
     The 'keyCol' items can be retrieved using this format, where CB is the combobox:
     keyItem = CB.GetClientData(CB.GetSelection())
     both columns are zero based
     """
+    objComboBox.Clear()
     curD.execute(stSQL)
     recs = curD.fetchall()
     for rec in recs:
@@ -838,15 +839,16 @@ def getComboboxIndex(objComboBox):
 ##
 def fillListctrlFromSQL(objListctrl, stSQL, keyCol=0, visibleCol=1):
     """
-    Given a listctrl with it's list currently empty and
-    an SQL statement that returns at least two columns
-    Returns the list control with the records appended as it's selection entries
+    Given a listctrl and an SQL statement that returns at least two columns;
+    First clears the list then returns the list control with the records
+    appended as it's selection entries
     The visible items are from 'visibleCol' in the results set.
     The 'keyCol' items can be retrieved using a format like the following,
     where LC is the list control:
     keyItem = LC.GetItemData(LC.GetFocusedItem())
     both columns are zero based
     """
+    objListctrl.Clear()
     recs = curD.execute(stSQL).fetchall()
     i=0 # dummy variable, will change with each InsertStringItem
     for rec in recs:

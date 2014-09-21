@@ -606,9 +606,9 @@ class maskingPanel(wx.Panel):
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         stSQLLoggers = 'SELECT ID, LoggerSerialNumber FROM Loggers;'
-        pnl.cbxLoggerID = wx.ComboBox(pnl, ID_CBX_SEL_LOGGER, style=wx.CB_READONLY)
-        scidb.fillComboboxFromSQL(pnl.cbxLoggerID, stSQLLoggers)
-        stpSiz.Add(pnl.cbxLoggerID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        self.cbxLoggerID = wx.ComboBox(pnl, ID_CBX_SEL_LOGGER, style=wx.CB_READONLY)
+        scidb.fillComboboxFromSQL(self.cbxLoggerID, stSQLLoggers)
+        stpSiz.Add(self.cbxLoggerID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         self.Bind(wx.EVT_COMBOBOX, self.OnSelect)
 
@@ -746,6 +746,15 @@ class maskingPanel(wx.Panel):
         if event_id == ID_CBX_SEL_STATION:
             keyItem = self.cbxStationID.GetClientData(item)
             print 'Station cbx, item ', item, 'key', keyItem
+            # refill the Loggers combobox based on the Series selected
+            stSQLLoggers = """SELECT Loggers.ID, Loggers.LoggerSerialNumber
+            FROM (ChannelSegments LEFT JOIN DataChannels
+            ON ChannelSegments.ChannelID = DataChannels.ID)
+            LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID
+            WHERE (((ChannelSegments.StationID)={iSe}))
+            GROUP BY Loggers.ID, Loggers.LoggerSerialNumber;
+            """.format(iSe=keyItem)
+            scidb.fillComboboxFromSQL(self.cbxLoggerID, stSQLLoggers)
         if event_id == ID_CBX_SEL_LOGGER:
             print 'Logger cbx, item ', item
 
