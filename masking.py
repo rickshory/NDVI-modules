@@ -53,18 +53,6 @@ EVT_CK_MASKING_PREVIEW = wx.PyEventBinder(CkMaskingPreviewEventType, 1)
 
 sFmt = '%Y-%m-%d %H:%M:%S'
 
-def ScaleCanvas(center):
-    """
-    function that returns a scaling vector to scale y and x relative to each other
-    """
-    # center gets ignored in this case
-    # returns a vector that multiplies X and Y
-#    return [200,1] # rule of thumb
-#    s = gYRange, gXRange
-#    return s # try this
-    return N.array( (gYRange, gXRange), N.float)
-
-
 class CkMaskingPreviewEvent(wx.PyCommandEvent):
     def __init__(self, evtType, id):
         wx.PyCommandEvent.__init__(self, evtType, id)
@@ -150,19 +138,6 @@ class MyApp(wx.App):
 
         self.PreviewControlsValid() # re-fetch parameters
         self.ShowMaskingPreview()
-
-#ID_ST_MAX_DN_BTN = wx.NewId()
-#ID_ST_DAY_DN_BTN = wx.NewId()
-#ID_ST_HOUR_DN_BTN = wx.NewId()
-#ID_ST_HOUR_UP_BTN = wx.NewId()
-#ID_ST_DAY_UP_BTN = wx.NewId()
-#ID_ST_MAX_UP_BTN = wx.NewId()
-#ID_EN_MAX_DN_BTN = wx.NewId()
-#ID_EN_DAY_DN_BTN = wx.NewId()
-#ID_EN_HOUR_DN_BTN = wx.NewId()
-#ID_EN_HOUR_UP_BTN = wx.NewId()
-#ID_EN_DAY_UP_BTN = wx.NewId()
-#ID_EN_MAX_UP_BTN = wx.NewId()
 
     def SvcApplyMaskButton(self):
         if not self.PreviewControlsValid():
@@ -678,7 +653,7 @@ class maskingPanel(wx.Panel):
         stpSiz.Add(self.tcDTStart, pos=(gRow, 1), span=(1, 3), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 #        self.tcDTStart.SetValue('2010-06-13 5pm') # for testing
-        self.tcDTStart.SetValue('timestamp, or blank for "beginning"')
+        self.tcDTStart.SetValue('timestamp, or blank for first in Channel')
 
         # add StartTime adjustment buttons
         sbHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -719,7 +694,7 @@ class maskingPanel(wx.Panel):
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
         
 #        self.tcDTEnd.SetValue('2010-06-14 5pm') # for testing
-        self.tcDTEnd.SetValue('timestamp, or blank for "end"')
+        self.tcDTEnd.SetValue('timestamp, or blank for last in Channel')
 
         # add EndTime adjustment buttons
         ebHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -780,23 +755,8 @@ class maskingPanel(wx.Panel):
         pnl.SetupScrolling()
 
     def OnTimeAdjustButton(self, event):
-        event_id = event.GetId()
-        if event_id == ID_ST_DAY_DN_BTN:
-            print "ID_ST_DAY_DN_BTN Event reached OnTimeAdjustButton"
         event.Skip()
         
-#ID_ST_MAX_DN_BTN = wx.NewId()
-#ID_ST_DAY_DN_BTN = wx.NewId()
-#ID_ST_HOUR_DN_BTN = wx.NewId()
-#ID_ST_HOUR_UP_BTN = wx.NewId()
-#ID_ST_DAY_UP_BTN = wx.NewId()
-#ID_ST_MAX_UP_BTN = wx.NewId()
-#ID_EN_MAX_DN_BTN = wx.NewId()
-#ID_EN_DAY_DN_BTN = wx.NewId()
-#ID_EN_HOUR_DN_BTN = wx.NewId()
-#ID_EN_HOUR_UP_BTN = wx.NewId()
-#ID_EN_DAY_UP_BTN = wx.NewId()
-#ID_EN_MAX_UP_BTN = wx.NewId()
     def OnKillFocus(self, event):
         # send an event on to the general Check Masking Preview function
         CPevt = CkMaskingPreviewEvent(CkMaskingPreviewEventType, -1)
@@ -845,18 +805,10 @@ class maskingPanel(wx.Panel):
         gRow += 1
         # Add the FloatCanvas canvas
         pnl.NC = NavCanvas.NavCanvas(pnl,
-             ProjectionFun = ScaleCanvas,
+             ProjectionFun = None,
              Debug = 0,
              BackgroundColor = "WHITE")
         pnl.Canvas = pnl.NC.Canvas # reference the contained FloatCanvas
-        # test of drawing one line
-#        self.UnBindAllMouseEvents()
-#        self.Canvas.InitAll()
-#        self.Canvas.Draw()
-#        points = [(-100,-100),(100,100), (100,-100), (-100,100)]
-#        self.Canvas.AddLine(points, LineWidth = 1, LineColor = 'BLUE')
-#        self.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
-        # then the "Zoom To Fit" button correctly expands it to the whole space
 
         pvSiz.Add(pnl.NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         pvSiz.AddGrowableRow(gRow)
