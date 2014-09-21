@@ -20,6 +20,7 @@ except ImportError:
 
 ID_CBX_SEL_STATION= wx.NewId()
 ID_CBX_SEL_LOGGER= wx.NewId()
+ID_MASKING_PANEL = wx.NewId()
 ID_MASKING_SETUP_PANEL = wx.NewId()
 ID_MASKING_PREVIEW_PANEL = wx.NewId()
 ID_CHAN_TEXT = wx.NewId()
@@ -194,8 +195,8 @@ class MyApp(wx.App):
         tpFrame = self.GetTopWindow()
         # get ChannelID, if selected
         txChanText = tpFrame.FindWindowById(ID_CHAN_TEXT)
-        msPnl = tpFrame.FindWindowById(ID_MASKING_SETUP_PANEL)
-        pUp = msPnl.chanPopup # popup is an attibute of the panel, though the panel is not its parent
+        mPnl = tpFrame.FindWindowById(ID_MASKING_PANEL)
+        pUp = mPnl.chanPopup # popup is an attibute of the panel, though the panel is not its parent
         ls = pUp.GetControl() # direct handle to the popup's control, which is the listCtrl
         # to retrieve the hidden key number stored in the popup list row (e.g. a DB record ID):
         curItem = pUp.curitem
@@ -223,7 +224,7 @@ class MyApp(wx.App):
             self.stUseStart = scidb.curD.execute(stSQLmin).fetchone()['DataFirst']
             txStartTime.SetValue(self.stUseStart)
             stMsg = 'Season-long previews may take several seconds to display.'
-            dlg = wx.MessageDialog(msPnl, stMsg, 'Note', wx.OK)
+            dlg = wx.MessageDialog(mPnl, stMsg, 'Note', wx.OK)
             result = dlg.ShowModal()
             dlg.Destroy()
         else: # test the control for valid date/time
@@ -249,7 +250,7 @@ class MyApp(wx.App):
             self.stUseEnd = scidb.curD.execute(stSQLmax).fetchone()['DataLast']
             txEndTime.SetValue(self.stUseEnd)
             stMsg = 'Season-long previews may take several seconds to display.'
-            dlg = wx.MessageDialog(msPnl, stMsg, 'Note', wx.OK)
+            dlg = wx.MessageDialog(mPnl, stMsg, 'Note', wx.OK)
             result = dlg.ShowModal()
             dlg.Destroy()
         else: # test the control for valid date/time
@@ -619,12 +620,12 @@ class maskingPanel(wx.Panel):
         stpSiz.Add(wx.StaticText(pnl, -1, 'Data Channel:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-        pnl.cbxChanID = wx.combo.ComboCtrl(pnl, ID_CHAN_TEXT, "", style=wx.CB_READONLY | wx.TE_PROCESS_ENTER)
-        pnl.chanPopup = ListCtrlComboPopup()
+        self.cbxChanID = wx.combo.ComboCtrl(pnl, ID_CHAN_TEXT, "", style=wx.CB_READONLY | wx.TE_PROCESS_ENTER)
+        self.chanPopup = ListCtrlComboPopup()
 #        pnl.chanPopup.id = ID_CHAN_LIST
         # It is important to call SetPopupControl() as soon as possible
-        pnl.cbxChanID.SetPopupControl(pnl.chanPopup)
-        stpSiz.Add(pnl.cbxChanID, pos=(gRow, 2), span=(1, 7), flag=wx.LEFT, border=5)
+        self.cbxChanID.SetPopupControl(self.chanPopup)
+        stpSiz.Add(self.cbxChanID, pos=(gRow, 2), span=(1, 7), flag=wx.LEFT, border=5)
         stSQLChan = "SELECT DataChannels.ID, " \
             "( DataChannels.Column || ',' ||  Loggers.LoggerSerialNumber || ',' ||  " \
             "Sensors.SensorSerialNumber || ',' ||  DataTypes.TypeText || ',' ||  " \
@@ -636,7 +637,7 @@ class maskingPanel(wx.Panel):
             "LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID) " \
             "LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID) " \
             "LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID;"
-        scidb.fillComboCtrlPopupFromSQL(pnl.chanPopup, stSQLChan, [300, 180, 140])
+        scidb.fillComboCtrlPopupFromSQL(self.chanPopup, stSQLChan, [300, 180, 140])
 #        pnl.chanPopup.AddItem(("a",None,3,4,5,6,7)) # test AddItem w /every imaginable error
 
         gRow += 1
@@ -852,7 +853,7 @@ class maskingFrame(wx.Frame):
         self.Show(True)
 
     def InitUI(self):
-        framePanel = maskingPanel(self, wx.ID_ANY)
+        framePanel = maskingPanel(self, ID_MASKING_PANEL)
 
 
 def main():
