@@ -27,25 +27,17 @@ ID_END_TIME = wx.NewId()
 ID_APPLY_BTN = wx.NewId()
 ID_RB_MASK = wx.NewId()
 ID_RB_UNMASK = wx.NewId()
-ID_ST_MAX_DN_BTN = wx.NewId()
 ID_ST_DAY_DN_BTN = wx.NewId()
 ID_ST_HOUR_DN_BTN = wx.NewId()
 ID_ST_HOUR_UP_BTN = wx.NewId()
 ID_ST_DAY_UP_BTN = wx.NewId()
-ID_ST_MAX_UP_BTN = wx.NewId()
-ID_EN_MAX_DN_BTN = wx.NewId()
 ID_EN_DAY_DN_BTN = wx.NewId()
 ID_EN_HOUR_DN_BTN = wx.NewId()
 ID_EN_HOUR_UP_BTN = wx.NewId()
 ID_EN_DAY_UP_BTN = wx.NewId()
-ID_EN_MAX_UP_BTN = wx.NewId()
 
-ID_Starts_Down = [ID_ST_MAX_DN_BTN, ID_ST_DAY_DN_BTN, ID_ST_HOUR_DN_BTN]
-ID_Starts_Up = [ID_ST_HOUR_UP_BTN, ID_ST_DAY_UP_BTN, ID_ST_MAX_UP_BTN]
-ID_Starts = ID_Starts_Down + ID_Starts_Up
-ID_Ends_Down = [ID_EN_MAX_DN_BTN, ID_EN_DAY_DN_BTN, ID_EN_HOUR_DN_BTN]
-ID_Ends_Up = [ID_EN_HOUR_UP_BTN, ID_EN_DAY_UP_BTN, ID_EN_MAX_UP_BTN]
-ID_Ends = ID_Ends_Down + ID_Ends_Up
+ID_Starts = [ID_ST_DAY_DN_BTN, ID_ST_HOUR_DN_BTN, ID_ST_HOUR_UP_BTN, ID_ST_DAY_UP_BTN]
+ID_Ends = [ID_EN_DAY_DN_BTN, ID_EN_HOUR_DN_BTN, ID_EN_HOUR_UP_BTN, ID_EN_DAY_UP_BTN]
 ID_TimeAdjusts = ID_Starts + ID_Ends
 
 CkMaskingPreviewEventType = wx.NewEventType()
@@ -84,8 +76,6 @@ class MyApp(wx.App):
         if event_id == ID_APPLY_BTN: #
             print "ID_APPLY_BTN Event reached OnButton at App level"
             self.SvcApplyMaskButton()
-        if event_id == ID_ST_DAY_DN_BTN:
-            print "ID_ST_DAY_DN_BTN Event reached OnButton at App level"
         if event_id in ID_TimeAdjusts:
             self.AdjustTimeRange(event_id)
 
@@ -666,10 +656,6 @@ class maskingPanel(wx.Panel):
         # add StartTime adjustment buttons
         sbHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.StartMaxDnButton = wx.Button(pnl, ID_ST_MAX_DN_BTN, '<<', style=wx.BU_EXACTFIT)
-        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_MAX_DN_BTN)
-        sbHorizSizer.Add(self.StartMaxDnButton)
-
         self.StartDayDnButton = wx.Button(pnl, ID_ST_DAY_DN_BTN, '<Da', style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_DAY_DN_BTN)
         sbHorizSizer.Add(self.StartDayDnButton)
@@ -685,10 +671,6 @@ class maskingPanel(wx.Panel):
         self.StartDayUpButton = wx.Button(pnl, ID_ST_DAY_UP_BTN, 'Da>', style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_DAY_UP_BTN)
         sbHorizSizer.Add(self.StartDayUpButton)
-
-        self.StartMaxUpButton = wx.Button(pnl, ID_ST_MAX_UP_BTN, '>>', style=wx.BU_EXACTFIT)
-        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_ST_MAX_UP_BTN)
-        sbHorizSizer.Add(self.StartMaxUpButton)
 
         stpSiz.Add(sbHorizSizer, pos=(gRow, 4), span=(1, 1))
 
@@ -707,10 +689,6 @@ class maskingPanel(wx.Panel):
         # add EndTime adjustment buttons
         ebHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        self.EndMaxDnButton = wx.Button(pnl, ID_EN_MAX_DN_BTN, '<<', style=wx.BU_EXACTFIT)
-        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_EN_MAX_DN_BTN)
-        ebHorizSizer.Add(self.EndMaxDnButton)
-
         self.EndDayDnButton = wx.Button(pnl, ID_EN_DAY_DN_BTN, '<Da', style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_EN_DAY_DN_BTN)
         ebHorizSizer.Add(self.EndDayDnButton)
@@ -726,10 +704,6 @@ class maskingPanel(wx.Panel):
         self.EndDayUpButton = wx.Button(pnl, ID_EN_DAY_UP_BTN, 'Da>', style=wx.BU_EXACTFIT)
         self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_EN_DAY_UP_BTN)
         ebHorizSizer.Add(self.EndDayUpButton)
-
-        self.EndMaxUpButton = wx.Button(pnl, ID_EN_MAX_UP_BTN, '>>', style=wx.BU_EXACTFIT)
-        self.Bind(wx.EVT_BUTTON,  self.OnTimeAdjustButton, id=ID_EN_MAX_UP_BTN)
-        ebHorizSizer.Add(self.EndMaxUpButton)
 
         stpSiz.Add(ebHorizSizer, pos=(gRow, 4), span=(1, 1))
         
