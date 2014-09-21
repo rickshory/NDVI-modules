@@ -756,6 +756,29 @@ class maskingPanel(wx.Panel):
             GROUP BY Loggers.ID, Loggers.LoggerSerialNumber;
             """.format(iSe=keyItem)
             scidb.fillComboboxFromSQL(self.cbxLoggerID, stSQLLoggers)
+
+            stSQLChan = """SELECT DataChannels.ID, ( DataChannels.Column || ',' ||
+            Loggers.LoggerSerialNumber || ',' ||  Sensors.SensorSerialNumber || ',' ||
+            DataTypes.TypeText || ',' ||  DataUnits.UnitsText || ',' ||
+            DataChannels.UTC_Offset) AS Channel,
+            DataSeries.DataSeriesDescription AS Series,
+            ChannelSegments.SegmentBegin AS Begin
+            FROM (((((DataChannels
+            LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID)
+            LEFT JOIN Sensors ON DataChannels.SensorID = Sensors.ID)
+             LEFT JOIN DataTypes ON DataChannels.DataTypeID = DataTypes.ID)
+            LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID)
+            LEFT JOIN ChannelSegments ON DataChannels.ID = ChannelSegments.ChannelID)
+            LEFT JOIN DataSeries ON ChannelSegments.SeriesID = DataSeries.ID
+            WHERE Loggers.ID IN (SELECT Loggers.ID
+            FROM (ChannelSegments LEFT JOIN DataChannels
+            ON ChannelSegments.ChannelID = DataChannels.ID)
+            LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID
+            WHERE (((ChannelSegments.StationID)={iSe}))
+            GROUP BY Loggers.ID, Loggers.LoggerSerialNumber)
+            """.format(iSe=keyItem)
+            scidb.fillComboCtrlPopupFromSQL(self.chanPopup, stSQLChan, [300, 180, 140])
+
         if event_id == ID_CBX_SEL_LOGGER:
             print 'Logger cbx, item ', item
 
