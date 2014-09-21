@@ -249,13 +249,17 @@ class MyApp(wx.App):
 
         txEndTime = tpFrame.FindWindowById(ID_END_TIME)
         stDTEnd = txEndTime.GetValue()
-        if stDTEnd.strip() == '': # empty timestamp is valid, meaning 'everything after'
-            txEndTime.SetValue('') # blank the control, for simplicity
+        if stDTEnd.strip() == '': # empty timestamp is valid, meaning last in channel
             # get the latest timestamp for this channel
             stSQLmax = """SELECT MAX(UTTimestamp) AS DataLast FROM Data 
                 WHERE Data.ChannelID = {iCh};
                 """.format(iCh=self.ChanID)
             self.stUseEnd = scidb.curD.execute(stSQLmax).fetchone()['DataLast']
+            txEndTime.SetValue(self.stUseEnd)
+            stMsg = 'Season-long previews may take several seconds to display.'
+            dlg = wx.MessageDialog(msPnl, stMsg, 'Note', wx.OK)
+            result = dlg.ShowModal()
+            dlg.Destroy()
         else: # test the control for valid date/time
             dtEnd = wx.DateTime() # Uninitialized datetime
             EndTimeValid = dtEnd.ParseDateTime(stDTEnd)
