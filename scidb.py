@@ -840,15 +840,14 @@ def getComboboxIndex(objComboBox):
 def fillListctrlFromSQL(objListctrl, stSQL, keyCol=0, visibleCol=1):
     """
     Given a listctrl and an SQL statement that returns at least two columns;
-    First clears the list then returns the list control with the records
-    appended as it's selection entries
+    Returns the list control with the records appended as it's selection entries
     The visible items are from 'visibleCol' in the results set.
     The 'keyCol' items can be retrieved using a format like the following,
     where LC is the list control:
     keyItem = LC.GetItemData(LC.GetFocusedItem())
     both columns are zero based
     """
-    objListctrl.Clear()
+#    objListctrl.Clear()
     recs = curD.execute(stSQL).fetchall()
     i=0 # dummy variable, will change with each InsertStringItem
     for rec in recs:

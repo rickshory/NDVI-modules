@@ -508,6 +508,35 @@ class NDVIFrame(wx.Frame):
                 WHERE DayOfYear = strftime('%j','{sDt}');
                 """.format(sDt=self.stDateToPreview)
             minOffEqTm = scidb.curD.execute(stSQLm).fetchone()['MinutesCorrection']
+
+
+#        self.dsFrame.statusBar.SetStatusText('Getting data range for ' + self.stItem)
+            stSQLMinMax = """
+                SELECT MIN(CAST(Data.Value AS FLOAT)) AS MinData,
+                MAX(CAST(Data.Value AS FLOAT)) AS MaxData
+                FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
+                WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
+                AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') >= '{sDt}'
+                AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') < DATETIME('{sDt}', '1 day')
+                AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
+                AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
+            """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview)
+            print stSQLMinMax
+            MnMxRec = scidb.curD.execute(stSQLMinMax).fetchone()
+            self.fDataMin = MnMxRec['MinData']
+            self.fDataMax = MnMxRec['MaxData']
+            print "Min", self.fDataMin, "Max", self.fDataMax
+            self.dStart = datetime.datetime.strptime(self.stUseStart, sFmt)
+            self.dEnd = datetime.datetime.strptime(self.stUseEnd, sFmt)
+            self.totSecs = (self.dEnd - self.dStart).total_seconds()
+            print 'totSecs', self.totSecs
+            if self.fDataMax == self.fDataMin:
+                self.scaleY = 0
+            else:
+                self.scaleY = (self.totSecs * 0.618) / (self.fDataMax - self.fDataMin)
+
+
+
             stSQL = """SELECT DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') AS SolarTime, 
                 strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
                 Data.Value
