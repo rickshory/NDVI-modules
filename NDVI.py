@@ -535,7 +535,7 @@ class NDVIFrame(wx.Frame):
                 self.scaleY = 0
             else:
                 self.scaleY = (self.totSecs * 0.618) / (self.fDataMax - self.fDataMin)
-
+            print 'scaleY', self.scaleY
             stSQL = """SELECT DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') AS SolarTime, 
                 strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
                 Data.Value * {fSy} AS Val
@@ -552,8 +552,11 @@ class NDVIFrame(wx.Frame):
                 return
             pts = []
             for ptRec in ptRecs:
-#                print ptRec['Secs'], ptRec['Value']
                 pts.append((ptRec['Secs'], ptRec['Val']))
+                l = len(pts)
+                if l <10 or l >710:
+                    print l, ptRec['Secs'], ptRec['Val']
+            print 'len(pts)', len(pts)
             self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
             self.Canvas.ZoomToBB()
             
