@@ -538,14 +538,14 @@ class NDVIFrame(wx.Frame):
 
             stSQL = """SELECT DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') AS SolarTime, 
                 strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
-                Data.Value
+                Data.Value * {fSy} AS Val
                 FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
                 WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
                 AND SolarTime >= '{sDt}' AND SolarTime < DATETIME('{sDt}', '1 day')
                 AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
                 AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
                 ORDER BY SolarTime;
-                """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview)
+                """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview, fSy=self.scaleY)
             ptRecs = scidb.curD.execute(stSQL).fetchall()
             if len(ptRecs) == 0:
                 self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
@@ -553,7 +553,7 @@ class NDVIFrame(wx.Frame):
             pts = []
             for ptRec in ptRecs:
 #                print ptRec['Secs'], ptRec['Value']
-                pts.append((ptRec['Secs'], ptRec['Value']))
+                pts.append((ptRec['Secs'], ptRec['Val']))
             self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
             self.Canvas.ZoomToBB()
             
