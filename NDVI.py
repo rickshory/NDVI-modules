@@ -551,14 +551,8 @@ class NDVIFrame(wx.Frame):
                 self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
                 return
             pts = []
-            vals = []
             for ptRec in ptRecs:
                 pts.append((ptRec['Secs'], ptRec['Val']))
-                vals.append(ptRec['Val'])
-                l = len(pts)
-                if l <10 or l >710:
-                    print l, ptRec['Secs'], ptRec['Val']
-            print 'len(pts):', len(pts), 'max val:', max(vals), 'min val:', min(vals)
             self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
             self.Canvas.ZoomToBB()
             
