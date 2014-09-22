@@ -398,7 +398,7 @@ class NDVIPanel(wx.Panel):
         gRow += 1
         # Add the FloatCanvas canvas
         self.NC = NavCanvas.NavCanvas(pnl,
-             ProjectionFun = self.ScalePreviewCanvas,
+#             ProjectionFun = self.ScalePreviewCanvas,
              Debug = 0,
              BackgroundColor = "WHITE")
         self.Canvas = self.NC.Canvas # reference the contained FloatCanvas
