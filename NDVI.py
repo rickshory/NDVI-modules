@@ -481,7 +481,7 @@ class NDVIFrame(wx.Frame):
         txtDate = self.DtList.GetItemText(index)
         if txtDate != self.stDateToPreview:
             self.Canvas.InitAll()
-            self.Canvas.SetProjectionFun(self.ScalePreviewCanvas)
+#            self.Canvas.SetProjectionFun(self.ScalePreviewCanvas)
             self.Canvas.Draw()
             self.stDateToPreview = txtDate
             print "date to preview:", self.stDateToPreview
@@ -534,7 +534,7 @@ class NDVIFrame(wx.Frame):
             if self.fDataMax == self.fDataMin:
                 self.scaleY = 0
             else:
-                self.scaleY = (self.totSecs * 0.618) / (self.fDataMax - self.fDataMin)
+                self.scaleY = (self.totSecs) / (self.fDataMax - self.fDataMin)
             print 'scaleY', self.scaleY
             stSQL = """SELECT DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') AS SolarTime, 
                 strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
@@ -551,12 +551,14 @@ class NDVIFrame(wx.Frame):
                 self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
                 return
             pts = []
+            vals = []
             for ptRec in ptRecs:
                 pts.append((ptRec['Secs'], ptRec['Val']))
+                vals.append(ptRec['Val'])
                 l = len(pts)
                 if l <10 or l >710:
                     print l, ptRec['Secs'], ptRec['Val']
-            print 'len(pts)', len(pts)
+            print 'len(pts):', len(pts), 'max val:', max(vals), 'min val:', min(vals)
             self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
             self.Canvas.ZoomToBB()
             
