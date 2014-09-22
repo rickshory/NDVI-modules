@@ -526,16 +526,15 @@ class NDVIFrame(wx.Frame):
             self.fDataMin = MnMxRec['MinData']
             self.fDataMax = MnMxRec['MaxData']
             print "Min", self.fDataMin, "Max", self.fDataMax
-            self.dStart = datetime.datetime.strptime(self.stUseStart, sFmt)
-            self.dEnd = datetime.datetime.strptime(self.stUseEnd, sFmt)
-            self.totSecs = (self.dEnd - self.dStart).total_seconds()
+#            self.dStart = datetime.datetime.strptime(self.stUseStart, sFmt)
+#            self.dEnd = datetime.datetime.strptime(self.stUseEnd, sFmt)
+#            self.totSecs = (self.dEnd - self.dStart).total_seconds()
+            self.totSecs = 60 * 60 * 24 # for testing use standard day length
             print 'totSecs', self.totSecs
             if self.fDataMax == self.fDataMin:
                 self.scaleY = 0
             else:
                 self.scaleY = (self.totSecs * 0.618) / (self.fDataMax - self.fDataMin)
-
-
 
             stSQL = """SELECT DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') AS SolarTime, 
                 strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
