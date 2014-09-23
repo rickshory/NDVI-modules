@@ -377,15 +377,6 @@ class NDVIPanel(wx.Panel):
         pnl.SetSizer(stSiz)
         pnl.SetAutoLayout(1)
 
-    def ScalePreviewCanvas(self, center):
-        """
-        function that returns a scaling vector to scale y and x relative to each other
-
-        """
-        # center gets ignored in this case
-        # returns a vector that multiplies X and Y
-        return [20,1] # rule of thumb
-
     def InitPreviewPanel(self, pnl):
         pnl.SetBackgroundColour('#FFFFFF')
         pvSiz = wx.GridBagSizer(0, 0)
@@ -398,7 +389,6 @@ class NDVIPanel(wx.Panel):
         gRow += 1
         # Add the FloatCanvas canvas
         self.NC = NavCanvas.NavCanvas(pnl,
-#             ProjectionFun = self.ScalePreviewCanvas,
              Debug = 0,
              BackgroundColor = "WHITE")
         self.Canvas = self.NC.Canvas # reference the contained FloatCanvas
@@ -459,7 +449,6 @@ class NDVIFrame(wx.Frame):
         self.DtList = framePanel.datesList
         self.DtList.Bind( wx.EVT_MOTION, self.onMouseMotion )
         self.pvLabel = framePanel.pvLabel
-        self.ScalePreviewCanvas = framePanel.ScalePreviewCanvas
         self.NC = framePanel.NC
         self.Canvas = framePanel.Canvas
         self.CreateStatusBar()
@@ -480,11 +469,8 @@ class NDVIFrame(wx.Frame):
             return
         txtDate = self.DtList.GetItemText(index)
         if txtDate == self.stDateToPreview:
-            self.SetStatusText(self.stDateToPreview + " already previewed")
-            print 'same date already previewed:', self.stDateToPreview
             return # no need to re-do one already done
         self.Canvas.InitAll()
-#            self.Canvas.SetProjectionFun(self.ScalePreviewCanvas)
         self.Canvas.Draw()
         self.stDateToPreview = txtDate
         self.SetStatusText("previewing " + self.stDateToPreview)
@@ -529,11 +515,7 @@ class NDVIFrame(wx.Frame):
         self.fDataMin = MnMxRec['MinData']
         self.fDataMax = MnMxRec['MaxData']
         print "Min", self.fDataMin, "Max", self.fDataMax
-#            self.dStart = datetime.datetime.strptime(self.stUseStart, sFmt)
-#            self.dEnd = datetime.datetime.strptime(self.stUseEnd, sFmt)
-#            self.totSecs = (self.dEnd - self.dStart).total_seconds()
-        self.totSecs = 60 * 60 * 24 # for testing use standard day length
-        print 'totSecs', self.totSecs
+        self.totSecs = 60 * 60 * 24 # use standard day length
         if self.fDataMax == self.fDataMin:
             self.scaleY = 0
         else:
@@ -551,7 +533,7 @@ class NDVIFrame(wx.Frame):
             AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
             ORDER BY Secs;
             """.format(iSt=staID, iSe=serID, fHo=-hrOffLon, fEq=-minOffEqTm, sDt=self.stDateToPreview, fSy=self.scaleY)
-        print stSQL
+#        print stSQL
         ptRecs = scidb.curD.execute(stSQL).fetchall()
         if len(ptRecs) == 0:
             self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
