@@ -521,7 +521,7 @@ class NDVIFrame(wx.Frame):
                 AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
                 AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
             """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview)
-            print stSQLMinMax
+#            print stSQLMinMax
             MnMxRec = scidb.curD.execute(stSQLMinMax).fetchone()
             self.fDataMin = MnMxRec['MinData']
             self.fDataMax = MnMxRec['MaxData']
@@ -534,18 +534,20 @@ class NDVIFrame(wx.Frame):
             if self.fDataMax == self.fDataMin:
                 self.scaleY = 0
             else:
-                self.scaleY = (self.totSecs) / (self.fDataMax - self.fDataMin)
+                self.scaleY = (0.618 * self.totSecs) / (self.fDataMax - self.fDataMin)
             print 'scaleY', self.scaleY
-            stSQL = """SELECT DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') AS SolarTime, 
+            stSQL = """SELECT
                 strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
                 Data.Value * {fSy} AS Val
                 FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
                 WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
-                AND SolarTime >= '{sDt}' AND SolarTime < DATETIME('{sDt}', '1 day')
+                AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') >= '{sDt}'
+                AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') < DATETIME('{sDt}', '1 day')
                 AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
                 AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
-                ORDER BY SolarTime;
+                ORDER BY Secs;
                 """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview, fSy=self.scaleY)
+            print stSQL
             ptRecs = scidb.curD.execute(stSQL).fetchall()
             if len(ptRecs) == 0:
                 self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
