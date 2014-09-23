@@ -479,84 +479,85 @@ class NDVIFrame(wx.Frame):
             self.pvLabel.SetLabel('Select Ref station, IR series, then float over dates to preview')
             return
         txtDate = self.DtList.GetItemText(index)
-        if txtDate != self.stDateToPreview:
-            self.Canvas.InitAll()
+        if txtDate == self.stDateToPreview:
+            print 'same date already previewed:', self.stDateToPreview
+            return # no need to re-do one already done
+        self.Canvas.InitAll()
 #            self.Canvas.SetProjectionFun(self.ScalePreviewCanvas)
-            self.Canvas.Draw()
-            self.stDateToPreview = txtDate
-            print "date to preview:", self.stDateToPreview
-            self.pvLabel.SetLabel('Generating preview for ' + self.stDateToPreview)
-            
-            # get the station ID, if selected
-            staID = scidb.getComboboxIndex(self.cbxRefStationID)
-            if staID == None:
-                self.pvLabel.SetLabel('Select Reference Station, to preview dates')
-                return
-            # get the IR series ID, if selected
-            serID = scidb.getComboboxIndex(self.cbxIRRefSeriesID)
-            if serID == None:
-                self.pvLabel.SetLabel('Select IR series for the Reference Station, to preview dates')
-                return
-            # get the hour offset from the station longitude
-            longitude = scidb.stationLongitude(staID)
-            if longitude == None:
-                hrOffLon = 0
-            else:
-                hrOffLon = longitude / 15 # one hour for every 15 degrees of longitude
-            # get the minute offet from the Equation of Time table
-            stSQLm = """SELECT MinutesCorrection FROM EqnOfTime
-                WHERE DayOfYear = strftime('%j','{sDt}');
-                """.format(sDt=self.stDateToPreview)
-            minOffEqTm = scidb.curD.execute(stSQLm).fetchone()['MinutesCorrection']
-
+        self.Canvas.Draw()
+        self.stDateToPreview = txtDate
+        print "date to preview:", self.stDateToPreview
+        self.pvLabel.SetLabel('Generating preview for ' + self.stDateToPreview)
+        
+        # get the station ID, if selected
+        staID = scidb.getComboboxIndex(self.cbxRefStationID)
+        if staID == None:
+            self.pvLabel.SetLabel('Select Reference Station, to preview dates')
+            return
+        # get the IR series ID, if selected
+        serID = scidb.getComboboxIndex(self.cbxIRRefSeriesID)
+        if serID == None:
+            self.pvLabel.SetLabel('Select IR series for the Reference Station, to preview dates')
+            return
+        # get the hour offset from the station longitude
+        longitude = scidb.stationLongitude(staID)
+        if longitude == None:
+            hrOffLon = 0
+        else:
+            hrOffLon = longitude / 15 # one hour for every 15 degrees of longitude
+        # get the minute offet from the Equation of Time table
+        stSQLm = """SELECT MinutesCorrection FROM EqnOfTime
+            WHERE DayOfYear = strftime('%j','{sDt}');
+            """.format(sDt=self.stDateToPreview)
+        minOffEqTm = scidb.curD.execute(stSQLm).fetchone()['MinutesCorrection']
 
 #        self.dsFrame.statusBar.SetStatusText('Getting data range for ' + self.stItem)
-            stSQLMinMax = """
-                SELECT MIN(CAST(Data.Value AS FLOAT)) AS MinData,
-                MAX(CAST(Data.Value AS FLOAT)) AS MaxData
-                FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
-                WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
-                AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') >= '{sDt}'
-                AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') < DATETIME('{sDt}', '1 day')
-                AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
-                AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
-            """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview)
+        stSQLMinMax = """
+            SELECT MIN(CAST(Data.Value AS FLOAT)) AS MinData,
+            MAX(CAST(Data.Value AS FLOAT)) AS MaxData
+            FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
+            WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
+            AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') >= '{sDt}'
+            AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') < DATETIME('{sDt}', '1 day')
+            AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
+            AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
+        """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview)
 #            print stSQLMinMax
-            MnMxRec = scidb.curD.execute(stSQLMinMax).fetchone()
-            self.fDataMin = MnMxRec['MinData']
-            self.fDataMax = MnMxRec['MaxData']
-            print "Min", self.fDataMin, "Max", self.fDataMax
+        MnMxRec = scidb.curD.execute(stSQLMinMax).fetchone()
+        self.fDataMin = MnMxRec['MinData']
+        self.fDataMax = MnMxRec['MaxData']
+        print "Min", self.fDataMin, "Max", self.fDataMax
 #            self.dStart = datetime.datetime.strptime(self.stUseStart, sFmt)
 #            self.dEnd = datetime.datetime.strptime(self.stUseEnd, sFmt)
 #            self.totSecs = (self.dEnd - self.dStart).total_seconds()
-            self.totSecs = 60 * 60 * 24 # for testing use standard day length
-            print 'totSecs', self.totSecs
-            if self.fDataMax == self.fDataMin:
-                self.scaleY = 0
-            else:
-                self.scaleY = (0.618 * self.totSecs) / (self.fDataMax - self.fDataMin)
-            print 'scaleY', self.scaleY
-            stSQL = """SELECT
-                strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
-                Data.Value * {fSy} AS Val
-                FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
-                WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
-                AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') >= '{sDt}'
-                AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') < DATETIME('{sDt}', '1 day')
-                AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
-                AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
-                ORDER BY Secs;
-                """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview, fSy=self.scaleY)
-            print stSQL
-            ptRecs = scidb.curD.execute(stSQL).fetchall()
-            if len(ptRecs) == 0:
-                self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
-                return
-            pts = []
-            for ptRec in ptRecs:
-                pts.append((ptRec['Secs'], ptRec['Val']))
-            self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
-            self.Canvas.ZoomToBB()
+        self.totSecs = 60 * 60 * 24 # for testing use standard day length
+        print 'totSecs', self.totSecs
+        if self.fDataMax == self.fDataMin:
+            self.scaleY = 0
+        else:
+            self.scaleY = (0.618 * self.totSecs) / (self.fDataMax - self.fDataMin)
+        print 'scaleY', self.scaleY
+        stSQL = """SELECT
+            strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
+            Data.Value * {fSy} AS Val
+            FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
+            WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
+            AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') >= '{sDt}'
+            AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') < DATETIME('{sDt}', '1 day')
+            AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
+            AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
+            ORDER BY Secs;
+            """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview, fSy=self.scaleY)
+        print stSQL
+        ptRecs = scidb.curD.execute(stSQL).fetchall()
+        if len(ptRecs) == 0:
+            self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
+            return
+        pts = []
+        for ptRec in ptRecs:
+            pts.append((ptRec['Secs'], ptRec['Val']))
+        self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
+        self.Canvas.ZoomToBB()
             
     def OnMessage(self, on, msg):
         if not on:
