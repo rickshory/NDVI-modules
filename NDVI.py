@@ -519,11 +519,11 @@ class NDVIFrame(wx.Frame):
             MAX(CAST(Data.Value AS FLOAT)) AS MaxData
             FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
             WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
-            AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') >= '{sDt}'
-            AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') < DATETIME('{sDt}', '1 day')
+            AND Data.UTTimestamp >= DATETIME('{sDt}', '{fHo} hour', '{fEq} minute')
+            AND Data.UTTimestamp < DATETIME('{sDt}', '1 day', '{fHo} hour', '{fEq} minute')
             AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
             AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
-        """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview)
+        """.format(iSt=staID, iSe=serID, fHo=-hrOffLon, fEq=-minOffEqTm, sDt=self.stDateToPreview)
 #            print stSQLMinMax
         MnMxRec = scidb.curD.execute(stSQLMinMax).fetchone()
         self.fDataMin = MnMxRec['MinData']
@@ -551,17 +551,6 @@ class NDVIFrame(wx.Frame):
             AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
             ORDER BY Secs;
             """.format(iSt=staID, iSe=serID, fHo=-hrOffLon, fEq=-minOffEqTm, sDt=self.stDateToPreview, fSy=self.scaleY)
-        s = """SELECT
-            strftime('%s', Data.UTTimestamp) - strftime('%s', DATETIME('2010-05-26', '9.95461755067 hour', '-3.27 minute')) AS Secs,
-            Data.Value * 57.8809756098 AS Val
-            FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
-            WHERE ChannelSegments.StationID = 3  AND ChannelSegments.SeriesID =3
-            AND Data.UTTimestamp >= DATETIME('2010-05-26', '9.95461755067 hour', '-3.27 minute')
-            AND Data.UTTimestamp < DATETIME('2010-05-26', '1 day', '9.95461755067 hour', '-3.27 minute')
-            AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
-            AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
-            ORDER BY Secs;
-        """
         print stSQL
         ptRecs = scidb.curD.execute(stSQL).fetchall()
         if len(ptRecs) == 0:
