@@ -537,11 +537,14 @@ class NDVIFrame(wx.Frame):
         ptRecs = scidb.curD.execute(stSQL).fetchall()
         if len(ptRecs) == 0:
             self.pvLabel.SetLabel('No data for for ' + self.stDateToPreview)
-            return
-        pts = []
-        for ptRec in ptRecs:
-            pts.append((ptRec['Secs'], ptRec['Val']))
-        self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
+            stNoData = "No data for this time range"
+            pt = (0,0)
+            self.Canvas.AddScaledText(stNoData, pt, Size = 10, Color = 'BLACK', Position = "cc")
+        else:
+            pts = []
+            for ptRec in ptRecs:
+                pts.append((ptRec['Secs'], ptRec['Val']))
+            self.Canvas.AddLine(pts, LineWidth = 1, LineColor = 'BLUE')
         self.Canvas.ZoomToBB()
             
     def OnMessage(self, on, msg):
