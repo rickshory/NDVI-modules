@@ -963,7 +963,7 @@ def stationLongitude(iStationID):
                             return None
                         else: # got a valid value from the FieldSites table
                             return lon
-                    except: # 
+                    except: #
                         return None # no record in the FieldSites table for the passed ID 
             except:
                 return None # no record in the Stations table for the passed ID 
