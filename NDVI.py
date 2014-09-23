@@ -541,16 +541,16 @@ class NDVIFrame(wx.Frame):
         print 'scaleY', self.scaleY
         self.SetStatusText("Getting data for " + self.stDateToPreview)
         stSQL = """SELECT
-            strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
+            strftime('%s', Data.UTTimestamp) - strftime('%s', DATETIME('{sDt}', '{fHo} hour', '{fEq} minute')) AS Secs,
             Data.Value * {fSy} AS Val
             FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
             WHERE ChannelSegments.StationID = {iSt}  AND ChannelSegments.SeriesID = {iSe}
-            AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') >= '{sDt}'
-            AND DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute') < DATETIME('{sDt}', '1 day')
+            AND Data.UTTimestamp >= DATETIME('{sDt}', '{fHo} hour', '{fEq} minute')
+            AND Data.UTTimestamp < DATETIME('{sDt}', '1 day', '{fHo} hour', '{fEq} minute')
             AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
             AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
             ORDER BY Secs;
-            """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview, fSy=self.scaleY)
+            """.format(iSt=staID, iSe=serID, fHo=-hrOffLon, fEq=-minOffEqTm, sDt=self.stDateToPreview, fSy=self.scaleY)
         s = """SELECT
             strftime('%s', Data.UTTimestamp) - strftime('%s', DATETIME('2010-05-26', '9.95461755067 hour', '-3.27 minute')) AS Secs,
             Data.Value * 57.8809756098 AS Val
