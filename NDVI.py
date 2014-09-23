@@ -480,12 +480,14 @@ class NDVIFrame(wx.Frame):
             return
         txtDate = self.DtList.GetItemText(index)
         if txtDate == self.stDateToPreview:
+            self.SetStatusText(self.stDateToPreview + " already previewed")
             print 'same date already previewed:', self.stDateToPreview
             return # no need to re-do one already done
         self.Canvas.InitAll()
 #            self.Canvas.SetProjectionFun(self.ScalePreviewCanvas)
         self.Canvas.Draw()
         self.stDateToPreview = txtDate
+        self.SetStatusText("previewing " + self.stDateToPreview)
         print "date to preview:", self.stDateToPreview
         self.pvLabel.SetLabel('Generating preview for ' + self.stDateToPreview)
         
@@ -511,7 +513,7 @@ class NDVIFrame(wx.Frame):
             """.format(sDt=self.stDateToPreview)
         minOffEqTm = scidb.curD.execute(stSQLm).fetchone()['MinutesCorrection']
 
-#        self.dsFrame.statusBar.SetStatusText('Getting data range for ' + self.stItem)
+        self.SetStatusText("Getting data range for " + self.stDateToPreview)
         stSQLMinMax = """
             SELECT MIN(CAST(Data.Value AS FLOAT)) AS MinData,
             MAX(CAST(Data.Value AS FLOAT)) AS MaxData
@@ -537,6 +539,7 @@ class NDVIFrame(wx.Frame):
         else:
             self.scaleY = (0.618 * self.totSecs) / (self.fDataMax - self.fDataMin)
         print 'scaleY', self.scaleY
+        self.SetStatusText("Getting data for " + self.stDateToPreview)
         stSQL = """SELECT
             strftime('%s', DATETIME(Data.UTTimestamp, '{fHo} hour', '{fEq} minute')) - strftime('%s', '{sDt}') AS Secs,
             Data.Value * {fSy} AS Val
