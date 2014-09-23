@@ -551,6 +551,17 @@ class NDVIFrame(wx.Frame):
             AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
             ORDER BY Secs;
             """.format(iSt=staID, iSe=serID, fHo=hrOffLon, fEq=minOffEqTm, sDt=self.stDateToPreview, fSy=self.scaleY)
+        s = """SELECT
+            strftime('%s', Data.UTTimestamp) - strftime('%s', DATETIME('2010-05-26', '9.95461755067 hour', '-3.27 minute')) AS Secs,
+            Data.Value * 57.8809756098 AS Val
+            FROM ChannelSegments LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID
+            WHERE ChannelSegments.StationID = 3  AND ChannelSegments.SeriesID =3
+            AND Data.UTTimestamp >= DATETIME('2010-05-26', '9.95461755067 hour', '-3.27 minute')
+            AND Data.UTTimestamp < DATETIME('2010-05-26', '1 day', '9.95461755067 hour', '-3.27 minute')
+            AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
+            AND  Data.UTTimestamp <= COALESCE(ChannelSegments.SegmentEnd, DATETIME('now'))
+            ORDER BY Secs;
+        """
         print stSQL
         ptRecs = scidb.curD.execute(stSQL).fetchall()
         if len(ptRecs) == 0:
