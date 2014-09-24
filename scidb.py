@@ -130,7 +130,7 @@ try:
         "UTTimestamp" timestamp NOT NULL ,
         "ChannelID" INTEGER NOT NULL ,
         "Value" FLOAT NOT NULL ,
-        "Use" BOOL NOT NULL  DEFAULT 1,
+        "Use" BOOL NOT NULL DEFAULT 1,
         CHECK (CAST(Value AS FLOAT) == Value),
         FOREIGN KEY("ChannelID") REFERENCES DataChannels("ID")
         );
@@ -335,27 +335,46 @@ try:
         "RefStationID" INTEGER ,
         "IRRefSeriesID" INTEGER ,
         "VISRefSeriesID" INTEGER ,
+        "UseRef" BOOL NOT NULL DEFAULT 1,
         "IRDataSeriesID" INTEGER ,
         "VisDataSeriesID" INTEGER ,
-        "IRFunction" VARCHAR(50) DEFAULT "=i" ,
-        "VISFunction" VARCHAR(50) DEFAULT "=v" ,
-        "PlusMinusCutoffHours" FLOAT DEFAULT 2 ,
-        "Opt1ClrDayVsSetTholds" BOOL NOT NULL  DEFAULT 1 ,
+        "IRFunction" VARCHAR(250) DEFAULT "=i" ,
+        "VISFunction" VARCHAR(250) DEFAULT "=v" ,
+        "PlusMinusCutoffHours" FLOAT NOT NULL DEFAULT 2 ,
+        "Opt1ClrDayVsSetTholds" BOOL NOT NULL DEFAULT 1 ,
         "ClearDay" date ,
-        "ThresholdPctLow" INTEGER DEFAULT 75 ,
-        "ThresholdPctHigh" INTEGER DEFAULT 125 ,
+        "ThresholdPctLow" INTEGER NOT NULL DEFAULT 75 ,
+        "ThresholdPctHigh" INTEGER NOT NULL DEFAULT 125 ,
         "IRRefCutoff" FLOAT ,
         "VISRefCutoff" FLOAT ,
         "IRDatCutoff" FLOAT ,
         "VISDatCutoff" FLOAT,
-        "UseOnlyValidNDVI" BOOL NOT NULL  DEFAULT 0 ,
+        "UseOnlyValidNDVI" BOOL NOT NULL DEFAULT 0 ,
         "NDVIvalidMin" FLOAT DEFAULT -1 ,
-        "NDVIvalidMax" FLOAT DEFAULT 1   
+        "NDVIvalidMax" FLOAT DEFAULT 1  ,
+        "CreateSummaries" BOOL NOT NULL DEFAULT 0,
+        "OutputSAS" BOOL NOT NULL DEFAULT 0,
+        "Normalize" BOOL NOT NULL DEFAULT 0,
+        "OutputFormat" INTEGER NOT NULL DEFAULT 2,
+        "OutputBaseName" VARCHAR(30) NOT NULL DEFAULT "NDVI" ,
+        "OutputFolder" VARCHAR(250),
         CHECK ("PlusMinusCutoffHours" >= 0)
         CHECK ("PlusMinusCutoffHours" <= 12)
-        CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" >= 0))
-        CHECK (("ThresholdPctLow" is NULL) OR ("ThresholdPctLow" <= 100))
-        CHECK (("ThresholdPctHigh" is NULL) OR ("ThresholdPctHigh" >= 100))  
+        CHECK (CAST(PlusMinusCutoffHours AS FLOAT) == PlusMinusCutoffHours)
+        CHECK ((PlusMinusCutoffHours is NULL) OR (CAST(PlusMinusCutoffHours AS FLOAT) == PlusMinusCutoffHours))
+        CHECK ("ThresholdPctLow" > 0)
+        CHECK ("ThresholdPctLow" < 100)
+        CHECK (CAST(ThresholdPctLow AS INTEGER) == ThresholdPctLow)
+        CHECK ("ThresholdPctHigh" > 100)
+        CHECK (CAST(ThresholdPctHigh AS INTEGER) == ThresholdPctHigh)
+        CHECK ((IRRefCutoff is NULL) OR (CAST(IRRefCutoff AS FLOAT) == IRRefCutoff))
+        CHECK ((VISRefCutoff is NULL) OR (CAST(VISRefCutoff AS FLOAT) == VISRefCutoff))
+        CHECK ((IRDatCutoff is NULL) OR (CAST(IRDatCutoff AS FLOAT) == IRDatCutoff))
+        CHECK ((VISDatCutoff is NULL) OR (CAST(VISDatCutoff AS FLOAT) == VISDatCutoff))
+        CHECK ((NDVIvalidMin is NULL) OR (CAST(NDVIvalidMin AS FLOAT) == NDVIvalidMin))
+        CHECK ((NDVIvalidMax is NULL) OR (CAST(NDVIvalidMax AS FLOAT) == NDVIvalidMax))
+        CHECK ("OutputFormat" >= 1)
+        CHECK ("OutputFormat" <= 3)
         );
 
         CREATE TABLE IF NOT EXISTS "NDVIcalcDates" (
