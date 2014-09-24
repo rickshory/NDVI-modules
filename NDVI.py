@@ -114,11 +114,12 @@ class NDVIPanel(wx.Panel):
         stpLabel = wx.StaticText(pnl, -1, 'Set up NDVI calculations here')
         stpSiz.Add(stpLabel, pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-        stpSiz.Add(wx.StaticText(pnl, -1, 'Use panel:'),
-                     pos=(gRow, 2), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+        gRow += 1
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Retrieve panel:'),
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         self.cbxGetPanel = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-        stpSiz.Add(self.cbxGetPanel, pos=(gRow, 3), span=(1, 2), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxGetPanel, pos=(gRow, 1), span=(1, 3), flag=wx.LEFT, border=5)
         self.refresh_cbxPanelsChoices(-1)
 
         gRow += 1
@@ -859,15 +860,6 @@ class NDVIPanel(wx.Panel):
              Debug = 0,
              BackgroundColor = "WHITE")
         self.Canvas = self.NC.Canvas # reference the contained FloatCanvas
-        # test of drawing one line
-#        self.UnBindAllMouseEvents()
-#        self.Canvas.InitAll()
-#        self.Canvas.Draw()
-#        points = [(-100,-100),(100,100), (100,-100), (-100,100)]
-#        self.Canvas.AddLine(points, LineWidth = 1, LineColor = 'BLUE')
-#        self.Canvas.ZoomToBB() # this makes the drawing about 10% of the whole canvas, but
-        # then the "Zoom To Fit" button correctly expands it to the whole space
-
         pvSiz.Add(self.NC, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         pvSiz.AddGrowableRow(gRow)
         pnl.SetSizer(pvSiz)
@@ -907,7 +899,7 @@ class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title)
         self.InitUI()
-        self.SetSize((950, 600))
+        self.SetSize((1050, 600))
 #        self.Centre()
         self.Show(True)
 
