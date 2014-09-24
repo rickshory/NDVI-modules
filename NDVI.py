@@ -295,22 +295,22 @@ class NDVIPanel(wx.Panel):
 
 
         gRow += 1
-        stpSiz.Add(wx.StaticText(self, -1, 'Output As:'),
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Output As:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         iRBLeftBorderWd = 30
         gRow += 1
-        self.rbExcel = wx.RadioButton(self, label='Excel workbook', style=wx.RB_GROUP)
+        self.rbExcel = wx.RadioButton(pnl, label='Excel workbook', style=wx.RB_GROUP)
         stpSiz.Add(self.rbExcel, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbExcel.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
-        self.rbTabDelim = wx.RadioButton(self, label='Tab-delimited text')
+        self.rbTabDelim = wx.RadioButton(pnl, label='Tab-delimited text')
         stpSiz.Add(self.rbTabDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbTabDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
         
         gRow += 1
-        self.rbCommaDelim = wx.RadioButton(self, label='Comma-separated values ("CSV")')
+        self.rbCommaDelim = wx.RadioButton(pnl, label='Comma-separated values ("CSV")')
         stpSiz.Add(self.rbCommaDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbCommaDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
@@ -319,21 +319,21 @@ class NDVIPanel(wx.Panel):
 
         gRow += 1
 #        self.btnBrowseDir = wx.Button(self, label="Dir", size=(90, 28))
-        self.btnBrowseDir = wx.Button(self, label="Dir", size=(-1, -1))
+        self.btnBrowseDir = wx.Button(pnl, label="Dir", size=(-1, -1))
         self.btnBrowseDir.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnGetDir(evt))
         stpSiz.Add(self.btnBrowseDir, pos=(gRow, 0), flag=wx.LEFT, border=5)
         
-        stpSiz.Add(wx.StaticText(self, -1, 'Base name, file or folder:'),
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Base name, file or folder:'),
                      pos=(gRow, 1), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT, border=5)
 
-        self.tcBaseName = wx.TextCtrl(self, -1)
+        self.tcBaseName = wx.TextCtrl(pnl, -1)
         stpSiz.Add(self.tcBaseName, pos=(gRow, 2), span=(1, 3),
             flag=wx.ALIGN_LEFT|wx.EXPAND, border=5)
         self.stItemName = 'Test_Base_Name' # for testing <-------- FIX THIS
         self.tcBaseName.SetValue(self.stItemName)
 
         gRow += 1
-        self.tcDir = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
+        self.tcDir = wx.TextCtrl(pnl, -1, style=wx.TE_MULTILINE)
         stpSiz.Add(self.tcDir, pos=(gRow, 0), span=(2, 5),
             flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         gRow += 1 # space for the 2 grid rows for tcDir
@@ -341,10 +341,10 @@ class NDVIPanel(wx.Panel):
 
         
         gRow += 1
-        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
         gRow += 1
-        self.tcOutputOptInfo = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE|wx.TE_READONLY)
+        self.tcOutputOptInfo = wx.TextCtrl(pnl, -1, style=wx.TE_MULTILINE|wx.TE_READONLY)
         stpSiz.Add(self.tcOutputOptInfo, pos=(gRow, 0), span=(3, 5),
             flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         gRow += 1 # space for the three grid rows for tcOutputOptInfo
@@ -353,33 +353,33 @@ class NDVIPanel(wx.Panel):
         self.giveRBInfo(-1) # have to explictly call this 1st time; -1 is dummy value for event
         
         gRow += 1
-        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
         gRow += 1
-        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
         gRow += 1
-        sheetNoteBlocking1 = wx.StaticText(self, -1, 'NOTE: Making a dataset will block this application until complete.')
+        sheetNoteBlocking1 = wx.StaticText(pnl, -1, 'NOTE: Making a dataset will block this application until complete.')
 #        sheetNoteBlocking1.SetFont(bolded)
         stpSiz.Add(sheetNoteBlocking1, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT, border=5)
         gRow += 1
-        sheetNoteBlocking2 = wx.StaticText(self, -1, ' A full dataset can take a long time.')
+        sheetNoteBlocking2 = wx.StaticText(pnl, -1, ' A full dataset can take a long time.')
 #        sheetNoteBlocking2.SetFont(bolded)
         stpSiz.Add(sheetNoteBlocking2, pos=(gRow, 0), span=(1, 5), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
-        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
         gRow += 1
-        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
         gRow += 1
 
-        self.ckPreview = wx.CheckBox(self, label="Preview, Rows:")
+        self.ckPreview = wx.CheckBox(pnl, label="Preview, Rows:")
         stpSiz.Add(self.ckPreview, pos=(gRow, 0), span=(1, 1),
             flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
         self.ckPreview.SetValue(True)
         self.ckPreview.Bind(wx.EVT_CHECKBOX, self.onCkPreview)
 
-        self.spinPvwRows = wx.SpinCtrl(self, -1, '', size=(50,-1))
+        self.spinPvwRows = wx.SpinCtrl(pnl, -1, '', size=(50,-1))
         self.spinPvwRows.SetRange(1,100)
         self.spinPvwRows.SetValue(10)
         stpSiz.Add(self.spinPvwRows, pos=(gRow, 1), span=(1, 1),
@@ -388,12 +388,12 @@ class NDVIPanel(wx.Panel):
 #        stpSiz.Add(wx.StaticText(self, -1, ' Rows'),
 #                     pos=(gRow, 2), flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
 
-        self.btnMake = wx.Button(self, label="Make", size=(90, 28))
+        self.btnMake = wx.Button(pnl, label="Make", size=(90, 28))
         self.btnMake.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnMake(evt))
         stpSiz.Add(self.btnMake, pos=(gRow, 3), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
-        self.tcProgress = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE|wx.TE_READONLY)
+        self.tcProgress = wx.TextCtrl(pnl, -1, style=wx.TE_MULTILINE|wx.TE_READONLY)
         stpSiz.Add(self.tcProgress, pos=(gRow, 0), span=(4, 5),
             flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         gRow += 1 # space for the 4 grid rows for tcProgress
