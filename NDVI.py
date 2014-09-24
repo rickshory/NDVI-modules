@@ -936,7 +936,7 @@ class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
         wx.Frame.__init__(self, parent, id, title)
         self.InitUI()
-        self.SetSize((750, 600))
+        self.SetSize((950, 600))
 #        self.Centre()
         self.Show(True)
 
