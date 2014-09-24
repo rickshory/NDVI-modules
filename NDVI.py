@@ -254,9 +254,9 @@ class NDVIPanel(wx.Panel):
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'Cutoff, hours +/- solar noon:'),
-                     pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcPlusMinusCutoffHours = wx.TextCtrl(pnl)
-        stpSiz.Add(self.tcPlusMinusCutoffHours, pos=(gRow, 3), span=(1, 1), 
+        stpSiz.Add(self.tcPlusMinusCutoffHours, pos=(gRow, 2), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
