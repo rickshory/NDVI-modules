@@ -55,61 +55,76 @@ class NDVIPanel(wx.Panel):
         #horizontal split means the split goes across
         #vertical split means the split goes up and down
         vSplit = wx.SplitterWindow(self, -1)
-        self.ndviSetupPanel = scrolled.ScrolledPanel(vSplit, -1)
-        self.InitNDVISetupPanel(self.ndviSetupPanel)
-        
-#        self.ndviSetupLabel = wx.StaticText(self.ndviSetupPanel, -1, "Set up NDVI calculations here")
-        ndviInfoPanel = wx.Panel(vSplit, -1)
-        ndviInfoPanel.SetBackgroundColour(wx.RED)
-#        self.ndviInfoLabel = wx.StaticText(ndviInfoPanel, -1, "NDVI info will be here")
+        hSplit = wx.SplitterWindow(vSplit, -1)
+        optsSplit = wx.SplitterWindow(hSplit, -1)
 
-        hSplit = wx.SplitterWindow(ndviInfoPanel, -1)
-        ndviOptsPanel = wx.Panel(hSplit, -1)
-        optsSplit = wx.SplitterWindow(ndviOptsPanel, -1)
         ndviDatesPanel = wx.Panel(optsSplit, -1)
         self.InitDatesPanel(ndviDatesPanel)
 
         ndviStationsPanel = wx.Panel(optsSplit, -1)
         self.InitStationsPanel(ndviStationsPanel)
-        
+        optsSplit.SplitVertically(ndviDatesPanel, ndviStationsPanel)
         optsSplit.SetMinimumPaneSize(100)
         optsSplit.SetSashGravity(0.5)
-        # 'sashPosition=0' is supposed to split it down the middle, but the left panel is way smaller
-        # see if further internal sizers fix this
-        optsSplit.SplitVertically(ndviDatesPanel, ndviStationsPanel, sashPosition=0)
-        # following doesn't help
-        #optsSplit.SplitVertically(ndviDatesPanel, self.ndviStationsPanel, sashPosition=self.datesList.GetSize()[0]+10)
-        optsSiz = wx.BoxSizer(wx.HORIZONTAL)
-        optsSiz.Add(optsSplit, 1, wx.EXPAND)
-        ndviOptsPanel.SetSizer(optsSiz)
-        ndviOptsPanel.SetAutoLayout(1)
         
         previewPanel = wx.Panel(hSplit, -1)
         self.InitPreviewPanel(previewPanel)
 #        self.previewPanel.SetBackgroundColour('#FFFF00')
 #        self.pvwLabel = wx.StaticText(self.previewPanel, -1, "previews will be here")
 
-        hSplit.SetMinimumPaneSize(20)
+        hSplit.SplitHorizontally(optsSplit, previewPanel)
+        hSplit.SetMinimumPaneSize(100)
         hSplit.SetSashGravity(0.5)
-        hSplit.SplitHorizontally(ndviOptsPanel, previewPanel)
-        vSiz = wx.BoxSizer(wx.VERTICAL)
-        vSiz.Add(hSplit, 1, wx.EXPAND)
-        ndviInfoPanel.SetSizer(vSiz)
+        
+        self.ndviSetupPanel = scrolled.ScrolledPanel(vSplit, -1)
+        self.InitNDVISetupPanel(self.ndviSetupPanel)
 
-        vSplit.SetMinimumPaneSize(20)
+        vSplit.SplitVertically(self.ndviSetupPanel, hSplit)
+        vSplit.SetMinimumPaneSize(100)
         vSplit.SetSashGravity(0.5)
-        vSplit.SplitVertically(self.ndviSetupPanel, ndviInfoPanel)
-        hSiz = wx.BoxSizer(wx.HORIZONTAL)
-        hSiz.Add(vSplit, 1, wx.EXPAND)
-        self.SetSizer(hSiz)
+
+        OverallSizer = wx.BoxSizer(wx.HORIZONTAL)
+        OverallSizer.Add(vSplit, 1, wx.EXPAND)
+        self.SetSizer(OverallSizer)
+        
+#        self.ndviSetupLabel = wx.StaticText(self.ndviSetupPanel, -1, "Set up NDVI calculations here")
+#        ndviInfoPanel = wx.Panel(vSplit, -1)
+#        ndviInfoPanel.SetBackgroundColour(wx.RED)
+#        self.ndviInfoLabel = wx.StaticText(ndviInfoPanel, -1, "NDVI info will be here")
+
+#        ndviOptsPanel = wx.Panel(hSplit, -1)
+#        optsSplit = wx.SplitterWindow(ndviOptsPanel, -1)
+        
+        # 'sashPosition=0' is supposed to split it down the middle, but the left panel is way smaller
+        # see if further internal sizers fix this
+        # following doesn't help
+        #optsSplit.SplitVertically(ndviDatesPanel, self.ndviStationsPanel, sashPosition=self.datesList.GetSize()[0]+10)
+#        optsSiz = wx.BoxSizer(wx.HORIZONTAL)
+#        optsSiz.Add(optsSplit, 1, wx.EXPAND)
+#        ndviOptsPanel.SetSizer(optsSiz)
+#        ndviOptsPanel.SetAutoLayout(1)
+
+#        hSplit.SetMinimumPaneSize(20)
+#        hSplit.SetSashGravity(0.5)
+#        hSplit.SplitHorizontally(ndviOptsPanel, previewPanel)
+#        vSiz = wx.BoxSizer(wx.VERTICAL)
+#        vSiz.Add(hSplit, 1, wx.EXPAND)
+#        ndviInfoPanel.SetSizer(vSiz)
+
+#        vSplit.SetMinimumPaneSize(20)
+#        vSplit.SetSashGravity(0.5)
+#        vSplit.SplitVertically(self.ndviSetupPanel, ndviInfoPanel)
+#        hSiz = wx.BoxSizer(wx.HORIZONTAL)
+#        hSiz.Add(vSplit, 1, wx.EXPAND)
+#        self.SetSizer(hSiz)
         
 #        EVT_ENTER_WINDOW(self, self.OnMessage(1, "Hello, world") )
 #        EVT_LEAVE_WINDOW(self, self.OnMessage(0, "Goodbye, world") )
 
-        print 'dates list size:', self.datesList.GetSize()
-        # following doesn't help
-        print "dates list width:", self.datesList.GetSize()[0]
-        optsSplit.SetSashPosition(position=self.datesList.GetSize()[0]+10, redraw=True)
+#        print 'dates list size:', self.datesList.GetSize()
+#        # following doesn't help
+#        print "dates list width:", self.datesList.GetSize()[0]
+#        optsSplit.SetSashPosition(position=self.datesList.GetSize()[0]+10, redraw=True)
 
         return
     
