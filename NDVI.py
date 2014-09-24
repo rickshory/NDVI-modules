@@ -177,8 +177,8 @@ class NDVIPanel(wx.Panel):
                      pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         self.ckUseRef = wx.CheckBox(pnl, label="Use Reference")
-        stpSiz.Add(self.ckUseRef, pos=(gRow, 1), span=(1, 2),
-            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+        stpSiz.Add(self.ckUseRef, pos=(gRow, 1), span=(1, 1),
+            flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.ckUseRef.SetValue(True)
 
         gRow += 1
@@ -186,7 +186,7 @@ class NDVIPanel(wx.Panel):
         stSQLStations = 'SELECT ID, StationName FROM Stations;'
         self.cbxRefStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxRefStationID, stSQLStations)
-        stpSiz.Add(self.cbxRefStationID, pos=(gRow, 1), span=(1, 3), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxRefStationID, pos=(gRow, 0), span=(1, 4), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'For the reference station:'),
@@ -276,9 +276,9 @@ class NDVIPanel(wx.Panel):
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'percent of solar maximum on the clear day:'),
-                     pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.tcClearDay = wx.TextCtrl(pnl)
-        stpSiz.Add(self.tcClearDay, pos=(gRow, 3), span=(1, 2), 
+        stpSiz.Add(self.tcClearDay, pos=(gRow, 2), span=(1, 2), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
