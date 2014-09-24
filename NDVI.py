@@ -147,7 +147,7 @@ class NDVIPanel(wx.Panel):
                      pos=(gRow, 2), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         self.cbxGetPanel = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
-        stpSiz.Add(self.cbxGetPanel, pos=(gRow, 3), span=(1, 1), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxGetPanel, pos=(gRow, 3), span=(1, 2), flag=wx.LEFT, border=5)
         self.refresh_cbxPanelsChoices(-1)
 
         gRow += 1
@@ -174,50 +174,57 @@ class NDVIPanel(wx.Panel):
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'Reference station:'),
-                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        self.ckUseRef = wx.CheckBox(pnl, label="Use Reference")
+        stpSiz.Add(self.ckUseRef, pos=(gRow, 1), span=(1, 2),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+        self.ckUseRef.SetValue(True)
+
+        gRow += 1
 
         stSQLStations = 'SELECT ID, StationName FROM Stations;'
         self.cbxRefStationID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxRefStationID, stSQLStations)
-        stpSiz.Add(self.cbxRefStationID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxRefStationID, pos=(gRow, 1), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'For the reference station:'),
-                     pos=(gRow, 1), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+                     pos=(gRow, 0), span=(1, 3), flag=wx.LEFT, border=30)
 
         stSQLSeries = 'SELECT ID, DataSeriesDescription FROM DataSeries;'
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'IR is in:'),
-                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.cbxIRRefSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxIRRefSeriesID, stSQLSeries)
-        stpSiz.Add(self.cbxIRRefSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxIRRefSeriesID, pos=(gRow, 1), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'VIS is in:'),
-                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.cbxVISRefSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxVISRefSeriesID, stSQLSeries)
-        stpSiz.Add(self.cbxVISRefSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxVISRefSeriesID, pos=(gRow, 1), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'For the other stations (selected to the right):'),
-                     pos=(gRow, 1), span=(1, 4), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+                     pos=(gRow, 0), span=(1, 4), flag=wx.LEFT, border=30)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'IR is in:'),
-                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.cbxIRDataSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxIRDataSeriesID, stSQLSeries)
-        stpSiz.Add(self.cbxIRDataSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxIRDataSeriesID, pos=(gRow, 1), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'VIS is in:'),
-                     pos=(gRow, 0), span=(1, 2), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+                     pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
         self.cbxVisDataSeriesID = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         scidb.fillComboboxFromSQL(self.cbxVisDataSeriesID, stSQLSeries)
-        stpSiz.Add(self.cbxVisDataSeriesID, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
+        stpSiz.Add(self.cbxVisDataSeriesID, pos=(gRow, 1), span=(1, 3), flag=wx.LEFT, border=5)
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
@@ -291,6 +298,37 @@ class NDVIPanel(wx.Panel):
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
+        gRow += 1
+        self.ckIncludeSummaries = wx.CheckBox(pnl,
+            label="Create daily summaries. (Excel output will include charts)")
+        stpSiz.Add(self.ckIncludeSummaries, pos=(gRow, 0), span=(1, 4),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+        self.ckIncludeSummaries.SetValue(False)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
+        gRow += 1
+        self.ckIncludeSAS = wx.CheckBox(pnl,
+            label="Also output data for SAS")
+        stpSiz.Add(self.ckIncludeSAS, pos=(gRow, 0), span=(1, 4),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+        self.ckIncludeSAS.SetValue(False)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
+        gRow += 1
+        self.ckNormalize = wx.CheckBox(pnl,
+            label="Normalize NDVI into range 0-to-1, i.e. view only relative changes")
+        stpSiz.Add(self.ckNormalize, pos=(gRow, 0), span=(1, 4),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+        self.ckNormalize.SetValue(False)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+
 # ----->
 
 
