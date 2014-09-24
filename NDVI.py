@@ -291,7 +291,137 @@ class NDVIPanel(wx.Panel):
 
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
+# ----->
 
+
+        gRow += 1
+        stpSiz.Add(wx.StaticText(self, -1, 'Output As:'),
+                     pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        iRBLeftBorderWd = 30
+        gRow += 1
+        self.rbExcel = wx.RadioButton(self, label='Excel workbook', style=wx.RB_GROUP)
+        stpSiz.Add(self.rbExcel, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbExcel.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
+
+        gRow += 1
+        self.rbTabDelim = wx.RadioButton(self, label='Tab-delimited text')
+        stpSiz.Add(self.rbTabDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbTabDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
+        
+        gRow += 1
+        self.rbCommaDelim = wx.RadioButton(self, label='Comma-separated values ("CSV")')
+        stpSiz.Add(self.rbCommaDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        self.rbCommaDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
+
+        gRow += 1
+        stpSiz.Add((0, 10), pos=(gRow, 0), span=(1, 3)) # some space
+
+        gRow += 1
+#        self.btnBrowseDir = wx.Button(self, label="Dir", size=(90, 28))
+        self.btnBrowseDir = wx.Button(self, label="Dir", size=(-1, -1))
+        self.btnBrowseDir.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnGetDir(evt))
+        stpSiz.Add(self.btnBrowseDir, pos=(gRow, 0), flag=wx.LEFT, border=5)
+        
+        stpSiz.Add(wx.StaticText(self, -1, 'Base name, file or folder:'),
+                     pos=(gRow, 1), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT, border=5)
+
+        self.tcBaseName = wx.TextCtrl(self, -1)
+        stpSiz.Add(self.tcBaseName, pos=(gRow, 2), span=(1, 3),
+            flag=wx.ALIGN_LEFT|wx.EXPAND, border=5)
+        self.stItemName = 'Test_Base_Name' # for testing <-------- FIX THIS
+        self.tcBaseName.SetValue(self.stItemName)
+
+        gRow += 1
+        self.tcDir = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE)
+        stpSiz.Add(self.tcDir, pos=(gRow, 0), span=(2, 5),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        gRow += 1 # space for the 2 grid rows for tcDir
+        self.tcDir.SetValue('(save output in default directory)')
+
+        
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+
+        gRow += 1
+        self.tcOutputOptInfo = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE|wx.TE_READONLY)
+        stpSiz.Add(self.tcOutputOptInfo, pos=(gRow, 0), span=(3, 5),
+            flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        gRow += 1 # space for the three grid rows for tcOutputOptInfo
+        gRow += 1
+
+        self.giveRBInfo(-1) # have to explictly call this 1st time; -1 is dummy value for event
+        
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+
+        gRow += 1
+        sheetNoteBlocking1 = wx.StaticText(self, -1, 'NOTE: Making a dataset will block this application until complete.')
+#        sheetNoteBlocking1.SetFont(bolded)
+        stpSiz.Add(sheetNoteBlocking1, pos=(gRow, 0), span=(1, 5), flag=wx.TOP|wx.LEFT, border=5)
+        gRow += 1
+        sheetNoteBlocking2 = wx.StaticText(self, -1, ' A full dataset can take a long time.')
+#        sheetNoteBlocking2.SetFont(bolded)
+        stpSiz.Add(sheetNoteBlocking2, pos=(gRow, 0), span=(1, 5), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+        gRow += 1
+        stpSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
+
+        gRow += 1
+
+        self.ckPreview = wx.CheckBox(self, label="Preview, Rows:")
+        stpSiz.Add(self.ckPreview, pos=(gRow, 0), span=(1, 1),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+        self.ckPreview.SetValue(True)
+        self.ckPreview.Bind(wx.EVT_CHECKBOX, self.onCkPreview)
+
+        self.spinPvwRows = wx.SpinCtrl(self, -1, '', size=(50,-1))
+        self.spinPvwRows.SetRange(1,100)
+        self.spinPvwRows.SetValue(10)
+        stpSiz.Add(self.spinPvwRows, pos=(gRow, 1), span=(1, 1),
+            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+
+#        stpSiz.Add(wx.StaticText(self, -1, ' Rows'),
+#                     pos=(gRow, 2), flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+
+        self.btnMake = wx.Button(self, label="Make", size=(90, 28))
+        self.btnMake.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnMake(evt))
+        stpSiz.Add(self.btnMake, pos=(gRow, 3), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        self.tcProgress = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE|wx.TE_READONLY)
+        stpSiz.Add(self.tcProgress, pos=(gRow, 0), span=(4, 5),
+            flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
+        gRow += 1 # space for the 4 grid rows for tcProgress
+        gRow += 1
+        gRow += 1
+
+        # offer some estimate diagnostics
+        self.tcProgress.AppendText('Estimate for full dataset: ')
+        fEstSecsPerQuery = 0.2
+#        iNumRows = self.bkDict['CtOfDays'] * self.bkDict['NumberOfTimeSlicesPerDay']
+#        if self.sourceTable == 'OutputSheets':
+#            self.iTotRowEstimate = iNumRows
+#            self.tcProgress.AppendText(str(self.iTotRowEstimate) + ' rows; ')
+#            iNumQueries = self.shDict['CtAggCols'] + 1
+#            fNumSecsWorking = iNumRows * iNumQueries * fEstSecsPerQuery
+#            self.tcProgress.AppendText('working time, %d seconds ' % fNumSecsWorking)
+#        else: # book
+#            self.tcProgress.AppendText('%d rows in each of %d sheets' % (iNumRows, len(self.lShs)))
+#            self.iTotRowEstimate = iNumRows * len(self.lShs)
+#            self.tcProgress.AppendText(', for a total of %d rows; ' % self.iTotRowEstimate)
+#            iTotQueries = 0
+#            for shDict in self.lShs:
+#                iTotQueries += (shDict['CtAggCols'] + 1)
+#            fNumSecsWorking = iNumRows * iTotQueries * fEstSecsPerQuery
+#            self.tcProgress.AppendText('Estimated working time for whole dataset, %d seconds ' % fNumSecsWorking)
+        self.tcProgress.AppendText('(estimation not implemented yet)')
+
+# <-----
         gRow += 1
         self.btnSavePnl = wx.Button(pnl, label="Save\npanel", size=(-1, -1))
         self.btnSavePnl.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnSavePnl(evt))
@@ -308,6 +438,334 @@ class NDVIPanel(wx.Panel):
         pnl.SetSizer(stpSiz)
         pnl.SetAutoLayout(1)
         pnl.SetupScrolling()
+
+    def onCkPreview(self, evt):
+        if self.ckPreview.GetValue():
+            self.spinPvwRows.Enable(True)
+        else:
+            self.spinPvwRows.Enable(False)
+
+    def giveRBInfo(self, event):
+        """
+        Give the user some information about this output option
+        """
+        stMsg = ''
+        if self.rbExcel.GetValue():
+            stMsg = ' Excel output is only available on Windows systems, and only ' \
+                'if you have Excel installed. Only Excel allows making a multi-Sheet Book. ' \
+                'With other options, each Sheet becomes a separate file. \r' \
+                ' With Excel, you will see the dataset as it builds. Other options do not show.'
+        if self.rbTabDelim.GetValue():
+            stMsg = ' With tab delimited output, each Sheet becomes a separate file. If you ' \
+                ' make a whole Book at once, the Sheets will be a set of files, within a ' \
+                'folder named for the Book.\r' \
+                ' You will not see the dataset as it builds. It builds as a file (or files) on disk.'
+        if self.rbCommaDelim.GetValue():
+            stMsg = ' With CSV output, each Sheet becomes a separate file. If you ' \
+                ' make a whole Book at once, the Sheets will be a set of files, within a Book ' \
+                'folder.\r' \
+                ' If you have a comma within any data item, that item will have quotes around it in ' \
+                'the output file, to prevent the comma from breaking that row into a new ' \
+                'column at that point.\r' \
+                'You will not see the dataset as it builds. It builds as a file (or files) on disk.'
+        self.tcOutputOptInfo.SetValue(stMsg)
+
+    def onClick_BtnGetDir(self, event):
+        """
+        Get the directory to save the file we are about to make
+        """
+        dlg = wx.DirDialog(self, "Choose a directory:",
+                           style=wx.DD_DEFAULT_STYLE
+                           #| wx.DD_DIR_MUST_EXIST
+                           #| wx.DD_CHANGE_DIR
+                           )
+        if dlg.ShowModal() == wx.ID_OK:
+            self.tcDir.SetValue(dlg.GetPath())
+#            print "You chose %s" % dlg.GetPath()
+        dlg.Destroy()
+
+    def onClick_BtnMake(self, event):
+        """
+        Make the dataset
+        """
+        pass
+        return # for testing, stop here
+        # test if our file save info is valid
+        stDir = self.tcDir.GetValue()
+        if not os.path.exists(stDir):
+            stDir = os.path.expanduser('~') # user doesn't like? next time choose one
+            self.tcDir.SetValue(stDir)
+        stBaseName = self.tcBaseName.GetValue()
+#        if stBaseName[0] == '(': # assume '(default filename)' was sitting there
+#            stBaseName = self.stItemName #default
+#        stBaseName = "".join(x for x in stBaseName if x.isalnum())
+#        self.tcBaseName.SetValue(stBaseName)
+        stSavePath = os.path.join(stDir, stBaseName)
+        print "stSavePath:", stSavePath
+        if self.rbExcel.GetValue():
+            stSavePath = stSavePath + '.xlsx'
+        if self.rbTabDelim.GetValue():
+            stSavePath = stSavePath + '.txt'
+        if self.rbCommaDelim.GetValue():
+            stSavePath = stSavePath + '.csv'
+        if os.path.isfile(stSavePath):
+            stMsg = '"' + stSavePath + '" already exists. Overwrite?'
+            dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+#            print "result of Yes/No dialog:", result
+            if result == wx.ID_YES:
+                try:
+                    os.remove(stSavePath)
+                except:
+                    wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+            else:
+                return
+
+        if self.rbExcel.GetValue():
+            self.makeExcel()
+            return # end of if Excel
+
+        else: # one of the text formats
+            if self.sourceTable == 'OutputSheets': # going to create only one file, from this one sheet
+                shDict = self.lShs[0]
+                self.makeTextFile(0, shDict) # explictily pass the sheet dictionary
+                return
+            if self.sourceTable == 'OutputBooks': # process the whole book
+                if self.bkDict['PutAllOutputRowsInOneSheet'] == 1:
+                    self.makeTextFile(1, None) # flag to compile the whole book into one file, no shDict needed
+                else:
+                    iNumSheets = len(self.lShs)
+                    iSheetCt = 0
+                    for shDict in self.lShs:
+                        iSheetCt += 1
+                        stMsg = 'Doing sheet "' + shDict['WorksheetName'] + '", ' + str(iSheetCt) + ' of ' + str(iNumSheets)
+                        self.tcOutputOptInfo.SetValue(stMsg)
+                        self.makeTextFile(0, shDict) # explictily pass each sheet dictionary
+                return
+            return # end of if text file(s)    
+
+    def makeExcel(self):
+        """
+        Make an Excel workbook
+        """
+        if hasCom == False: # we tested for this at the top of this module
+            wx.MessageBox('This operating system cannot make Excel files', 'Info',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+        try:
+            oXL = win32com.client.Dispatch("Excel.Application")
+            oXL.Visible = 1
+        except:
+            wx.MessageBox('Excel is not on this computer', 'Info',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+        bXL = oXL.Workbooks.Add()
+        #remove any extra sheets
+        while bXL.Sheets.Count > 1:
+#                    print "Workbook has this many sheets:", bXL.Sheets.Count
+            bXL.Sheets(1).Delete()
+        shXL = bXL.Sheets(1)
+        boolSheetReady = True
+        # before we go any further, try saving file
+        stDir = self.tcDir.GetValue()
+        stBaseName = self.tcBaseName.GetValue()
+        stSavePath = os.path.join(stDir, stBaseName) + '.xlsx'
+
+        if os.path.isfile(stSavePath):
+            stMsg = '"' + stSavePath + '" already exists. Overwrite?'
+            dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+#            print "result of Yes/No dialog:", result
+            if result == wx.ID_YES:
+                try:
+                    os.remove(stSavePath)
+                except:
+                    wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+            else:
+                return
+
+        try:
+            bXL.SaveAs(stSavePath) # make sure there's nothing invalid about the filename
+        except:
+            wx.MessageBox('Can not save file "' + stSavePath + '"', 'Info',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+        self.tcOutputOptInfo.SetValue(' Creating Excel file "' + stSavePath + '"\n')
+
+
+        for shDict in self.lShs:
+            if boolSheetReady == False:
+                self.tcOutputOptInfo.SetValue(self.tcOutputOptInfo.GetValue() + 'Sheet "' + shXL.Name + '"\n')
+                print shXL.Name
+                sPrevShNm = shXL.Name
+                #shXL = bXL.Sheets.Add() # this works
+                #print shXL.Name # this works, and is the expected new sheet 1st in the book
+                #shXL.Move(After=bXL.Sheets(sPrevShNm)) # this moves sheet to a new book, then crashes
+                oXL.Worksheets.Add(After=oXL.Sheets(sPrevShNm)) # creats sheet, but 1st in the book
+                #worksheets.Add(After=worksheets(worksheets.Count)) # creats sheet, but 1st in the book 
+                shXL = oXL.ActiveSheet
+                print shXL.Name
+                boolSheetReady = True
+                
+            iSheetID = shDict['ID']
+            dsRow = 1
+            dsCol = 1
+            # name the worksheet
+#                    shXL = bXL.Sheets(1)
+            shXL.Name = shDict['WorksheetName']
+            boolSheetReady = False # sheet has been used, next loop will add a new one
+            #set up the column headings
+            stSQL = "SELECT Count(ID) AS CountOfID, ColumnHeading, " \
+                "AggType, Format_Excel, ListingOrder " \
+                "FROM OutputColumns GROUP BY WorksheetID, ColumnHeading, " \
+                "AggType, Format_Excel, ListingOrder " \
+                "HAVING WorksheetID = ? " \
+                "ORDER BY ListingOrder;"
+            scidb.curD.execute(stSQL, (iSheetID,))
+            recs = scidb.curD.fetchall()
+            for rec in recs:
+                shXL.Cells(dsRow,rec['ListingOrder']).Value = rec['ColumnHeading']
+                #apply column formats
+                if rec['Format_Excel'] != None:
+                    try:
+                        shXL.Columns(rec['ListingOrder']).NumberFormat = rec['Format_Excel']
+                    except:
+                        print 'Invalid Excel format, column ' + str(rec['ListingOrder'])
+
+            if self.ckPreview.GetValue():
+                iNumRowsToPreview = self.spinPvwRows.GetValue()
+            else:
+                iNumRowsToPreview = 1000000 # improve this
+            iPreviewCt = 0
+
+            # use the row generator
+#                    waitForExcel = wx.BusyInfo("Making Excel output")
+            sheetRows = scidb.generateSheetRows(iSheetID, formatValues = False)
+            for dataRow in sheetRows:
+                # yielded object is list with as many members as there are grid columns
+                iPreviewCt += 1
+                if iPreviewCt > iNumRowsToPreview:
+                    break
+                dsRow += 1
+                for dsCol in range(len(dataRow)):
+                    shXL.Cells(dsRow,dsCol+1).Value = dataRow[dsCol]
+#                    del waitForExcel    
+        shXL.Columns.AutoFit()
+        bXL.Save() 
+#                oXL.Cells(1,1).Value = "Hello"
+
+    def makeTextFile(self, combineSheets, shDict):
+        """
+        Make a text file
+        """
+#        wx.MessageBox('Called makeTextFile function', 'Info',
+#            wx.OK | wx.ICON_INFORMATION)
+        stDir = self.tcDir.GetValue()
+        stBaseName = self.tcBaseName.GetValue()
+        stBasePath = os.path.join(stDir, stBaseName)
+        if combineSheets == 0: # not making the whole book into one file, use base name for folder and add filename
+            if not os.path.exists(stBasePath):
+                try:
+                    os.makedirs(stBasePath)
+                except:
+                    wx.MessageBox('Can not create folder "' + stBasePath + '"', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+            stSavePath = os.path.join(stBasePath, shDict['WorksheetName'])
+
+        else:
+            stSavePath = stBasePath
+        if self.rbTabDelim.GetValue():
+            stSavePath = stSavePath + '.txt'
+        if self.rbCommaDelim.GetValue():
+            stSavePath = stSavePath + '.csv'
+        if os.path.isfile(stSavePath):
+            stMsg = '"' + stSavePath + '" already exists. Overwrite?'
+            dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+#            print "result of Yes/No dialog:", result
+            if result == wx.ID_YES:
+                try:
+                    os.remove(stSavePath)
+                except:
+                    wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+            else:
+                return
+        try: # before we go any further
+            # make sure there's nothing invalid about the filename
+            fOut = open(stSavePath, 'wb') 
+        except:
+            wx.MessageBox('Can not create file "' + stSavePath + '"', 'Info',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+
+        if self.rbTabDelim.GetValue():
+            wr = csv.writer(fOut, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        if self.rbCommaDelim.GetValue():
+            wr = csv.writer(fOut, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+        self.tcProgress.SetValue('Setting up column headings')
+        # item unless book is specified to go all in one block (not implemented yet)
+        # get the number of columns
+        stSQL = 'SELECT MAX(CAST(ListingOrder AS INTEGER)) AS Ct ' \
+            'FROM OutputColumns WHERE WorksheetID = ?'
+        scidb.curD.execute(stSQL, (shDict['ID'],))
+        rec = scidb.curD.fetchone()
+        lColHds = ['' for x in range(rec['Ct'])]
+        #set up the column headings
+        stSQL = "SELECT Count(ID) AS CountOfID, " \
+            "ColumnHeading, AggType, ListingOrder " \
+            "FROM OutputColumns " \
+            "GROUP BY WorksheetID, ColumnHeading, AggType, ListingOrder " \
+            "HAVING WorksheetID = ? " \
+            "ORDER BY ListingOrder;"
+        scidb.curD.execute(stSQL, (shDict['ID'],))
+        recs = scidb.curD.fetchall()
+        for rec in recs:
+            lColHds[rec['ListingOrder']-1] = rec['ColumnHeading']
+        wr.writerow(lColHds)
+        lMsg = []
+        lMsg.append('')
+        lMsg.append('')
+        lMsg.append(' rows written to "')
+        lMsg.append(stSavePath)
+        lMsg.append('".')
+        if self.ckPreview.GetValue():
+            iNumRowsToDo = self.spinPvwRows.GetValue()
+            lMsg[0] = 'Preview of '
+            lMsg[1] = str(iNumRowsToDo)
+        else:
+            iNumRowsToDo = 1000000 # improve this
+            lMsg[0] = 'Total of '
+        iRowCt = 0
+        # get a count
+        iNumRowsInDataset = scidb.countOfSheetRows(shDict['ID'])
+        # use the row generator
+        sheetRows = scidb.generateSheetRows(shDict['ID'])
+        for dataRow in sheetRows:
+            # yielded object is list with as many members as there are columns
+            iRowCt += 1
+            if iRowCt > iNumRowsToDo:
+                break
+            self.tcProgress.SetValue('Doing row %d of %d' % (iRowCt, iNumRowsInDataset))
+            wx.Yield() # allow window updates to occur
+            wr.writerow(dataRow)
+            
+        lMsg[1] = str(iRowCt)
+
+        fOut.close()
+        wx.MessageBox("".join(lMsg), 'Info',
+            wx.OK | wx.ICON_INFORMATION)
+        return # end of if CSV
 
     def FillNDVISetupPanelFromCalcDict(self):
         if self.calcDict['CalcName'] != None:
