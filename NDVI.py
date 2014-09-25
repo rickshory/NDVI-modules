@@ -319,17 +319,14 @@ class NDVIPanel(wx.Panel):
         gRow += 1
         self.rbExcel = wx.RadioButton(pnl, label='Excel workbook', style=wx.RB_GROUP)
         stpSiz.Add(self.rbExcel, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
-        self.rbExcel.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
         self.rbTabDelim = wx.RadioButton(pnl, label='Tab-delimited text')
         stpSiz.Add(self.rbTabDelim, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
-        self.rbTabDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
         
         gRow += 1
         self.rbCommaDelim = wx.RadioButton(pnl, label='Comma-separated values ("CSV")')
         stpSiz.Add(self.rbCommaDelim, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
-        self.rbCommaDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
         stpSiz.Add((0, 10), pos=(gRow, 0), span=(1, 3)) # some space
@@ -356,19 +353,6 @@ class NDVIPanel(wx.Panel):
         gRow += 1 # space for the 2 grid rows for tcDir
         self.tcDir.SetValue('(save output in default directory)')
 
-        
-        gRow += 1
-        stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
-
-        gRow += 1
-        self.tcOutputOptInfo = wx.TextCtrl(pnl, -1, style=wx.TE_MULTILINE|wx.TE_READONLY)
-        stpSiz.Add(self.tcOutputOptInfo, pos=(gRow, 0), span=(3, 5),
-            flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
-        gRow += 1 # space for the three grid rows for tcOutputOptInfo
-        gRow += 1
-
-        self.giveRBInfo(-1) # have to explictly call this 1st time; -1 is dummy value for event
-        
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
         gRow += 1
@@ -461,31 +445,6 @@ class NDVIPanel(wx.Panel):
             self.spinPvwRows.Enable(True)
         else:
             self.spinPvwRows.Enable(False)
-
-    def giveRBInfo(self, event):
-        """
-        Give the user some information about this output option
-        """
-        stMsg = ''
-        if self.rbExcel.GetValue():
-            stMsg = ' Excel output is only available on Windows systems, and only ' \
-                'if you have Excel installed. Only Excel allows making a multi-Sheet Book. ' \
-                'With other options, each Sheet becomes a separate file. \r' \
-                ' With Excel, you will see the dataset as it builds. Other options do not show.'
-        if self.rbTabDelim.GetValue():
-            stMsg = ' With tab delimited output, each Sheet becomes a separate file. If you ' \
-                ' make a whole Book at once, the Sheets will be a set of files, within a ' \
-                'folder named for the Book.\r' \
-                ' You will not see the dataset as it builds. It builds as a file (or files) on disk.'
-        if self.rbCommaDelim.GetValue():
-            stMsg = ' With CSV output, each Sheet becomes a separate file. If you ' \
-                ' make a whole Book at once, the Sheets will be a set of files, within a Book ' \
-                'folder.\r' \
-                ' If you have a comma within any data item, that item will have quotes around it in ' \
-                'the output file, to prevent the comma from breaking that row into a new ' \
-                'column at that point.\r' \
-                'You will not see the dataset as it builds. It builds as a file (or files) on disk.'
-        self.tcOutputOptInfo.SetValue(stMsg)
 
     def onClick_BtnGetDir(self, event):
         """
