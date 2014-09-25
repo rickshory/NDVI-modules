@@ -643,13 +643,13 @@ def dictIntoTable_InsertOrReplace(stTable, dict):
     as INSERT OR REPLACE.
     If the ID already exists in the table, UPDATEs the record
     IF the ID does not exist in the table, INSERTs a new record
-    Returns the new or updated record ID
+    Returns the new or updated record ID, or None on failure
     Normally, would have generated the dictionary by the functions
     'dictFromTableDefaults' or 'dictFromTableID'
     """
     """
-    dictionary does not preserve order, so write SQL using the order the dictionary delivers
-    build an SQL string e.g.:
+    Dictionary does not preserve order, so write SQL using the order the dictionary delivers.
+    Build an SQL string using named parameters e.g.:
     'INSERT OR REPLACE INTO Stations (Longitude, Name, ID, SiteID, Latitude)
          VALUES (:Longitude, :Name, :ID, :SiteID, :Latitude)
     """
@@ -662,12 +662,12 @@ def dictIntoTable_InsertOrReplace(stTable, dict):
     stVs = ', '.join(lVs)
     stSQL = 'INSERT OR REPLACE INTO ' + stTable + ' (' + stKs + ') '  \
             ' VALUES (' + stVs + ')'
-    print stSQL
-    curD.execute(stSQL, dict)
-#    curD.execute(stSQL, vals)
-    newRowID = curD.lastrowid
-    print 'rec value after INSERT OR REPLACE:', newRowID
-    return newRowID
+    try:
+        curD.execute(stSQL, dict)
+        newRowID = curD.lastrowid
+        return newRowID
+    except:
+        return None
 
 def countTableFieldItems(stTable, stField, stItem=None):
     """

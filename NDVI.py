@@ -865,74 +865,7 @@ class NDVIPanel(wx.Panel):
 #            self.Scroll(0, 0) # at the top
             return
         recID = scidb.dictIntoTable_InsertOrReplace('NDVIcalc', self.calcDict)
-        print 'recID after dictIntoTable_InsertOrReplace', recID
-        return # for testing
-        stSQL = """INSERT OR REPLACE INTO NDVIcalc (
-            ID,
-            CalcName,
-            ChartFromRefDay,
-            RefDay,
-            RefStationID,
-            IRRefSeriesID,
-            VISRefSeriesID,
-            UseRef,
-            IRDataSeriesID,
-            VisDataSeriesID,
-            IRFunction,
-            VISFunction,
-            PlusMinusCutoffHours,
-            Opt1ClrDayVsSetTholds,
-            ClearDay,
-            ThresholdPctLow,
-            ThresholdPctHigh,
-            IRRefCutoff,
-            VISRefCutoff,
-            IRDatCutoff,
-            VISDatCutoff,
-            UseOnlyValidNDVI,
-            NDVIvalidMin,
-            NDVIvalidMax,
-            CreateSummaries,
-            OutputSAS,
-            Normalize,
-            OutputFormat,
-            OutputBaseName,
-            OutputFolder ) 
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);"""
-        vals = (
-            self.calcDict['ID'],
-            self.calcDict['CalcName'],
-            self.calcDict['ChartFromRefDay'],
-            self.calcDict['RefDay'],
-            self.calcDict['RefStationID'],
-            self.calcDict['IRRefSeriesID'],
-            self.calcDict['VISRefSeriesID'],
-            self.calcDict['UseRef'],
-            self.calcDict['IRDataSeriesID'],
-            self.calcDict['VisDataSeriesID'],
-            self.calcDict['IRFunction'],
-            self.calcDict['VISFunction'],
-            self.calcDict['PlusMinusCutoffHours'],
-            self.calcDict['Opt1ClrDayVsSetTholds'],
-            self.calcDict['ClearDay'],
-            self.calcDict['ThresholdPctLow'],
-            self.calcDict['ThresholdPctHigh'],
-            self.calcDict['IRRefCutoff'],
-            self.calcDict['VISRefCutoff'],
-            self.calcDict['IRDatCutoff'],
-            self.calcDict['VISDatCutoff'],
-            self.calcDict['UseOnlyValidNDVI'],
-            self.calcDict['NDVIvalidMin'],
-            self.calcDict['NDVIvalidMax'],
-            self.calcDict['CreateSummaries'],
-            self.calcDict['OutputSAS'],
-            self.calcDict['Normalize'],
-            self.calcDict['OutputFormat'],
-            self.calcDict['OutputBaseName'],
-            self.calcDict['OutputFolder'])
-        rec = scidb.curD.execute(stSQL, vals)
-        print 'rec value after INSERT OR REPLACE INTO NDVIcalc:', rec
-        self.calcDict['ID'] = scidb.curD.lastrowid
+        self.calcDict['ID'] = recID
         print 'new record ID:', self.calcDict['ID']
         self.refresh_cbxPanelsChoices(-1)
 
