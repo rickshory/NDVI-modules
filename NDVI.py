@@ -18,6 +18,8 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
+sFmt = '%Y-%m-%d %H:%M:%S'
+
 class ndviDatesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
         wx.ListCtrl.__init__(self, *arg, **kw)
@@ -399,6 +401,7 @@ class NDVIPanel(wx.Panel):
         # offer some estimate diagnostics
         self.tcProgress.AppendText('Time estimate for full dataset: ')
         fEstSecsPerQuery = 0.2
+        # possibly call an estimation function here
 
         self.tcProgress.AppendText('(estimation not implemented yet)')
         gRow += 1
@@ -840,22 +843,97 @@ class NDVIPanel(wx.Panel):
     def onClick_BtnSavePnl(self, event):
         """
         """
-        # clean up whitespace; remove leading/trailing & multiples
-        stCalcName = " ".join(self.tcCalcName.GetValue().split())
-        print "stCalcName:", stCalcName
-        if stCalcName == '':
+        self.SavePanel()
+
+    def SavePanel(self):
+        self.FillDictFromNDVISetupPanel()
+        if self.calcDict['CalcName'] == None:
             wx.MessageBox('Need a Name for this panel', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
-            self.tcCalcName.SetValue(stCalcName)
+            self.tcCalcName.SetValue('')
             self.tcCalcName.SetFocus()
 #            self.Scroll(0, 0) # at the top
-            return
-        # if Name is same as in the dictionary, assume edited; overwrite
-        if stCalcName == self.calcDict['CalcName']:
-            boolUpdatePanel = 1
+            return            
+        # check if there is a record with a different ID that already has this CalcName
+        stSQLCk = 'SELECT ID FROM NDVIcalc WHERE CalcName = ? AND ID != ?'
+        rec = scidb.curD.execute(stSQLCk, (self.calcDict['CalcName'], self.calcDict['ID'])).fetchone()
+        if rec != None:
+            wx.MessageBox('There is already another panel named "' + self.calcDict['CalcName'] + '"', 'Duplicate',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcCalcName.SetValue(self.calcDict['CalcName'])
+            self.tcCalcName.SetFocus()
+#            self.Scroll(0, 0) # at the top
+            return            
+            
+                
+
+    def FillDictFromNDVISetupPanel(self):
+        # clean up whitespace; remove leading/trailing & multiples
+        stS = " ".join(self.tcCalcName.GetValue().split())
+        if stS == '':
+            self.calcDict['CalcName'] = None
         else:
-            boolUpdatePanel = 0
-        
+            self.calcDict['CalcName'] = stS
+        self.calcDict['RefStationID'] = self.cbxRefStationID.GetClientData(self.cbxRefStationID.GetSelection())
+        self.calcDict['IRRefSeriesID'] = self.cbxIRRefSeriesID.GetClientData(self.cbxIRRefSeriesID.GetSelection())
+        self.calcDict['VISRefSeriesID'] = self.cbxVISRefSeriesID.GetClientData(self.cbxVISRefSeriesID.GetSelection())
+        self.calcDict['UseRef'] = self.ckUseRef.GetValue()
+        self.calcDict['IRDataSeriesID'] = self.cbxIRDataSeriesID.GetClientData(self.cbxIRDataSeriesID.GetSelection())
+        self.calcDict['VisDataSeriesID'] = self.cbxVisDataSeriesID.GetClientData(self.cbxVisDataSeriesID.GetSelection())
+        stS = " ".join(self.tcIRFunction.GetValue().split()) # clean up whitespace
+        self.calcDict['IRFunction'] = stS
+        stS = " ".join(self.tcVISFunction.GetValue().split()) # clean up whitespace
+        self.calcDict['VISFunction'] = stS
+        try:
+            self.calcDict['PlusMinusCutoffHours'] = float(self.tcPlusMinusCutoffHours.GetValue())
+        except:
+            self.calcDict['PlusMinusCutoffHours'] = 2
+        dt = wx.DateTime() # Uninitialized datetime
+        DateValid = dt.ParseDate(self.tcClearDay.GetValue())
+        if DateValid == -1: # invalid date
+            self.calcDict['ClearDay'] = None
+        else: # store in standard format
+            self.calcDict['ClearDay'] = dt.Format(sFmt)
+        try:
+            self.calcDict['ThresholdPctLow'] = int(self.tcThresholdPctLow.GetValue())
+        except:
+            self.calcDict['ThresholdPctLow'] = 75
+        try:
+            self.calcDict['ThresholdPctHigh'] = int(self.tcThresholdPctHigh.GetValue())
+        except:
+            self.calcDict['ThresholdPctHigh'] = 125
+        # not implemented: IRRefCutoff, VISRefCutoff, IRDatCutoff, VISDatCutoff
+        self.calcDict['UseOnlyValidNDVI'] = self.ckUseOnlyValidNDVI.GetValue()
+        try:
+            self.calcDict['NDVIvalidMin'] = float(self.tcNDVIvalidMin.GetValue())
+        except:
+            self.calcDict['NDVIvalidMin'] = -1
+        try:
+            self.calcDict['NDVIvalidMax'] = float(self.tcNDVIvalidMax.GetValue())
+        except:
+            self.calcDict['NDVIvalidMax'] = 1
+        self.calcDict['CreateSummaries'] = self.ckIncludeSummaries.GetValue()
+        self.calcDict['OutputSAS'] = self.ckIncludeSAS.GetValue()
+        self.calcDict['Normalize'] = self.ckNormalize.GetValue()
+        # get output format from radio buttons
+        if self.rbExcel.GetValue():
+            self.calcDict['OutputFormat'] = 1
+        if self.rbTabDelim.GetValue():
+            self.calcDict['OutputFormat'] = 2
+        if self.rbCommaDelim.GetValue():
+            self.calcDict['OutputFormat'] = 3
+        stS = " ".join(self.tcBaseName.GetValue().split()) # clean up whitespace
+        # <<--- maybe check for illegal file/folder name here
+        self.calcDict['OutputBaseName'] = stS
+        stS = self.tcDir.GetValue()
+        if stS == '(save output in default directory)':
+            self.calcDict['OutputFolder'] = None
+        else:
+            if os.path.exists(stS):
+                self.calcDict['OutputFolder'] = stS
+            else:
+                self.calcDict['OutputFolder'] = None
+
 
     def onCbxTasks(self, event):
         print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
