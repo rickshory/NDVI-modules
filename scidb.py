@@ -636,6 +636,44 @@ def dictFromTableID(stTable, iID):
         d[recName] = recs[recName]
     return d
 
+def dictIntoTable_InsertOrReplace(stTable, dict):
+    """
+    Given a table and a dictionary that has keys corresponding to
+    all the table's field names, writes the dictionary to the table
+    as INSERT OR REPLACE.
+    If the ID already exists in the table, UPDATEs the record
+    IF the ID does not exist in the table, INSERTs a new record
+    Returns the new or updated record ID
+    Normally, would have generated the dictionary by the functions
+    'dictFromTableDefaults' or 'dictFromTableID'
+    """
+    """
+    dictionary does not preserve order, so write SQL using the order the dictionary delivers
+    build an SQL string e.g.:
+    'INSERT OR REPLACE INTO Stations (Longitude, Name, ID, SiteID, Latitude)
+         VALUES (:Longitude, :Name, :ID, :SiteID, :Latitude)
+    """
+    lKs = []
+    lVs = []
+    for k in dict.keys():
+        lKs.append(k)
+        lVs.append(':' + k)
+    stKs = ', '.join(lKs)
+    stVs = ', '.join(lVs)
+    stSQL = 'INSERT OR REPLACE INTO ' + stTable + ' (' + stKs + ') '  \
+            ' VALUES (' + stVs + ')'
+    curD.execute(stSQL, dict)
+#    curD.execute(stSQL, vals)
+    newRowID = curD.lastrowid
+    print 'rec value after INSERT OR REPLACE:', newRowID
+    return newRowID
+        
+
+for i in newdict.keys():
+    newlist.append(i)
+        
+    
+
 def countTableFieldItems(stTable, stField, stItem=None):
     """
     Tests whether an item is in the given field of a given table
