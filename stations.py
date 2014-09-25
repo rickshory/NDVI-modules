@@ -3,6 +3,20 @@ import os, sys, re, cPickle
 import scidb
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
+class Dialog_StationDetails(wx.Dialog):
+    def __init__(self, parent, id, title = "Add or Edit Station Details"):
+        wx.Dialog.__init__(self, parent, id)
+        self.InitUI()
+        self.SetSize((350, 300))
+        self.SetTitle("Add or Edit Station Details") # overrides title passed above
+
+    def InitUI(self):
+#        pnl = InfoPanel_StationDetails(self, wx.ID_ANY)
+        self.pnl = InfoPanel_StationDetails(self)
+   
+    def OnClose(self, event):
+        self.Destroy()
+
 # ----------------------------------------------------------------------
 # customized for drag/drop from list of Stations
 # DragStationList
