@@ -93,17 +93,17 @@ class NDVIPanel(wx.Panel):
         # get existing or blank record
 #        stSQL = "SELECT * FROM NDVIcalc WHERE ID = ?;"
 #        rec = scidb.curD.execute(stSQL, (0,)).fetchone()
-        stSQL = "SELECT * FROM NDVIcalc;"
-        rec = scidb.curD.execute(stSQL).fetchone()
-        if rec == None:
-            print "no records yet in 'NDVIcalc'"
-            self.calcDict = scidb.dictFromTableDefaults('NDVIcalc')
-        else:
+#        stSQL = "SELECT * FROM NDVIcalc;"
+#        rec = scidb.curD.execute(stSQL).fetchone()
+#        if rec == None:
+#            print "no records yet in 'NDVIcalc'"
+        self.calcDict = scidb.dictFromTableDefaults('NDVIcalc')
+#        else:
 #            calcDict = copy.copy(rec) # this crashes
 #        print 'scidb.curD.description:', scidb.curD.description
-            self.calcDict = {}
-            for recName in rec.keys():
-                self.calcDict[recName] = rec[recName]
+#            self.calcDict = {}
+#            for recName in rec.keys():
+#                self.calcDict[recName] = rec[recName]
 #        print "self.calcDict:", self.calcDict
         self.FillNDVISetupPanelFromCalcDict()
 
@@ -931,6 +931,7 @@ class NDVIPanel(wx.Panel):
         print 'rec value after INSERT OR REPLACE INTO NDVIcalc:', rec
         self.calcDict['ID'] = scidb.curD.lastrowid
         print 'new record ID:', self.calcDict['ID']
+        self.refresh_cbxPanelsChoices(-1)
 
 
     def FillDictFromNDVISetupPanel(self):
