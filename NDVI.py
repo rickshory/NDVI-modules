@@ -863,7 +863,10 @@ class NDVIPanel(wx.Panel):
             self.tcCalcName.SetValue(self.calcDict['CalcName'])
             self.tcCalcName.SetFocus()
 #            self.Scroll(0, 0) # at the top
-            return            
+            return
+        recID = scidb.dictIntoTable_InsertOrReplace('NDVIcalc', self.calcDict)
+        print 'recID after dictIntoTable_InsertOrReplace', recID
+        return # for testing
         stSQL = """INSERT OR REPLACE INTO NDVIcalc (
             ID,
             CalcName,

@@ -662,17 +662,12 @@ def dictIntoTable_InsertOrReplace(stTable, dict):
     stVs = ', '.join(lVs)
     stSQL = 'INSERT OR REPLACE INTO ' + stTable + ' (' + stKs + ') '  \
             ' VALUES (' + stVs + ')'
+    print stSQL
     curD.execute(stSQL, dict)
 #    curD.execute(stSQL, vals)
     newRowID = curD.lastrowid
     print 'rec value after INSERT OR REPLACE:', newRowID
     return newRowID
-        
-
-for i in newdict.keys():
-    newlist.append(i)
-        
-    
 
 def countTableFieldItems(stTable, stField, stItem=None):
     """
