@@ -399,25 +399,8 @@ class NDVIPanel(wx.Panel):
         # offer some estimate diagnostics
         self.tcProgress.AppendText('Time estimate for full dataset: ')
         fEstSecsPerQuery = 0.2
-#        iNumRows = self.bkDict['CtOfDays'] * self.bkDict['NumberOfTimeSlicesPerDay']
-#        if self.sourceTable == 'OutputSheets':
-#            self.iTotRowEstimate = iNumRows
-#            self.tcProgress.AppendText(str(self.iTotRowEstimate) + ' rows; ')
-#            iNumQueries = self.shDict['CtAggCols'] + 1
-#            fNumSecsWorking = iNumRows * iNumQueries * fEstSecsPerQuery
-#            self.tcProgress.AppendText('working time, %d seconds ' % fNumSecsWorking)
-#        else: # book
-#            self.tcProgress.AppendText('%d rows in each of %d sheets' % (iNumRows, len(self.lShs)))
-#            self.iTotRowEstimate = iNumRows * len(self.lShs)
-#            self.tcProgress.AppendText(', for a total of %d rows; ' % self.iTotRowEstimate)
-#            iTotQueries = 0
-#            for shDict in self.lShs:
-#                iTotQueries += (shDict['CtAggCols'] + 1)
-#            fNumSecsWorking = iNumRows * iTotQueries * fEstSecsPerQuery
-#            self.tcProgress.AppendText('Estimated working time for whole dataset, %d seconds ' % fNumSecsWorking)
-        self.tcProgress.AppendText('(estimation not implemented yet)')
 
-# <-----
+        self.tcProgress.AppendText('(estimation not implemented yet)')
         gRow += 1
         self.btnSavePnl = wx.Button(pnl, label="Save\npanel", size=(-1, -1))
         self.btnSavePnl.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnSavePnl(evt))
