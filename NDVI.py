@@ -307,21 +307,28 @@ class NDVIPanel(wx.Panel):
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'Output As:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
+        
+        stAboutOutput = ' Excel uses the Base Name for a file, the other options create a ' \
+            'set of files in the Base Name folder. With Excel, you will see the dataset as ' \
+            'it builds. Other options do not show as the files build on disk.'
+        stWrO = wordwrap(stAboutOutput, 450, wx.ClientDC(pnl))
+        stpSiz.Add(wx.StaticText(pnl, -1, stWrO),
+            pos=(gRow, 2), span=(4, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
-        iRBLeftBorderWd = 30
+        iRBLeftBorderWd = 20
         gRow += 1
         self.rbExcel = wx.RadioButton(pnl, label='Excel workbook', style=wx.RB_GROUP)
-        stpSiz.Add(self.rbExcel, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        stpSiz.Add(self.rbExcel, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbExcel.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
         self.rbTabDelim = wx.RadioButton(pnl, label='Tab-delimited text')
-        stpSiz.Add(self.rbTabDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        stpSiz.Add(self.rbTabDelim, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbTabDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
         
         gRow += 1
         self.rbCommaDelim = wx.RadioButton(pnl, label='Comma-separated values ("CSV")')
-        stpSiz.Add(self.rbCommaDelim, pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
+        stpSiz.Add(self.rbCommaDelim, pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=iRBLeftBorderWd)
         self.rbCommaDelim.Bind(wx.EVT_RADIOBUTTON, self.giveRBInfo)
 
         gRow += 1
@@ -333,7 +340,7 @@ class NDVIPanel(wx.Panel):
         self.btnBrowseDir.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnGetDir(evt))
         stpSiz.Add(self.btnBrowseDir, pos=(gRow, 0), flag=wx.LEFT, border=5)
         
-        stpSiz.Add(wx.StaticText(pnl, -1, 'Base name, file or folder:'),
+        stpSiz.Add(wx.StaticText(pnl, -1, 'Base Name, file or folder:'),
                      pos=(gRow, 1), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT, border=5)
 
         self.tcBaseName = wx.TextCtrl(pnl, -1)
