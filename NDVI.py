@@ -301,9 +301,6 @@ class NDVIPanel(wx.Panel):
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, iLinespan), flag=wx.EXPAND)
 
-# ----->
-
-
         gRow += 1
         stpSiz.Add(wx.StaticText(pnl, -1, 'Output As:'),
                      pos=(gRow, 0), span=(1, 2), flag=wx.LEFT|wx.BOTTOM, border=5)
@@ -343,8 +340,6 @@ class NDVIPanel(wx.Panel):
         self.tcBaseName = wx.TextCtrl(pnl, -1)
         stpSiz.Add(self.tcBaseName, pos=(gRow, 2), span=(1, 3),
             flag=wx.ALIGN_LEFT|wx.EXPAND, border=5)
-        self.stItemName = 'Test_Base_Name' # for testing <-------- FIX THIS
-        self.tcBaseName.SetValue(self.stItemName)
 
         gRow += 1
         self.tcDir = wx.TextCtrl(pnl, -1, style=wx.TE_MULTILINE)
@@ -402,7 +397,7 @@ class NDVIPanel(wx.Panel):
         gRow += 1
 
         # offer some estimate diagnostics
-        self.tcProgress.AppendText('Estimate for full dataset: ')
+        self.tcProgress.AppendText('Time estimate for full dataset: ')
         fEstSecsPerQuery = 0.2
 #        iNumRows = self.bkDict['CtOfDays'] * self.bkDict['NumberOfTimeSlicesPerDay']
 #        if self.sourceTable == 'OutputSheets':
@@ -756,6 +751,7 @@ class NDVIPanel(wx.Panel):
             scidb.setComboboxToClientData(self.cbxIRRefSeriesID, self.calcDict['IRRefSeriesID'])
         if self.calcDict['VISRefSeriesID'] != None:
             scidb.setComboboxToClientData(self.cbxVISRefSeriesID, self.calcDict['VISRefSeriesID'])
+        self.ckUseRef.SetValue(self.calcDict['UseRef'])
         if self.calcDict['IRDataSeriesID'] != None:
             scidb.setComboboxToClientData(self.cbxIRDataSeriesID, self.calcDict['IRDataSeriesID'])
         if self.calcDict['VisDataSeriesID'] != None:
@@ -766,17 +762,39 @@ class NDVIPanel(wx.Panel):
             self.tcVISFunction.SetValue('%s' % self.calcDict['VISFunction'])
         if self.calcDict['PlusMinusCutoffHours'] != None:
             self.tcPlusMinusCutoffHours.SetValue('%.1f' % self.calcDict['PlusMinusCutoffHours'])
+        # Opt1ClrDayVsSetTholds ignored, always use percent thresholds of clear day
+        if self.calcDict['ClearDay'] != None:
+            self.tcClearDay.SetValue('%s' % self.calcDict['ClearDay'])
         if self.calcDict['ThresholdPctLow'] != None:
             self.tcThresholdPctLow.SetValue('%d' % self.calcDict['ThresholdPctLow'])
         if self.calcDict['ThresholdPctHigh'] != None:
             self.tcThresholdPctHigh.SetValue('%d' % self.calcDict['ThresholdPctHigh'])
-        if self.calcDict['ClearDay'] != None:
-            self.tcClearDay.SetValue('%d' % self.calcDict['ClearDay'])
+        # not implemented: IRRefCutoff, VISRefCutoff, IRDatCutoff, VISDatCutoff
         self.ckUseOnlyValidNDVI.SetValue(self.calcDict['UseOnlyValidNDVI'])
         if self.calcDict['NDVIvalidMin'] != None:
             self.tcNDVIvalidMin.SetValue('%.2f' % self.calcDict['NDVIvalidMin'])
         if self.calcDict['NDVIvalidMax'] != None:
             self.tcNDVIvalidMax.SetValue('%.2f' % self.calcDict['NDVIvalidMax'])
+        self.ckIncludeSummaries.SetValue(self.calcDict['CreateSummaries'])
+        self.ckIncludeSAS.SetValue(self.calcDict['OutputSAS'])
+        self.ckNormalize.SetValue(self.calcDict['Normalize'])
+        # set radio buttons, default false
+        self.rbExcel.SetValue(0)
+        self.rbTabDelim.SetValue(0)
+        self.rbCommaDelim.SetValue(0)
+        if self.calcDict['OutputFormat'] == 1:
+            self.rbExcel.SetValue(1)
+        if self.calcDict['OutputFormat'] == 2:
+            self.rbTabDelim.SetValue(1)
+        if self.calcDict['OutputFormat'] == 3:
+            self.rbCommaDelim.SetValue(1)
+        if self.calcDict['OutputBaseName'] != None:
+            self.tcBaseName.SetValue('%s' % self.calcDict['OutputBaseName'])
+        if self.calcDict['OutputFolder'] == None:
+            self.tcDir.SetValue('(save output in default directory)')
+        else:
+            self.tcDir.SetValue('%s' % self.calcDict['OutputFolder'])
+
 
     def InitDatesPanel(self, pnl):
         pnl.SetBackgroundColour('#0FFF0F')
