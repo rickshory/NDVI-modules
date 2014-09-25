@@ -618,6 +618,24 @@ def dictFromTableDefaults(stTable):
             d[stFldNm] = val
     return d
 
+def dictFromTableID(stTable, iID):
+    """
+    Given a table and a number that is a value in the table's 'ID' field,
+    returns a dictionary with keys corresponding to all the fields.
+    The values are from the corresponding table fields.
+    If the record is not found, returns None
+    """
+    stSQL = 'SELECT * FROM ' + stTable + ' WHERE ID = ?;'
+    curD.execute(stSQL, (iID,))
+    recs = curD.fetchall() # should be either zero or one record
+    if len(recs) == 0: 
+        return None    
+#   d = copy.copy(recs) # this crashes
+    d = {}
+    for recName in recs.keys(): # copy the 1st and only record
+        d[recName] = recs[recName]
+    return d
+
 def countTableFieldItems(stTable, stField, stItem=None):
     """
     Tests whether an item is in the given field of a given table

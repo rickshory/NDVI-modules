@@ -3,6 +3,9 @@ import os, sys, re, cPickle
 import scidb
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 
+ID_NEW_STATION_BTN = wx.NewId()
+ID_EDIT_STATION_BTN = wx.NewId()
+
 class Dialog_StationDetails(wx.Dialog):
     def __init__(self, parent, id, title = "Add or Edit Station Details"):
         wx.Dialog.__init__(self, parent, id)
