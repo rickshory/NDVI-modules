@@ -53,7 +53,7 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
 
         gRow = 0
         shPnlSiz.Add(wx.StaticText(self, -1, self.stStaLabel),
-            pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+            pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
  
 #        gRow += 1
 #        shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
@@ -69,8 +69,15 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         self.cbxFldSites = wx.ComboBox(self, -1, style=wx.CB_READONLY)
         stSQLFieldSites = 'SELECT ID, SiteName FROM FieldSites'
         scidb.fillComboboxFromSQL(self.cbxFldSites, stSQLFieldSites)
-        shPnlSiz.Add(self.cbxFldSites, pos=(gRow, 1), span=(1, 2), 
+        shPnlSiz.Add(self.cbxFldSites, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        shPnlSiz.Add(wx.StaticText(self, -1, 'You only need to enter Station latitude and longitude if'),
+            pos=(gRow, 0), span=(1, 3), flag=wx.LEFT|wx.BOTTOM, border=5)
+        gRow += 1
+        shPnlSiz.Add(wx.StaticText(self, -1, 'you want to override the Site latitude and longitude.'),
+            pos=(gRow, 0), span=(1, 3), flag=wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         shPnlSiz.Add(wx.StaticText(self, -1, 'Latitude'),
