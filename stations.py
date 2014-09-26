@@ -146,13 +146,26 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         if self.StDict['StationName'] != None:
             self.tcStationName.SetValue(self.StDict['StationName'])
         scidb.setComboboxToClientData(self.cbxFldSites, self.StDict['SiteID'])
-        stSiteLL = 'Site lat/lon: (none yet)'
-        self.txSiteLLMsg.SetLabel(stSiteLL)
+        self.ShowSiteLatLon()
         if self.StDict['LatitudeDecDegrees'] != None:
             self.tcLat.SetValue('%.6f' % self.StDict['LatitudeDecDegrees'])
         if self.StDict['LongitudeDecDegrees'] != None:
             self.tcLon.SetValue('%.6f' % self.StDict['LongitudeDecDegrees'])
 
+    def ShowSiteLatLon(self):
+        if self.StDict['SiteID'] == None:
+            stSiteLL = 'Site lat/lon: (none yet)'
+        else:
+            stSQL_SiLL = 'SELECT LatitudeDecDegrees, LongitudeDecDegrees FROM FieldSites WHERE ID = ?'
+            rec = scidb.curD.execute(stSQL_SiLL, (self.StDict['SiteID'],))
+            rec = scidb.curD.fetchone() # returns one record, or None
+            if rec == None:
+                stSiteLL = 'Site lat/lon: (can not read)'
+            else:
+                stSiteLL = 'Site lat/lon: (' + ('%.6f' % rec['LatitudeDecDegrees']) + \
+                    ', ' + ('%.6f' % rec['LongitudeDecDegrees']) + ')'
+        self.txSiteLLMsg.SetLabel(stSiteLL)
+        
     def FillDictFromPanel(self):
         # clean up whitespace; remove leading/trailing & multiples
         self.StDict['StationName'] = " ".join(self.tcStationName.GetValue().split())
