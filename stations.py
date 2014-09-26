@@ -353,11 +353,12 @@ class InfoPanel_SiteDetails(scrolled.ScrolledPanel):
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
-        siPnlSizer.Add(wx.StaticText(self, -1, 'Hour Offset, e.g. US Central Time = -6 (not required)'),
-            pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_RIGHT|wx.LEFT|wx.BOTTOM, border=5)
+        siPnlSizer.Add(wx.StaticText(self, -1, 'Hour Offset (not required)\ne.g. US Central Time = -6'),
+            pos=(gRow, 0), span=(2, 2), flag=wx.ALIGN_RIGHT|wx.LEFT|wx.BOTTOM, border=5)
         self.tcHrOffset = wx.TextCtrl(self)
         siPnlSizer.Add(self.tcHrOffset, pos=(gRow, 2), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+        gRow += 1 # space for multiline text above
 
         gRow += 1
         self.btnSave = wx.Button(self, label="Save", size=(90, 28))
