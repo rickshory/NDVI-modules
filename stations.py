@@ -3,6 +3,7 @@ import os, sys, re, cPickle
 import scidb
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 import wx.lib.scrolledpanel as scrolled, wx.grid
+from wx.lib.wordwrap import wordwrap
 
 ID_NEW_STATION_BTN = wx.NewId()
 ID_EDIT_STATION_BTN = wx.NewId()
@@ -53,6 +54,7 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         
 
     def LayoutPanel(self):
+        wordWrapWidth = 350
         self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
         shPnlSiz = wx.GridBagSizer(1, 1)
 
@@ -69,14 +71,13 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'Processing requires longitude to calculate'),
-            pos=(gRow, 0), span=(1, 3), flag=wx.LEFT|wx.TOP, border=5)
-        gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'solar time (latitude is unused). Choose Site'),
-            pos=(gRow, 0), span=(1, 3), flag=wx.LEFT, border=5)
-        gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'or enter number(s) for each station.'),
-            pos=(gRow, 0), span=(1, 3), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        stAboutLL = 'Processing requires longitude to calculate solar time (latitude is ' \
+                'unused). Choose Site or enter lat/lon for each station. ' \
+                'Within a degree is typically accurate enough.'
+        stWr = wordwrap(stAboutLL, wordWrapWidth, wx.ClientDC(self))
+        shPnlSiz.Add(wx.StaticText(self, -1, stWr),
+                     pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         shPnlSiz.Add(wx.StaticText(self, -1, 'Site'),
@@ -92,11 +93,11 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         shPnlSiz.Add(btnAddSite, pos=(gRow, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=5)
 
         gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'You only need to enter Station latitude and longitude if'),
-            pos=(gRow, 0), span=(1, 3), flag=wx.LEFT|wx.TOP, border=5)
-        gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'you want to override the Site latitude and longitude.'),
-            pos=(gRow, 0), span=(1, 3), flag=wx.LEFT|wx.BOTTOM, border=5)
+        stAboutSLL = 'You only need to enter Station latitude and longitude if ' \
+                'you want to override the Site latitude and longitude.'
+        stWr1 = wordwrap(stAboutSLL, wordWrapWidth, wx.ClientDC(self))
+        shPnlSiz.Add(wx.StaticText(self, -1, stWr1),
+                     pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
         shPnlSiz.Add(wx.StaticText(self, -1, 'Latitude'),
