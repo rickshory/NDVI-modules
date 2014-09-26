@@ -5,6 +5,8 @@ from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 import wx.lib.scrolledpanel as scrolled, wx.grid
 from wx.lib.wordwrap import wordwrap
 
+ID_CBX_SEL_SITE = wx.NewId()
+
 class Dialog_StationDetails(wx.Dialog):
     def __init__(self, parent, id, title = "Station", actionCode = None):
         wx.Dialog.__init__(self, parent, id)
@@ -79,7 +81,10 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         gRow += 1
         shPnlSiz.Add(wx.StaticText(self, -1, 'Site'),
             pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT|wx.BOTTOM, border=5)
-        self.cbxFldSites = wx.ComboBox(self, -1, style=wx.CB_READONLY)
+        self.cbxFldSites = wx.ComboBox(self, ID_CBX_SEL_SITE, style=wx.CB_READONLY)
+        self.cbxFldSites.Bind(wx.EVT_COMBOBOX, self.onCbxTasks)
+        # txSiteLLMsg will not be emplaced till later, but needed now for fillSitesList
+        self.txSiteLLMsg = wx.StaticText(self, -1, label='Site lat/lon:')
         self.fillSitesList()
         shPnlSiz.Add(self.cbxFldSites, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
@@ -97,7 +102,6 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         shPnlSiz.Add(SibHorizSizer, pos=(gRow, 2), span=(1, 1))
 
         gRow += 1
-        self.txSiteLLMsg = wx.StaticText(self, -1, label='Site lat/lon:')
         shPnlSiz.Add(self.txSiteLLMsg,
             pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
 
@@ -113,14 +117,14 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
                      pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
 
         gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'Latitude'),
+        shPnlSiz.Add(wx.StaticText(self, -1, 'Station latitude'),
             pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT|wx.BOTTOM, border=5)
         self.tcLat = wx.TextCtrl(self)
         shPnlSiz.Add(self.tcLat, pos=(gRow, 1), span=(1, 2), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
         gRow += 1
-        shPnlSiz.Add(wx.StaticText(self, -1, 'Longitude'),
+        shPnlSiz.Add(wx.StaticText(self, -1, 'Station longitude'),
             pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT|wx.BOTTOM, border=5)
         self.tcLon = wx.TextCtrl(self)
         shPnlSiz.Add(self.tcLon, pos=(gRow, 1), span=(1, 2), 
@@ -141,6 +145,14 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
     def fillSitesList(self):
         stSQLFieldSites = 'SELECT ID, SiteName FROM FieldSites'
         scidb.fillComboboxFromSQL(self.cbxFldSites, stSQLFieldSites)
+        self.ShowSiteLatLon()
+
+    def onCbxTasks(self, event):
+        evt_id = event.GetId()
+        print 'in onCbxTasks, event ID:', evt_id
+        if evt_id == ID_CBX_SEL_SITE:
+            print 'about to call ShowSiteLatLon'
+            self.ShowSiteLatLon()
 
     def FillPanelFromDict(self):
         if self.StDict['StationName'] != None:
@@ -153,11 +165,12 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
             self.tcLon.SetValue('%.6f' % self.StDict['LongitudeDecDegrees'])
 
     def ShowSiteLatLon(self):
-        if self.StDict['SiteID'] == None:
+        recID = scidb.getComboboxIndex(self.cbxFldSites)
+        if recID == None:
             stSiteLL = 'Site lat/lon: (none yet)'
         else:
             stSQL_SiLL = 'SELECT LatitudeDecDegrees, LongitudeDecDegrees FROM FieldSites WHERE ID = ?'
-            rec = scidb.curD.execute(stSQL_SiLL, (self.StDict['SiteID'],))
+            rec = scidb.curD.execute(stSQL_SiLL, (recID,))
             rec = scidb.curD.fetchone() # returns one record, or None
             if rec == None:
                 stSiteLL = 'Site lat/lon: (can not read)'
