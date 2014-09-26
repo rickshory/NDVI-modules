@@ -627,13 +627,13 @@ def dictFromTableID(stTable, iID):
     """
     stSQL = 'SELECT * FROM ' + stTable + ' WHERE ID = ?;'
     curD.execute(stSQL, (iID,))
-    recs = curD.fetchall() # should be either zero or one record
-    if len(recs) == 0: 
+    rec = curD.fetchone() # returns one record, or None
+    if rec == None: 
         return None    
 #   d = copy.copy(recs) # this crashes
     d = {}
-    for recName in recs.keys(): # copy the 1st and only record
-        d[recName] = recs[recName]
+    for recName in rec.keys(): # copy the record into the dictionary
+        d[recName] = rec[recName]
     return d
 
 def dictIntoTable_InsertOrReplace(stTable, dict):

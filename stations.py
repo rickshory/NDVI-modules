@@ -367,11 +367,19 @@ class SetupStationsPanel(wx.Panel):
         hdrStation = wx.StaticText(self, label="Stations:")
         sizerSta.Add(hdrStation, pos=(0, 0), span=(1, 1),
                      flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT, border=1)
+
+        StbHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
         
         btnAddStation = wx.Button(self, label="New", size=(32, 20))
         btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnWorkOnStation(evt, str))
-        sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
-        
+        StbHorizSizer.Add(btnAddStation)
+
+        btnEditStation = wx.Button(self, label="Edit", size=(32, 20))
+        btnEditStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnEditStation.GetLabel(): self.onClick_BtnWorkOnStation(evt, str))
+        StbHorizSizer.Add(btnEditStation)
+
+        sizerSta.Add(StbHorizSizer, pos=(0, 1), span=(1, 1))
+
         self.lstStations = DragStationList(self, style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.LC_SINGLE_SEL)
         self.lstStations.InsertColumn(0, "Station")
         self.fillStationsList()
@@ -478,11 +486,12 @@ class SetupStationsPanel(wx.Panel):
         if strLabel == "New":
             dia = Dialog_StationDetails(self, wx.ID_ANY, actionCode = ['New', 0])
         elif strLabel == "Edit":
-            recNum = self.lstStations.GetItemData(self.lstStations.GetFocusedItem())
-            if recNum == None:
+            staItem = self.lstStations.GetFocusedItem()
+            if staItem == -1:
                 wx.MessageBox('Select a Station to edit', 'No Selection',
                     wx.OK | wx.ICON_INFORMATION)
                 return
+            recNum = self.lstStations.GetItemData(staItem)
             dia = Dialog_StationDetails(self, wx.ID_ANY, actionCode = ['Edit', recNum])
         else:
             return
