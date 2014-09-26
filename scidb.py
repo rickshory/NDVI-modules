@@ -140,11 +140,13 @@ try:
         ("UTTimestamp" ASC, "ChannelID" ASC);
         
         CREATE TABLE IF NOT EXISTS "FieldSites" (
-        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL  UNIQUE ,
+        "ID" INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL UNIQUE ,
         "SiteName" VARCHAR(50) NOT NULL UNIQUE,
-        "LatitudeDecDegrees" FLOAT,
-        "LongitudeDecDegrees" FLOAT,
-        "UTC_Offset" INTEGER
+        "LatitudeDecDegrees" FLOAT NOT NULL,
+        "LongitudeDecDegrees" FLOAT NOT NULL,
+        "UTC_Offset" INTEGER,
+        CHECK (CAST(LatitudeDecDegrees AS FLOAT) == LatitudeDecDegrees)
+        CHECK (CAST(LongitudeDecDegrees AS FLOAT) == LongitudeDecDegrees)
         );
                 
         CREATE TABLE IF NOT EXISTS "Stations" (

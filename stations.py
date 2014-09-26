@@ -88,9 +88,17 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         shPnlSiz.Add(self.cbxFldSites, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
+        SibHorizSizer = wx.BoxSizer(wx.HORIZONTAL)
+
         btnAddSite = wx.Button(self, label="New", size=(32, 20))
-        btnAddSite.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSite.GetLabel(): self.onClick_BtnAddSite(evt, str))
-        shPnlSiz.Add(btnAddSite, pos=(gRow, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=5)
+        btnAddSite.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSite.GetLabel(): self.onClick_BtnWorkOnSite(evt, str))
+        SibHorizSizer.Add(btnAddSite)
+
+        btnEditSite = wx.Button(self, label="Edit", size=(32, 20))
+        btnEditSite.Bind(wx.EVT_BUTTON, lambda evt, str=btnEditSite.GetLabel(): self.onClick_BtnWorkOnSite(evt, str))
+        SibHorizSizer.Add(btnEditSite)
+
+        shPnlSiz.Add(SibHorizSizer, pos=(gRow, 2), span=(1, 1))
 
         gRow += 1
         stAboutSLL = 'You only need to enter Station latitude and longitude if ' \
@@ -147,7 +155,7 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         except:
             self.StDict['LongitudeDecDegrees'] = None
 
-    def onClick_BtnAddSite(self, event, str):
+    def onClick_BtnWorkOnSite(self, event, str):
         wx.MessageBox('"Add Site" button clicked', 'Verify',
             wx.OK | wx.ICON_INFORMATION)
 
