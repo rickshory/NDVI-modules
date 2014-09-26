@@ -5,9 +5,6 @@ from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
 import wx.lib.scrolledpanel as scrolled, wx.grid
 from wx.lib.wordwrap import wordwrap
 
-ID_NEW_STATION_BTN = wx.NewId()
-ID_EDIT_STATION_BTN = wx.NewId()
-
 class Dialog_StationDetails(wx.Dialog):
     def __init__(self, parent, id, title = "Station", actionCode = None):
         wx.Dialog.__init__(self, parent, id)
@@ -216,6 +213,196 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
             self.Scroll(0, 0) # the required controls are all at the top
             return    
         recID = scidb.dictIntoTable_InsertOrReplace('Stations', self.StDict)
+        parObject = self.GetParent()
+        if parObject.GetClassName() == "wxDialog":
+            parObject.EndModal(0)
+
+    def onClick_BtnCancel(self, event):
+        """
+        This frame is shown in a Dialog, which is its parent object.
+        """
+        parObject = self.GetParent()
+        if parObject.GetClassName() == "wxDialog":
+            parObject.EndModal(0)
+
+
+class Dialog_SiteDetails(wx.Dialog):
+    def __init__(self, parent, id, title = "Site", actionCode = None):
+        wx.Dialog.__init__(self, parent, id)
+        self.InitUI(actionCode)
+        self.SetSize((350, 300))
+        if actionCode[0] == 'New':
+            self.SetTitle("Add Site")
+        if actionCode[0] == 'Edit':
+            self.SetTitle("Edit Site Details")
+        if actionCode[0] == None:
+            self.SetTitle("Add or Edit Site Details") # overrides title passed above
+
+    def InitUI(self, actionCode):
+#        pnl = InfoPanel_SiteDetails(self, wx.ID_ANY)
+        self.pnl = InfoPanel_SiteDetails(self, actionCode)
+   
+    def OnClose(self, event):
+        self.Destroy()
+
+class InfoPanel_SiteDetails(scrolled.ScrolledPanel):
+    def __init__(self, parent, actionCode):
+        scrolled.ScrolledPanel.__init__(self, parent, -1)
+#    def __init__(self, parent, id):
+#        wx.Panel.__init__(self, parent, id)
+        self.InitUI(actionCode)
+        
+    def InitUI(self, actionCode):
+        
+        print "Initializing SiteDetails frame"
+        if actionCode[0] == 'New': # create a new Site record
+            self.SiDict = scidb.dictFromTableDefaults('FieldSites')
+            print 'new default self.SiDict:', self.SiDict
+            self.stSiteLabel = 'Name of Site you are adding to the database'
+        else: # editing an existing record
+            self.SiDict = scidb.dictFromTableID('FieldSites', actionCode[1])
+            print 'self.SiDict loaded from table:', self.SiDict
+            self.stSiteLabel = 'Site'
+
+        print "Initializing Panel_SiteDetails ->>>>"
+
+        print "actionCode:", actionCode
+        self.LayoutPanel()
+        self.FillPanelFromDict()
+        
+
+    def LayoutPanel(self):
+        wordWrapWidth = 350
+        self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
+        siPnlSizer = wx.GridBagSizer(1, 1)
+
+        gRow = 0
+        siPnlSizer.Add(wx.StaticText(self, -1, self.stSiteLabel),
+            pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+ 
+#        gRow += 1
+#        siPnlSizer.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+        
+        gRow += 1
+        self.tcSiteName = wx.TextCtrl(self)
+        siPnlSizer.Add(self.tcSiteName, pos=(gRow, 0), span=(1, 3), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+
+        stAboutLL = 'Processing requires longitude to calculate solar time (latitude is ' \
+                'unused). Within a degree is typically accurate enough. Enter as ' \
+                'decimal degrees, negative for South latitude and West longitude.'
+        stWr = wordwrap(stAboutLL, wordWrapWidth, wx.ClientDC(self))
+        siPnlSizer.Add(wx.StaticText(self, -1, stWr),
+                     pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        siPnlSizer.Add(wx.StaticText(self, -1, 'Latitude'),
+            pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcLat = wx.TextCtrl(self)
+        siPnlSizer.Add(self.tcLat, pos=(gRow, 1), span=(1, 2), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        siPnlSizer.Add(wx.StaticText(self, -1, 'Longitude'),
+            pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcLon = wx.TextCtrl(self)
+        siPnlSizer.Add(self.tcLon, pos=(gRow, 1), span=(1, 2), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        siPnlSizer.Add(wx.StaticText(self, -1, 'Hour Offset, e.g. US Central Time = -6 (not required)'),
+            pos=(gRow, 0), span=(1, 2), flag=wx.ALIGN_RIGHT|wx.LEFT|wx.BOTTOM, border=5)
+        self.tcHrOffset = wx.TextCtrl(self)
+        siPnlSizer.Add(self.tcHrOffset, pos=(gRow, 2), span=(1, 1), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        self.btnSave = wx.Button(self, label="Save", size=(90, 28))
+        self.btnSave.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnSave(evt))
+        siPnlSizer.Add(self.btnSave, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
+        self.btnCancel = wx.Button(self, label="Cancel", size=(90, 28))
+        self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
+        siPnlSizer.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        self.SetSizer(siPnlSizer)
+        self.SetAutoLayout(1)
+        self.SetupScrolling()
+
+    def FillPanelFromDict(self):
+        if self.SiDict['SiteName'] != None:
+            self.tcSiteName.SetValue(self.SiDict['SiteName'])
+        if self.SiDict['LatitudeDecDegrees'] != None:
+            self.tcLat.SetValue('%.6f' % self.SiDict['LatitudeDecDegrees'])
+        if self.SiDict['LongitudeDecDegrees'] != None:
+            self.tcLon.SetValue('%.6f' % self.SiDict['LongitudeDecDegrees'])
+        if self.SiDict['UTC_Offset'] != None:
+            self.tcHrOffset.SetValue('%d' % self.SiDict['UTC_Offset'])
+        
+    def FillDictFromPanel(self):
+        # clean up whitespace; remove leading/trailing & multiples
+        self.SiDict['SiteName'] = " ".join(self.tcSiteName.GetValue().split())
+        self.SiDict['SiteID'] = scidb.getComboboxIndex(self.cbxFldSites)
+        try:
+            self.SiDict['LatitudeDecDegrees'] = float(self.tcLat.GetValue())
+        except:
+            self.SiDict['LatitudeDecDegrees'] = None
+        try:
+            self.SiDict['LongitudeDecDegrees'] = float(self.tcLon.GetValue())
+        except:
+            self.SiDict['LongitudeDecDegrees'] = None
+        try:
+            self.SiDict['UTC_Offset'] = int(self.tcHrOffset.GetValue())
+        except:
+            self.SiDict['UTC_Offset'] = None
+
+    def onClick_BtnSave(self, event):
+        """
+        If actionCode[0] = 'New', the SiteDetails is being created.
+        Attempt to create a new record and make the new record ID available.
+        If actionCode[0] = 'Edit', attempt to save any changes to the existing DB record
+        """
+        self.FillDictFromPanel() # get all values before testing
+        # verify
+        stSiteName = self.SiDict['SiteName']
+        print "stSiteName:", stSiteName
+        if stSiteName == '':
+            wx.MessageBox('Need Site Name', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcSiteName.SetValue(stSiteName)
+            self.tcSiteName.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+    
+        maxLen = scidb.lenOfVarcharTableField('FieldSites', 'SiteName')
+        if maxLen < 1:
+            wx.MessageBox('Error %d getting [FieldSites].[SiteName] field length.' % maxLen, 'Error',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+        if len(stSiteName) > maxLen:
+            wx.MessageBox('Max length for Site Name is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcSiteName.SetValue(stSiteName[:(maxLen)])
+            self.tcSiteName.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        if self.SiDict['LatitudeDecDegrees'] == None:
+            wx.MessageBox('Need Latitude', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcLat.SetValue('')
+            self.tcLat.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+        if self.SiDict['LongitudeDecDegrees'] == None:
+            wx.MessageBox('Need Longitude', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcLon.SetValue('')
+            self.tcLon.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+            
+        recID = scidb.dictIntoTable_InsertOrReplace('FieldSites', self.SiDict)
         parObject = self.GetParent()
         if parObject.GetClassName() == "wxDialog":
             parObject.EndModal(0)
