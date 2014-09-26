@@ -369,7 +369,7 @@ class SetupStationsPanel(wx.Panel):
                      flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT, border=1)
         
         btnAddStation = wx.Button(self, label="New", size=(32, 20))
-        btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnAddStation(evt, str))
+        btnAddStation.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddStation.GetLabel(): self.onClick_BtnWorkOnStation(evt, str))
         sizerSta.Add(btnAddStation, pos=(0, 1), flag=wx.ALIGN_LEFT|wx.LEFT, border=10)
         
         self.lstStations = DragStationList(self, style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.LC_SINGLE_SEL)
@@ -432,20 +432,10 @@ class SetupStationsPanel(wx.Panel):
         self.SetSizerAndFit(sizerWholeFrame)
 
     def fillStationsList(self):
-        self.lstStations.DeleteAllItems()
-        scidb.curD.execute("SELECT ID, StationName FROM Stations;")
-        recs = scidb.curD.fetchall()
-        for rec in recs:
-            idx = self.lstStations.InsertStringItem(sys.maxint, rec["StationName"])
-            self.lstStations.SetItemData(idx, rec["ID"])
+        scidb.fillListctrlFromSQL(self.lstStations, "SELECT ID, StationName FROM Stations;")
 
     def fillSeriesList(self):
-        self.lstSeries.DeleteAllItems()
-        scidb.curD.execute("SELECT ID, DataSeriesDescription FROM DataSeries;")
-        recs = scidb.curD.fetchall()
-        for rec in recs:
-            idx = self.lstSeries.InsertStringItem(sys.maxint, rec["DataSeriesDescription"])
-            self.lstSeries.SetItemData(idx, rec["ID"])
+        scidb.fillListctrlFromSQL(self.lstSeries, "SELECT ID, DataSeriesDescription FROM DataSeries;")
 
     def fillChannelSegmentsList(self):
         self.lstChanSegs.DeleteAllItems()
@@ -481,11 +471,21 @@ class SetupStationsPanel(wx.Panel):
         """"""
         print ' You clicked the button labeled "%s"' % strLabel
 
-    def onClick_BtnAddStation(self, event, strLabel):
+    def onClick_BtnWorkOnStation(self, event, strLabel):
         """
         """
-        print "in onClick_BtnAddStation"
-        dia = Dialog_StationDetails(self, wx.ID_ANY, actionCode = ['New', 0])
+        print "in onClick_BtnWorkOnStation"
+        if strLabel == "New":
+            dia = Dialog_StationDetails(self, wx.ID_ANY, actionCode = ['New', 0])
+        elif strLabel == "Edit":
+            recNum = self.lstStations.GetItemData(self.lstStations.GetFocusedItem())
+            if recNum == None:
+                wx.MessageBox('Select a Station to edit', 'No Selection',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            dia = Dialog_StationDetails(self, wx.ID_ANY, actionCode = ['Edit', recNum])
+        else:
+            return
         # the dialog contains an 'InfoPanel_StationDetails' named 'pnl'
         result = dia.ShowModal()
         # dialog is exited using EndModal, and comes back here
@@ -494,6 +494,7 @@ class SetupStationsPanel(wx.Panel):
         self.stationName = dia.pnl.tcStationName.GetValue()
         print "Name of new station, from the Modal:", self.stationName
         dia.Destroy()
+        self.fillStationsList()
         
     def onClick_BtnAddSeries(self, event, strLabel):
         """

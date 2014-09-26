@@ -917,7 +917,7 @@ def fillListctrlFromSQL(objListctrl, stSQL, keyCol=0, visibleCol=1):
     keyItem = LC.GetItemData(LC.GetFocusedItem())
     both columns are zero based
     """
-#    objListctrl.Clear()
+    objListctrl.DeleteAllItems()
     recs = curD.execute(stSQL).fetchall()
     i=0 # dummy variable, will change with each InsertStringItem
     for rec in recs:
