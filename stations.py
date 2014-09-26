@@ -82,6 +82,10 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         shPnlSiz.Add(self.cbxFldSites, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
+        btnAddSite = wx.Button(self, label="New", size=(32, 20))
+        btnAddSite.Bind(wx.EVT_BUTTON, lambda evt, str=btnAddSite.GetLabel(): self.onClick_BtnAddSite(evt, str))
+        shPnlSiz.Add(btnAddSite, pos=(gRow, 2), flag=wx.ALIGN_LEFT|wx.LEFT, border=5)
+
         gRow += 1
         shPnlSiz.Add(wx.StaticText(self, -1, 'You only need to enter Station latitude and longitude if'),
             pos=(gRow, 0), span=(1, 3), flag=wx.LEFT|wx.TOP, border=5)
@@ -137,6 +141,11 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         except:
             self.StDict['LongitudeDecDegrees'] = None
 
+    def onClick_BtnAddSite(self, event, str):
+        wx.MessageBox('"Add Site" button clicked', 'Verify',
+            wx.OK | wx.ICON_INFORMATION)
+
+
     def onClick_BtnSave(self, event):
         """
         If actionCode[0] = 'New', the StationDetails is being created.
@@ -166,28 +175,19 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
             self.tcStationName.SetValue(stStationName[:(maxLen)])
             self.tcStationName.SetFocus()
             self.Scroll(0, 0) # the required controls are all at the top
-            return
-
-        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
-            wx.OK | wx.ICON_INFORMATION)
-        return
-    
-        recID = scidb.dictIntoTable_InsertOrReplace('Stations', self.StDict)        
+            return    
+        recID = scidb.dictIntoTable_InsertOrReplace('Stations', self.StDict)
+        parObject = self.GetParent()
+        if parObject.GetClassName() == "wxDialog":
+            parObject.EndModal(0)
 
     def onClick_BtnCancel(self, event):
         """
-        If this frame is shown in a Dialog, the StationDetails is being created. Exit with no changes.
-        If this frame is shown in the main form, restore it from the saved DB record
+        This frame is shown in a Dialog, which is its parent object.
         """
-        self.newRecID = 0 # new record does not apply
         parObject = self.GetParent()
         if parObject.GetClassName() == "wxDialog":
-            parObject.EndModal(0) # if in the creation dialog, exit with no changes to the DB
-#            parObject.Destroy() 
-        else: # in the main form
-            wx.MessageBox('Ignoring any edits', 'Undo', 
-                wx.OK | wx.ICON_INFORMATION)
-        return
+            parObject.EndModal(0)
 
 # ----------------------------------------------------------------------
 # customized for drag/drop from list of Stations
@@ -493,21 +493,7 @@ class SetupStationsPanel(wx.Panel):
         # test of pulling things out of the modal dialog
         self.stationName = dia.pnl.tcStationName.GetValue()
         print "Name of new station, from the Modal:", self.stationName
-#        self.newRecID = dia.pnl.newRecID
-#        print "record ID from the Modal:", self.newRecID
         dia.Destroy()
-
-
-#        dlg = wx.TextEntryDialog(None, "Name of Station you are adding to the database:", "New Station", " ")
-#        answer = dlg.ShowModal()
-#        if answer == wx.ID_OK:
-#            stNewStation = dlg.GetValue()
-#            stNewStation = " ".join(stNewStation.split())
-#            recID = scidb.assureItemIsInTableField(stNewStation, "Stations", "StationName")
-#            self.fillStationsList()
-#        else:
-#            stNewStation = ''
-#        dlg.Destroy()
         
     def onClick_BtnAddSeries(self, event, strLabel):
         """
