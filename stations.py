@@ -80,8 +80,7 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         shPnlSiz.Add(wx.StaticText(self, -1, 'Site'),
             pos=(gRow, 0), span=(1, 1), flag=wx.ALIGN_RIGHT|wx.LEFT|wx.BOTTOM, border=5)
         self.cbxFldSites = wx.ComboBox(self, -1, style=wx.CB_READONLY)
-        stSQLFieldSites = 'SELECT ID, SiteName FROM FieldSites'
-        scidb.fillComboboxFromSQL(self.cbxFldSites, stSQLFieldSites)
+        self.fillSitesList()
         shPnlSiz.Add(self.cbxFldSites, pos=(gRow, 1), span=(1, 1), 
             flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
 
@@ -139,6 +138,10 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         self.SetAutoLayout(1)
         self.SetupScrolling()
 
+    def fillSitesList(self):
+        stSQLFieldSites = 'SELECT ID, SiteName FROM FieldSites'
+        scidb.fillComboboxFromSQL(self.cbxFldSites, stSQLFieldSites)
+
     def FillPanelFromDict(self):
         if self.StDict['StationName'] != None:
             self.tcStationName.SetValue(self.StDict['StationName'])
@@ -177,10 +180,35 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
             self.StDict['LongitudeDecDegrees'] = None
 
     def onClick_BtnWorkOnSite(self, event, str):
-        stMsg = '"' + str + ' Site" button clicked'
-        wx.MessageBox(stMsg, 'Verify',
-            wx.OK | wx.ICON_INFORMATION)
+        """
+        """
+        print "in onClick_BtnWorkOnSite, str = '" + str + '"'
+        if str == "New":
+            dia = Dialog_SiteDetails(self, wx.ID_ANY, actionCode = ['New', 0])
 
+        elif str == "Edit":
+            recNum = scidb.getComboboxIndex(self.lstSites)
+            
+#            siteItem = self.lstSites.GetFocusedItem()
+            if recNum == None:
+                wx.MessageBox('Select a Site to edit', 'No Selection',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+#            recNum = self.lstSites.GetItemData(siteItem)
+            dia = Dialog_SiteDetails(self, wx.ID_ANY, actionCode = ['Edit', recNum])
+
+        else:
+            return
+        # the dialog contains an 'InfoPanel_SiteDetails' named 'pnl'
+        result = dia.ShowModal()
+        # dialog is exited using EndModal, and comes back here
+        print "Modal FieldSite dialog result:", result
+        # test of pulling things out of the modal dialog
+        self.siteName = dia.pnl.tcSiteName.GetValue()
+        print "Name of site, from the Modal:", self.siteName
+        dia.Destroy()
+        self.fillSitesList()
+        self.ShowSiteLatLon()
 
     def onClick_BtnSave(self, event):
         """
