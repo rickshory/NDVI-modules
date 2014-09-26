@@ -101,6 +101,15 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
         shPnlSiz.Add(SibHorizSizer, pos=(gRow, 2), span=(1, 1))
 
         gRow += 1
+        self.stSiteLLMsg = wx.StaticText(self, -1, 'Site lat/lon:')
+        shPnlSiz.Add(self.stSiteLLMsg,
+            pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), 
+            flag=wx.EXPAND|wx.BOTTOM, border=1)       
+
+        gRow += 1
         stAboutSLL = 'You only need to enter Station latitude and longitude if ' \
                 'you want to override the Site latitude and longitude.'
         stWr1 = wordwrap(stAboutSLL, wordWrapWidth, wx.ClientDC(self))
