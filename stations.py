@@ -187,7 +187,7 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
             dia = Dialog_SiteDetails(self, wx.ID_ANY, actionCode = ['New', 0])
 
         elif str == "Edit":
-            recNum = scidb.getComboboxIndex(self.lstSites)
+            recNum = scidb.getComboboxIndex(self.cbxFldSites)
             
 #            siteItem = self.lstSites.GetFocusedItem()
             if recNum == None:
@@ -371,7 +371,6 @@ class InfoPanel_SiteDetails(scrolled.ScrolledPanel):
     def FillDictFromPanel(self):
         # clean up whitespace; remove leading/trailing & multiples
         self.SiDict['SiteName'] = " ".join(self.tcSiteName.GetValue().split())
-        self.SiDict['SiteID'] = scidb.getComboboxIndex(self.cbxFldSites)
         try:
             self.SiDict['LatitudeDecDegrees'] = float(self.tcLat.GetValue())
         except:
