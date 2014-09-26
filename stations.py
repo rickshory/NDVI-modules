@@ -8,11 +8,16 @@ ID_NEW_STATION_BTN = wx.NewId()
 ID_EDIT_STATION_BTN = wx.NewId()
 
 class Dialog_StationDetails(wx.Dialog):
-    def __init__(self, parent, id, title = "Add or Edit Station Details", actionCode = ['New', 0]):
+    def __init__(self, parent, id, title = "Station", actionCode = None):
         wx.Dialog.__init__(self, parent, id)
         self.InitUI(actionCode)
         self.SetSize((350, 300))
-        self.SetTitle("Add or Edit Station Details") # overrides title passed above
+        if actionCode[0] == 'New':
+            self.SetTitle("Add Station")
+        if actionCode[0] == 'Edit':
+            self.SetTitle("Edit Station Details")
+        if actionCode[0] == None:
+            self.SetTitle("Add or Edit Station Details") # overrides title passed above
 
     def InitUI(self, actionCode):
 #        pnl = InfoPanel_StationDetails(self, wx.ID_ANY)
