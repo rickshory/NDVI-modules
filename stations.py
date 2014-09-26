@@ -2,23 +2,175 @@ import wx, sqlite3, datetime
 import os, sys, re, cPickle
 import scidb
 from wx.lib.mixins.listctrl import ListCtrlAutoWidthMixin
+import wx.lib.scrolledpanel as scrolled, wx.grid
 
 ID_NEW_STATION_BTN = wx.NewId()
 ID_EDIT_STATION_BTN = wx.NewId()
 
 class Dialog_StationDetails(wx.Dialog):
-    def __init__(self, parent, id, title = "Add or Edit Station Details"):
+    def __init__(self, parent, id, title = "Add or Edit Station Details", actionCode = ['New', 0]):
         wx.Dialog.__init__(self, parent, id)
-        self.InitUI()
+        self.InitUI(actionCode)
         self.SetSize((350, 300))
         self.SetTitle("Add or Edit Station Details") # overrides title passed above
 
-    def InitUI(self):
+    def InitUI(self, actionCode):
 #        pnl = InfoPanel_StationDetails(self, wx.ID_ANY)
-        self.pnl = InfoPanel_StationDetails(self)
+        self.pnl = InfoPanel_StationDetails(self, actionCode)
    
     def OnClose(self, event):
         self.Destroy()
+
+class InfoPanel_StationDetails(scrolled.ScrolledPanel):
+    def __init__(self, parent, actionCode):
+        scrolled.ScrolledPanel.__init__(self, parent, -1)
+#    def __init__(self, parent, id):
+#        wx.Panel.__init__(self, parent, id)
+        self.InitUI(actionCode)
+        
+    def InitUI(self, actionCode):
+        
+        print "Initializing StationDetails frame"
+        if actionCode[0] == 'New': # create a new Station record
+            self.StDict = scidb.dictFromTableDefaults('Stations')
+            print 'new default self.StDict:', self.StDict
+            self.stStaLabel = 'Name of Station you are adding to the database'
+        else: # editing an existing record
+            self.StDict = scidb.dictFromTableID('Stations', actionCode[1])
+            print 'self.StDict loaded from table:', self.StDict
+            self.stStaLabel = 'Station'
+
+        print "Initializing Panel_StationDetails ->>>>"
+
+        print "actionCode:", actionCode
+        self.LayoutPanel()
+        self.FillPanelFromDict()
+        
+
+    def LayoutPanel(self):
+        self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
+        shPnlSiz = wx.GridBagSizer(1, 1)
+
+        gRow = 0
+        shPnlSiz.Add(wx.StaticText(self, -1, self.stStaLabel),
+            pos=(gRow, 0), flag=wx.ALIGN_RIGHT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+ 
+#        gRow += 1
+#        shPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+        
+        gRow += 1
+        self.tcStationName = wx.TextCtrl(self)
+        shPnlSiz.Add(self.tcStationName, pos=(gRow, 0), span=(1, 3), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        shPnlSiz.Add(wx.StaticText(self, -1, 'Site'),
+            pos=(gRow, 0), span=(1, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+        self.cbxFldSites = wx.ComboBox(self, -1, style=wx.CB_READONLY)
+        stSQLFieldSites = 'SELECT ID, SiteName FROM FieldSites'
+        scidb.fillComboboxFromSQL(self.cbxFldSites, stSQLFieldSites)
+        shPnlSiz.Add(self.cbxFldSites, pos=(gRow, 1), span=(1, 2), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        shPnlSiz.Add(wx.StaticText(self, -1, 'Latitude'),
+            pos=(gRow, 0), span=(1, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+        self.tcLat = wx.TextCtrl(self)
+        shPnlSiz.Add(self.tcLat, pos=(gRow, 1), span=(1, 2), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        shPnlSiz.Add(wx.StaticText(self, -1, 'Longitude'),
+            pos=(gRow, 0), span=(1, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+        self.tcLon = wx.TextCtrl(self)
+        shPnlSiz.Add(self.tcLon, pos=(gRow, 1), span=(1, 2), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+        self.btnSave = wx.Button(self, label="Save", size=(90, 28))
+        self.btnSave.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnSave(evt))
+        shPnlSiz.Add(self.btnSave, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
+        self.btnCancel = wx.Button(self, label="Cancel", size=(90, 28))
+        self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
+        shPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        self.SetSizer(shPnlSiz)
+        self.SetAutoLayout(1)
+        self.SetupScrolling()
+
+    def FillPanelFromDict(self):
+        if self.StDict['StationName'] != None:
+            self.tcStationName.SetValue(self.StDict['StationName'])
+        scidb.setComboboxToClientData(self.cbxFldSites, self.StDict['SiteID'])
+        if self.StDict['LatitudeDecDegrees'] != None:
+            self.tcLat.SetValue('%.6f' % self.StDict['LatitudeDecDegrees'])
+        if self.StDict['LongitudeDecDegrees'] != None:
+            self.tcLon.SetValue('%.6f' % self.StDict['LongitudeDecDegrees'])
+
+    def FillDictFromPanel(self):
+        # clean up whitespace; remove leading/trailing & multiples
+        self.StDict['StationName'] = " ".join(self.tcStationName.GetValue().split())
+        self.StDict['SiteID'] = scidb.getComboboxIndex(self.cbxFldSites)
+        try:
+            self.StDict['LatitudeDecDegrees'] = float(self.tcLat.GetValue())
+        except:
+            self.StDict['LatitudeDecDegrees'] = None
+        try:
+            self.StDict['LongitudeDecDegrees'] = float(self.tcLon.GetValue())
+        except:
+            self.StDict['LongitudeDecDegrees'] = None
+
+    def onClick_BtnSave(self, event):
+        """
+        If actionCode[0] = 'New', the StationDetails is being created.
+        Attempt to create a new record and make the new record ID available.
+        If actionCode[0] = 'Edit', attempt to save any changes to the existing DB record
+        """
+        self.FillDictFromPanel() # get all values before testing
+        # verify
+        stStationName = self.StDict['StationName']
+        print "stStationName:", stStationName
+        if stStationName == '':
+            wx.MessageBox('Need Station Name', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcStationName.SetValue(stStationName)
+            self.tcStationName.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+    
+        maxLen = scidb.lenOfVarcharTableField('Stations', 'StationName')
+        if maxLen < 1:
+            wx.MessageBox('Error %d getting [Stations].[StationName] field length.' % maxLen, 'Error',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+        if len(stStationName) > maxLen:
+            wx.MessageBox('Max length for Station Name is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcStationName.SetValue(stStationName[:(maxLen)])
+            self.tcStationName.SetFocus()
+            self.Scroll(0, 0) # the required controls are all at the top
+            return
+
+        wx.MessageBox('OK so far, but "Save" is not implemented yet', 'Info', 
+            wx.OK | wx.ICON_INFORMATION)
+        return
+    
+        recID = scidb.dictIntoTable_InsertOrReplace('Stations', self.StDict)        
+
+    def onClick_BtnCancel(self, event):
+        """
+        If this frame is shown in a Dialog, the StationDetails is being created. Exit with no changes.
+        If this frame is shown in the main form, restore it from the saved DB record
+        """
+        self.newRecID = 0 # new record does not apply
+        parObject = self.GetParent()
+        if parObject.GetClassName() == "wxDialog":
+            parObject.EndModal(0) # if in the creation dialog, exit with no changes to the DB
+#            parObject.Destroy() 
+        else: # in the main form
+            wx.MessageBox('Ignoring any edits', 'Undo', 
+                wx.OK | wx.ICON_INFORMATION)
+        return
 
 # ----------------------------------------------------------------------
 # customized for drag/drop from list of Stations
@@ -315,16 +467,30 @@ class SetupStationsPanel(wx.Panel):
     def onClick_BtnAddStation(self, event, strLabel):
         """
         """
-        dlg = wx.TextEntryDialog(None, "Name of Station you are adding to the database:", "New Station", " ")
-        answer = dlg.ShowModal()
-        if answer == wx.ID_OK:
-            stNewStation = dlg.GetValue()
-            stNewStation = " ".join(stNewStation.split())
-            recID = scidb.assureItemIsInTableField(stNewStation, "Stations", "StationName")
-            self.fillStationsList()
-        else:
-            stNewStation = ''
-        dlg.Destroy()
+        print "in onClick_BtnAddStation"
+        dia = Dialog_StationDetails(self, wx.ID_ANY, actionCode = ['New', 0])
+        # the dialog contains an 'InfoPanel_StationDetails' named 'pnl'
+        result = dia.ShowModal()
+        # dialog is exited using EndModal, and comes back here
+        print "Modal dialog result:", result
+        # test of pulling things out of the modal dialog
+        self.stationName = dia.pnl.tcStationName.GetValue()
+        print "Name of new station, from the Modal:", self.stationName
+#        self.newRecID = dia.pnl.newRecID
+#        print "record ID from the Modal:", self.newRecID
+        dia.Destroy()
+
+
+#        dlg = wx.TextEntryDialog(None, "Name of Station you are adding to the database:", "New Station", " ")
+#        answer = dlg.ShowModal()
+#        if answer == wx.ID_OK:
+#            stNewStation = dlg.GetValue()
+#            stNewStation = " ".join(stNewStation.split())
+#            recID = scidb.assureItemIsInTableField(stNewStation, "Stations", "StationName")
+#            self.fillStationsList()
+#        else:
+#            stNewStation = ''
+#        dlg.Destroy()
         
     def onClick_BtnAddSeries(self, event, strLabel):
         """
