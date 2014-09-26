@@ -156,7 +156,8 @@ class InfoPanel_StationDetails(scrolled.ScrolledPanel):
             self.StDict['LongitudeDecDegrees'] = None
 
     def onClick_BtnWorkOnSite(self, event, str):
-        wx.MessageBox('"Add Site" button clicked', 'Verify',
+        stMsg = '"' + str + ' Site" button clicked'
+        wx.MessageBox(stMsg, 'Verify',
             wx.OK | wx.ICON_INFORMATION)
 
 
