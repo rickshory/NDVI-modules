@@ -847,6 +847,7 @@ class NDVIPanel(wx.Panel):
 
     def SavePanel(self):
         self.FillDictFromNDVISetupPanel()
+        print 'self.calcDict:', self.calcDict
         if self.calcDict['CalcName'] == None:
             wx.MessageBox('Need a Name for this panel', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
@@ -871,12 +872,6 @@ class NDVIPanel(wx.Panel):
 
 
     def FillDictFromNDVISetupPanel(self):
-#        # clean up whitespace; remove leading/trailing & multiples
-#        stS = " ".join(self.tcCalcName.GetValue().split())
-#        if stS == '':
-#            self.calcDict['CalcName'] = None
-#        else:
-#            self.calcDict['CalcName'] = stS
         self.calcDict['CalcName'] = scidb.getTextFromTC(self.tcCalcName)
         self.calcDict['RefStationID'] = scidb.getComboboxIndex(self.cbxRefStationID)
         self.calcDict['IRRefSeriesID'] = scidb.getComboboxIndex(self.cbxIRRefSeriesID)
@@ -884,10 +879,8 @@ class NDVIPanel(wx.Panel):
         self.calcDict['UseRef'] = self.ckUseRef.GetValue()
         self.calcDict['IRDataSeriesID'] = scidb.getComboboxIndex(self.cbxIRDataSeriesID)
         self.calcDict['VisDataSeriesID'] = scidb.getComboboxIndex(self.cbxVisDataSeriesID)
-        stS = " ".join(self.tcIRFunction.GetValue().split()) # clean up whitespace
-        self.calcDict['IRFunction'] = stS
-        stS = " ".join(self.tcVISFunction.GetValue().split()) # clean up whitespace
-        self.calcDict['VISFunction'] = stS
+        self.calcDict['IRFunction'] = scidb.getTextFromTC(self.tcIRFunction, default = '=i')
+        self.calcDict['VISFunction'] = scidb.getTextFromTC(self.tcIRFunction, default = '=v')
         try:
             self.calcDict['PlusMinusCutoffHours'] = float(self.tcPlusMinusCutoffHours.GetValue())
         except:

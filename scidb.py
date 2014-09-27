@@ -873,7 +873,7 @@ def autofixChannelSegments():
     # created 15 segments
     offerSeriesForChannels() # if a Series is auto available, fill in
     
-def getTextFromTC(objTextControl):
+def getTextFromTC(objTextControl, default = None):
     """
     Given a wx text control, returns the text stripped of leading/trailing
     whitespace and with duplicate whitespace removed.
@@ -882,7 +882,7 @@ def getTextFromTC(objTextControl):
     # clean up whitespace; remove leading/trailing & multiples
     stS = " ".join(objTextControl.GetValue().split())
     if stS == '':
-        return None
+        return default
     else:
         return stS
 
