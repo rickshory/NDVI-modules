@@ -877,7 +877,7 @@ def getTextFromTC(objTextControl, default = None):
     """
     Given a wx text control, returns the text stripped of leading/trailing
     whitespace and with duplicate whitespace removed.
-    If nothing is left, returns None
+    If nothing is left returns the default, which is None if not explicitly given
     """
     # clean up whitespace; remove leading/trailing & multiples
     stS = " ".join(objTextControl.GetValue().split())
@@ -885,6 +885,52 @@ def getTextFromTC(objTextControl, default = None):
         return default
     else:
         return stS
+
+def getIntFromTC(objTextControl, default = None):
+    """
+    Given a wx text control, returns the contents converted to an integer if possible.
+    If not valid as an integer, returns the default, which is None if not explicitly given
+    """
+    try:
+        return = int(objTextControl.GetValue())
+    except:
+        return default
+
+def getFloatFromTC(objTextControl, default = None):
+    """
+    Given a wx text control, returns the contents converted to an float if possible.
+    If not valid as a float, returns the default, which is None if not explicitly given
+    """
+    try:
+        return = float(objTextControl.GetValue())
+    except:
+        return default
+
+def getDateFromTC(objTextControl, default = None):
+    """
+    Given a wx text control, returns the contents converted to a string in standard UNIX
+    date format 'yyyy-mm-dd' if possible.
+    If not valid as a date, returns the default, which is None if not explicitly given
+    """
+    dt = wx.DateTime() # Uninitialized datetime
+    DateValid = dt.ParseDate(objTextControl.GetValue())
+    if DateValid == -1: # invalid date
+        return default
+    else: # store in standard format
+        return = dt.Format('%Y-%m-%d')
+
+def getDateTimeFromTC(objTextControl, default = None):
+    """
+    Given a wx text control, returns the contents converted to a string in standard UNIX
+    datetime format 'yyyy-mm-dd hh:mm:ss' if possible.
+    If not valid as a date/time, returns the default, which is None if not explicitly given
+    """
+    dt = wx.DateTime() # Uninitialized datetime
+    DateValid = dt.ParseDateTime(objTextControl.GetValue())
+    if DateValid == -1: # invalid date/time
+        return default
+    else: # store in standard format
+        return = dt.Format('%Y-%m-%d %H:%M:%S')
 
 def fillComboboxFromSQL(objComboBox, stSQL, keyCol=0, visibleCol=1):
     """
