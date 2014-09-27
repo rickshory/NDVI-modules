@@ -892,7 +892,7 @@ def getIntFromTC(objTextControl, default = None):
     If not valid as an integer, returns the default, which is None if not explicitly given
     """
     try:
-        return = int(objTextControl.GetValue())
+        return int(objTextControl.GetValue())
     except:
         return default
 
@@ -902,7 +902,7 @@ def getFloatFromTC(objTextControl, default = None):
     If not valid as a float, returns the default, which is None if not explicitly given
     """
     try:
-        return = float(objTextControl.GetValue())
+        return float(objTextControl.GetValue())
     except:
         return default
 
@@ -917,7 +917,7 @@ def getDateFromTC(objTextControl, default = None):
     if DateValid == -1: # invalid date
         return default
     else: # store in standard format
-        return = dt.Format('%Y-%m-%d')
+        return dt.Format('%Y-%m-%d')
 
 def getDateTimeFromTC(objTextControl, default = None):
     """
@@ -930,7 +930,7 @@ def getDateTimeFromTC(objTextControl, default = None):
     if DateValid == -1: # invalid date/time
         return default
     else: # store in standard format
-        return = dt.Format('%Y-%m-%d %H:%M:%S')
+        return dt.Format('%Y-%m-%d %H:%M:%S')
 
 def fillComboboxFromSQL(objComboBox, stSQL, keyCol=0, visibleCol=1):
     """

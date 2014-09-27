@@ -881,34 +881,14 @@ class NDVIPanel(wx.Panel):
         self.calcDict['VisDataSeriesID'] = scidb.getComboboxIndex(self.cbxVisDataSeriesID)
         self.calcDict['IRFunction'] = scidb.getTextFromTC(self.tcIRFunction, default = '=i')
         self.calcDict['VISFunction'] = scidb.getTextFromTC(self.tcIRFunction, default = '=v')
-        try:
-            self.calcDict['PlusMinusCutoffHours'] = float(self.tcPlusMinusCutoffHours.GetValue())
-        except:
-            self.calcDict['PlusMinusCutoffHours'] = 2
-        dt = wx.DateTime() # Uninitialized datetime
-        DateValid = dt.ParseDate(self.tcClearDay.GetValue())
-        if DateValid == -1: # invalid date
-            self.calcDict['ClearDay'] = None
-        else: # store in standard format
-            self.calcDict['ClearDay'] = dt.Format(sFmt)
-        try:
-            self.calcDict['ThresholdPctLow'] = int(self.tcThresholdPctLow.GetValue())
-        except:
-            self.calcDict['ThresholdPctLow'] = 75
-        try:
-            self.calcDict['ThresholdPctHigh'] = int(self.tcThresholdPctHigh.GetValue())
-        except:
-            self.calcDict['ThresholdPctHigh'] = 125
+        self.calcDict['PlusMinusCutoffHours'] = scidb.getFloatFromTC(self.tcPlusMinusCutoffHours, default = 2)
+        self.calcDict['ClearDay'] = scidb.getDateFromTC(self.tcClearDay)
+        self.calcDict['ThresholdPctLow'] = scidb.getIntFromTC(self.tcThresholdPctLow, default = 75)
+        self.calcDict['ThresholdPctHigh'] = scidb.getIntFromTC(self.tcThresholdPctLow, default = 125)
         # not implemented: IRRefCutoff, VISRefCutoff, IRDatCutoff, VISDatCutoff
         self.calcDict['UseOnlyValidNDVI'] = self.ckUseOnlyValidNDVI.GetValue()
-        try:
-            self.calcDict['NDVIvalidMin'] = float(self.tcNDVIvalidMin.GetValue())
-        except:
-            self.calcDict['NDVIvalidMin'] = -1
-        try:
-            self.calcDict['NDVIvalidMax'] = float(self.tcNDVIvalidMax.GetValue())
-        except:
-            self.calcDict['NDVIvalidMax'] = 1
+        self.calcDict['NDVIvalidMin'] = scidb.getFloatFromTC(self.tcPlusMinusCutoffHours, default = -1)
+        self.calcDict['NDVIvalidMax'] = scidb.getFloatFromTC(self.tcPlusMinusCutoffHours, default = 1)
         self.calcDict['CreateSummaries'] = self.ckIncludeSummaries.GetValue()
         self.calcDict['OutputSAS'] = self.ckIncludeSAS.GetValue()
         self.calcDict['Normalize'] = self.ckNormalize.GetValue()
@@ -931,11 +911,8 @@ class NDVIPanel(wx.Panel):
             else:
                 self.calcDict['OutputFolder'] = None
 
-
     def onCbxTasks(self, event):
         print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
-
-
 
 class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
