@@ -871,18 +871,19 @@ class NDVIPanel(wx.Panel):
 
 
     def FillDictFromNDVISetupPanel(self):
-        # clean up whitespace; remove leading/trailing & multiples
-        stS = " ".join(self.tcCalcName.GetValue().split())
-        if stS == '':
-            self.calcDict['CalcName'] = None
-        else:
-            self.calcDict['CalcName'] = stS
-        self.calcDict['RefStationID'] = self.cbxRefStationID.GetClientData(self.cbxRefStationID.GetSelection())
-        self.calcDict['IRRefSeriesID'] = self.cbxIRRefSeriesID.GetClientData(self.cbxIRRefSeriesID.GetSelection())
-        self.calcDict['VISRefSeriesID'] = self.cbxVISRefSeriesID.GetClientData(self.cbxVISRefSeriesID.GetSelection())
+#        # clean up whitespace; remove leading/trailing & multiples
+#        stS = " ".join(self.tcCalcName.GetValue().split())
+#        if stS == '':
+#            self.calcDict['CalcName'] = None
+#        else:
+#            self.calcDict['CalcName'] = stS
+        self.calcDict['CalcName'] = scidb.getTextFromTC(self.tcCalcName)
+        self.calcDict['RefStationID'] = scidb.getComboboxIndex(self.cbxRefStationID)
+        self.calcDict['IRRefSeriesID'] = scidb.getComboboxIndex(self.cbxIRRefSeriesID)
+        self.calcDict['VISRefSeriesID'] = scidb.getComboboxIndex(self.cbxVISRefSeriesID)
         self.calcDict['UseRef'] = self.ckUseRef.GetValue()
-        self.calcDict['IRDataSeriesID'] = self.cbxIRDataSeriesID.GetClientData(self.cbxIRDataSeriesID.GetSelection())
-        self.calcDict['VisDataSeriesID'] = self.cbxVisDataSeriesID.GetClientData(self.cbxVisDataSeriesID.GetSelection())
+        self.calcDict['IRDataSeriesID'] = scidb.getComboboxIndex(self.cbxIRDataSeriesID)
+        self.calcDict['VisDataSeriesID'] = scidb.getComboboxIndex(self.cbxVisDataSeriesID)
         stS = " ".join(self.tcIRFunction.GetValue().split()) # clean up whitespace
         self.calcDict['IRFunction'] = stS
         stS = " ".join(self.tcVISFunction.GetValue().split()) # clean up whitespace

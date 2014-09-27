@@ -1,4 +1,4 @@
-import sqlite3, datetime, copy
+import wx, sqlite3, datetime, copy
 import sys, re
 datConn = None
 tmpConn = None
@@ -873,6 +873,19 @@ def autofixChannelSegments():
     # created 15 segments
     offerSeriesForChannels() # if a Series is auto available, fill in
     
+def getTextFromTC(objTextControl):
+    """
+    Given a wx text control, returns the text stripped of leading/trailing
+    whitespace and with duplicate whitespace removed.
+    If nothing is left, returns None
+    """
+    # clean up whitespace; remove leading/trailing & multiples
+    stS = " ".join(objTextControl.GetValue().split())
+    if stS == '':
+        return None
+    else:
+        return stS
+
 def fillComboboxFromSQL(objComboBox, stSQL, keyCol=0, visibleCol=1):
     """
     Given a combobox and an SQL statement that returns at least two columns;
