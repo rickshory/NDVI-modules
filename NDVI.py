@@ -848,27 +848,56 @@ class NDVIPanel(wx.Panel):
     def SavePanel(self):
         self.FillDictFromNDVISetupPanel()
         print 'self.calcDict:', self.calcDict
-        if self.calcDict['CalcName'] == None:
-            wx.MessageBox('Need a Name for this panel', 'Missing',
+        self.calcNameToValidate = self.calcDict['CalcName']
+        self.callsValidation = 'save' # flag for which fn calls validation
+        if self.validateCalcName():
+            recID = scidb.dictIntoTable_InsertOrReplace('NDVIcalc', self.calcDict)
+            self.calcDict['ID'] = recID
+#            print 'new record ID:', self.calcDict['ID']
+            self.refresh_cbxPanelsChoices(-1)
+
+    def validateCalcName(self):
+        """
+        Called both on normal Save of panel, and when Duplicating a panel
+        """
+        if self.calcNameToValidate == None:
+            wx.MessageBox('Need a Name for this Panel', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
-            self.tcCalcName.SetValue('')
-            self.tcCalcName.SetFocus()
+            if self.callsValidation == 'save': # flag for which fn called validation
+                self.tcCalcName.SetValue('') # called in normal Save from main panel
+                self.tcCalcName.SetFocus()
 #            self.Scroll(0, 0) # at the top
-            return            
+            return 0
+
+        # check length
+        maxLen = scidb.lenOfVarcharTableField('NDVIcalc', 'CalcName')
+        if maxLen < 1:
+            wx.MessageBox('Error %d getting [NDVIcalc].[CalcName] field length.' % maxLen, 'Error',
+                wx.OK | wx.ICON_INFORMATION)
+            return 0
+        if len(self.calcNameToValidate) > maxLen:
+            wx.MessageBox('Max length for Panel name is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
+                wx.OK | wx.ICON_INFORMATION)
+            self.calcNameToValidate = self.calcNameToValidate[:(maxLen)]
+            if self.callsValidation == 'save':
+                self.tcCalcName.SetValue(self.calcNameToValidate)
+                self.tcCalcName.SetFocus()
+            # if from Duplicate, write that part here
+                self.Scroll(0, 0) # scroll to the top
+            return 0
+
         # check if there is a record with a different ID that already has this CalcName
         stSQLCk = 'SELECT ID FROM NDVIcalc WHERE CalcName = ? AND ID != ?'
-        rec = scidb.curD.execute(stSQLCk, (self.calcDict['CalcName'], self.calcDict['ID'])).fetchone()
+        rec = scidb.curD.execute(stSQLCk, (self.calcNameToValidate, self.calcDict['ID'])).fetchone()
         if rec != None:
-            wx.MessageBox('There is already another panel named "' + self.calcDict['CalcName'] + '"', 'Duplicate',
+            wx.MessageBox('There is already another panel named "' + self.calcNameToValidate + '"', 'Duplicate',
                 wx.OK | wx.ICON_INFORMATION)
-            self.tcCalcName.SetValue(self.calcDict['CalcName'])
-            self.tcCalcName.SetFocus()
-#            self.Scroll(0, 0) # at the top
-            return
-        recID = scidb.dictIntoTable_InsertOrReplace('NDVIcalc', self.calcDict)
-        self.calcDict['ID'] = recID
-        print 'new record ID:', self.calcDict['ID']
-        self.refresh_cbxPanelsChoices(-1)
+            if self.callsValidation == 'save':
+                self.tcCalcName.SetValue(self.calcNameToValidate)
+                self.tcCalcName.SetFocus()
+#               self.Scroll(0, 0) # at the top
+                return 0
+        return 1
 
 
     def FillDictFromNDVISetupPanel(self):
