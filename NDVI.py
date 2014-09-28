@@ -847,13 +847,14 @@ class NDVIPanel(wx.Panel):
 
     def SavePanel(self):
         self.FillDictFromNDVISetupPanel()
-        print 'self.calcDict:', self.calcDict
+#        print 'self.calcDict:', self.calcDict
+        print 'existing record ID:', self.calcDict['ID']
         self.calcNameToValidate = self.calcDict['CalcName']
         self.callsValidation = 'save' # flag for which fn calls validation
         if self.validateCalcName():
             recID = scidb.dictIntoTable_InsertOrReplace('NDVIcalc', self.calcDict)
             self.calcDict['ID'] = recID
-#            print 'new record ID:', self.calcDict['ID']
+            print 'new record ID:', self.calcDict['ID']
             self.refresh_cbxPanelsChoices(-1)
 
     def validateCalcName(self):
@@ -883,20 +884,21 @@ class NDVIPanel(wx.Panel):
                 self.tcCalcName.SetValue(self.calcNameToValidate)
                 self.tcCalcName.SetFocus()
             # if from Duplicate, write that part here
-                self.Scroll(0, 0) # scroll to the top
+#                self.Scroll(0, 0) # scroll to the top
             return 0
 
         # check if there is a record with a different ID that already has this CalcName
-        stSQLCk = 'SELECT ID FROM NDVIcalc WHERE CalcName = ? AND ID != ?'
-        rec = scidb.curD.execute(stSQLCk, (self.calcNameToValidate, self.calcDict['ID'])).fetchone()
+        stSQLCk = 'SELECT ID FROM NDVIcalc WHERE CalcName = ?'
+        rec = scidb.curD.execute(stSQLCk, (self.calcNameToValidate, )).fetchone()
         if rec != None:
-            wx.MessageBox('There is already another panel named "' + self.calcNameToValidate + '"', 'Duplicate',
-                wx.OK | wx.ICON_INFORMATION)
-            if self.callsValidation == 'save':
-                self.tcCalcName.SetValue(self.calcNameToValidate)
-                self.tcCalcName.SetFocus()
-#               self.Scroll(0, 0) # at the top
-            return 0
+            if rec['ID'] != self.calcDict['ID']:
+                wx.MessageBox('There is already another panel named "' + self.calcNameToValidate + '"', 'Duplicate',
+                    wx.OK | wx.ICON_INFORMATION)
+                if self.callsValidation == 'save':
+                    self.tcCalcName.SetValue(self.calcNameToValidate)
+                    self.tcCalcName.SetFocus()
+                    self.Scroll(0, 0) # at the top
+                return 0
         return 1
 
 
