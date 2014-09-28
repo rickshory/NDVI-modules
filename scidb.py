@@ -644,9 +644,9 @@ def dictIntoTable_InsertOrReplace(stTable, dict):
     all the table's field names, writes the dictionary to the table
     as INSERT OR REPLACE.
     If the ID already exists in the table, UPDATEs the record
-    IF the ID does not exist in the table, INSERTs a new record
+    If the ID does not exist in the table, INSERTs a new record
     Returns the new or updated record ID, or None on failure
-    Normally, would have generated the dictionary by the functions
+    Normally, you would have generated the dictionary by the functions
     'dictFromTableDefaults' or 'dictFromTableID'
     """
     """
@@ -665,9 +665,13 @@ def dictIntoTable_InsertOrReplace(stTable, dict):
     stSQL = 'INSERT OR REPLACE INTO ' + stTable + ' (' + stKs + ') '  \
             ' VALUES (' + stVs + ')'
     print stSQL
+    # for development, let any errors occur and display to output
+#    try:
     curD.execute(stSQL, dict)
     newRowID = curD.lastrowid
     return newRowID
+#    except:
+#        return None
     
 def countTableFieldItems(stTable, stField, stItem=None):
     """
