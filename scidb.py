@@ -664,13 +664,11 @@ def dictIntoTable_InsertOrReplace(stTable, dict):
     stVs = ', '.join(lVs)
     stSQL = 'INSERT OR REPLACE INTO ' + stTable + ' (' + stKs + ') '  \
             ' VALUES (' + stVs + ')'
-    try:
-        curD.execute(stSQL, dict)
-        newRowID = curD.lastrowid
-        return newRowID
-    except:
-        return None
-
+    print stSQL
+    curD.execute(stSQL, dict)
+    newRowID = curD.lastrowid
+    return newRowID
+    
 def countTableFieldItems(stTable, stField, stItem=None):
     """
     Tests whether an item is in the given field of a given table
@@ -931,6 +929,16 @@ def getDateTimeFromTC(objTextControl, default = None):
         return default
     else: # store in standard format
         return dt.Format('%Y-%m-%d %H:%M:%S')
+
+def getBoolFromCB(objCheckBox):
+    """
+    Given a wx checkbox control
+    returns 1 if true, 0 if false
+    """
+    if objCheckBox.GetValue():
+        return 1
+    else:
+        return 0
 
 def fillComboboxFromSQL(objComboBox, stSQL, keyCol=0, visibleCol=1):
     """
