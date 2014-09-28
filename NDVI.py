@@ -896,7 +896,7 @@ class NDVIPanel(wx.Panel):
                 self.tcCalcName.SetValue(self.calcNameToValidate)
                 self.tcCalcName.SetFocus()
 #               self.Scroll(0, 0) # at the top
-                return 0
+            return 0
         return 1
 
 
