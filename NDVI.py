@@ -876,22 +876,22 @@ class NDVIPanel(wx.Panel):
         self.calcDict['RefStationID'] = scidb.getComboboxIndex(self.cbxRefStationID)
         self.calcDict['IRRefSeriesID'] = scidb.getComboboxIndex(self.cbxIRRefSeriesID)
         self.calcDict['VISRefSeriesID'] = scidb.getComboboxIndex(self.cbxVISRefSeriesID)
-        self.calcDict['UseRef'] = self.ckUseRef.GetValue()
+        self.calcDict['UseRef'] = scidb.getBoolFromCB(self.ckUseRef)
         self.calcDict['IRDataSeriesID'] = scidb.getComboboxIndex(self.cbxIRDataSeriesID)
         self.calcDict['VisDataSeriesID'] = scidb.getComboboxIndex(self.cbxVisDataSeriesID)
         self.calcDict['IRFunction'] = scidb.getTextFromTC(self.tcIRFunction, default = '=i')
-        self.calcDict['VISFunction'] = scidb.getTextFromTC(self.tcIRFunction, default = '=v')
+        self.calcDict['VISFunction'] = scidb.getTextFromTC(self.tcVISFunction, default = '=v')
         self.calcDict['PlusMinusCutoffHours'] = scidb.getFloatFromTC(self.tcPlusMinusCutoffHours, default = 2)
         self.calcDict['ClearDay'] = scidb.getDateFromTC(self.tcClearDay)
         self.calcDict['ThresholdPctLow'] = scidb.getIntFromTC(self.tcThresholdPctLow, default = 75)
-        self.calcDict['ThresholdPctHigh'] = scidb.getIntFromTC(self.tcThresholdPctLow, default = 125)
+        self.calcDict['ThresholdPctHigh'] = scidb.getIntFromTC(self.tcThresholdPctHigh, default = 125)
         # not implemented: IRRefCutoff, VISRefCutoff, IRDatCutoff, VISDatCutoff
-        self.calcDict['UseOnlyValidNDVI'] = self.ckUseOnlyValidNDVI.GetValue()
-        self.calcDict['NDVIvalidMin'] = scidb.getFloatFromTC(self.tcPlusMinusCutoffHours, default = -1)
-        self.calcDict['NDVIvalidMax'] = scidb.getFloatFromTC(self.tcPlusMinusCutoffHours, default = 1)
-        self.calcDict['CreateSummaries'] = self.ckIncludeSummaries.GetValue()
-        self.calcDict['OutputSAS'] = self.ckIncludeSAS.GetValue()
-        self.calcDict['Normalize'] = self.ckNormalize.GetValue()
+        self.calcDict['UseOnlyValidNDVI'] = scidb.getBoolFromCB(self.ckUseOnlyValidNDVI)
+        self.calcDict['NDVIvalidMin'] = scidb.getFloatFromTC(self.tcNDVIvalidMin, default = -1)
+        self.calcDict['NDVIvalidMax'] = scidb.getFloatFromTC(self.tcNDVIvalidMax, default = 1)
+        self.calcDict['CreateSummaries'] = scidb.getBoolFromCB(self.ckIncludeSummaries)
+        self.calcDict['OutputSAS'] = scidb.getBoolFromCB(self.ckIncludeSAS)
+        self.calcDict['Normalize'] = scidb.getBoolFromCB(self.ckNormalize)
         # get output format from radio buttons
         if self.rbExcel.GetValue():
             self.calcDict['OutputFormat'] = 1
@@ -899,9 +899,8 @@ class NDVIPanel(wx.Panel):
             self.calcDict['OutputFormat'] = 2
         if self.rbCommaDelim.GetValue():
             self.calcDict['OutputFormat'] = 3
-        stS = " ".join(self.tcBaseName.GetValue().split()) # clean up whitespace
+        self.calcDict['OutputBaseName'] = scidb.getTextFromTC(self.tcBaseName)
         # <<--- maybe check for illegal file/folder name here
-        self.calcDict['OutputBaseName'] = stS
         stS = self.tcDir.GetValue()
         if stS == '(save output in default directory)':
             self.calcDict['OutputFolder'] = None
