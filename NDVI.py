@@ -904,12 +904,14 @@ class NDVIPanel(wx.Panel):
         # save corresponding Dates and Stations
         # get a reference to the Dates list
 
-        parObject1 = self.GetParent() # 
+        parObject1 = self.GetParent() # the enclosing NDVI frame
         print "Parent 1:", parObject1, ", Class", parObject1.GetClassName()
-        parObject2 = parObject1.GetParent() # 
-        print "Parent 2:", parObject2, ", Class", parObject2.GetClassName()
-        parObject3 = parObject2.GetParent() # 
-        print "Parent 3:", parObject3, ", Class", parObject3.GetClassName()
+#        parObject2 = parObject1.GetParent() # 
+#        print "Parent 2:", parObject2, ", Class", parObject2.GetClassName()
+#        parObject3 = parObject2.GetParent() # 
+#        print "Parent 3:", parObject3, ", Class", parObject3.GetClassName()
+        self.DatesList = parObject1.FindWindowById(ID_DATES_LIST)
+        print 'self.DatesList first selection', self.DatesList.GetFirstSelected()
 
 
     def validateCalcName(self):
@@ -1005,9 +1007,9 @@ class NDVIPanel(wx.Panel):
         
     def onCbxRetrievePanel(self, event):
         k = scidb.getComboboxIndex(self.cbxGetPanel)
-        print 'self.cbxGetPanel selected, key:', k
+#        print 'self.cbxGetPanel selected, key:', k
         self.calcDict = scidb.dictFromTableID('NDVIcalc', k)
-        print 'self.calcDict', self.calcDict
+#        print 'self.calcDict', self.calcDict
         self.FillNDVISetupPanelFromCalcDict()
         
 
