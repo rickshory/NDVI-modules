@@ -904,15 +904,17 @@ class NDVIPanel(wx.Panel):
         # update the corresponding Dates and Stations from the selection lists
         parentFrame = self.GetParent() # the enclosing NDVI frame
         # for Dates; clear any old, get new from list, and insert in DB
-        scidb.removeRecsOfTableID('NDVIcalcDates', recID)
+        stSQLDelDates = 'DELETE FROM NDVIcalcDates WHERE CalcID = ?'
+        scidb.curD.execute(stSQLDelDates, (recID,))
         self.DatesList = parentFrame.FindWindowById(ID_DATES_LIST)
         lSelectedDates = scidb.getListCtrlSelectionsAsTextList(self.DatesList)
         print 'selected dates', lSelectedDates
-        lInsertDates = []
-        for d in lSelectedDates:
-            lInsertDates.append((recID, d))
-        print 'lInsertDates', lInsertDates
         stSQLInsertDates = 'INSERT INTO NDVIcalcDates(CalcID, CalcDate) VALUES(?, ?)'
+#        lInsertDates = []
+#        for d in lSelectedDates:
+#            lInsertDates.append((recID, d))
+        lInsertDates = [(recID, d) for d in lSelectedDates]
+#        print 'lInsertDates', lInsertDates
         scidb.datConn.execute("BEGIN DEFERRED TRANSACTION") # much faster
         scidb.curD.executemany(stSQLInsertDates, lInsertDates)
         scidb.datConn.execute("COMMIT TRANSACTION")
