@@ -672,11 +672,19 @@ def dictIntoTable_InsertOrReplace(stTable, dict):
     return newRowID
 #    except:
 #        return None
-    
+
+def removeRecsOfTableID(stTable, iID):
+    """
+    Given a table and a number that is a value in the table's 'ID' field,
+    deletes any records that have that ID.
+    """
+    stSQL = 'DELETE FROM ' + stTable + ' WHERE ID = ?;'
+    curD.execute(stSQL, (iID,))
+
 def countTableFieldItems(stTable, stField, stItem=None):
     """
     Tests whether an item is in the given field of a given table
-    Returns 0 if not, the number or matching records if so
+    Returns 0 if not, the number of matching records if so
     Input is three strings:
     stTable is the table
     stField is the field in that table
@@ -959,6 +967,23 @@ def getListCtrlSelectionsAsTextList(objListCtrl):
             break
         # found a selected item, add to list
         l.append(objListCtrl.GetItemText(i))
+    return l
+
+def getListCtrlSelectionsAsKeysList(objListCtrl):
+    """
+    Given a wx ListCtrl, returns all the data from selected items as a
+    list of record keys. This would be for a ListCtrl that has database record keys
+    stored as ItemData in its rows.
+    If none are selected, returns an empty list.
+    """
+    l = []
+    i = -1
+    while 1:
+        i = objListCtrl.GetNextItem(i, wx.LIST_NEXT_ALL, wx.LIST_STATE_SELECTED)
+        if i == -1:
+            break
+        # found a selected item, add to list
+        l.append(objListCtrl.GetItemData(i))
     return l
 
 def fillComboboxFromSQL(objComboBox, stSQL, keyCol=0, visibleCol=1):
