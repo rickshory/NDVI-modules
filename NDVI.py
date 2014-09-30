@@ -896,21 +896,30 @@ class NDVIPanel(wx.Panel):
         self.callsValidation = 'save' # flag for which fn calls validation
         if not self.validateCalcName():
             return
-        
+        # save the basic NDVI panel data
         recID = scidb.dictIntoTable_InsertOrReplace('NDVIcalc', self.calcDict)
         self.calcDict['ID'] = recID
         print 'new record ID:', self.calcDict['ID']
         self.refresh_cbxPanelsChoices(-1)
-        # save corresponding Dates and Stations
-        # get a reference to the Dates list
-
-        parObject1 = self.GetParent() # the enclosing NDVI frame
-#        print "Parent 1:", parObject1, ", Class", parObject1.GetClassName()
-        self.DatesList = parObject1.FindWindowById(ID_DATES_LIST)
+        # update the corresponding Dates and Stations from the selection lists
+        parentFrame = self.GetParent() # the enclosing NDVI frame
+        # for Dates; clear any old, get new from list, and insert in DB
+        scidb.removeRecsOfTableID('NDVIcalcDates', recID)
+        self.DatesList = parentFrame.FindWindowById(ID_DATES_LIST)
         lSelectedDates = scidb.getListCtrlSelectionsAsTextList(self.DatesList)
         print 'selected dates', lSelectedDates
-
-        self.StationsList = parObject1.FindWindowById(ID_STATIONS_LIST)
+        lInsertDates = []
+        for d in lSelectedDates:
+            lInsertDates.append((recID, d))
+        print 'lInsertDates', lInsertDates
+        stSQLInsertDates = 'INSERT INTO NDVIcalcDates(CalcID, CalcDate) VALUES(?, ?)'
+        scidb.datConn.execute("BEGIN DEFERRED TRANSACTION") # much faster
+        scidb.curD.executemany(stSQLInsertDates, lInsertDates)
+        scidb.datConn.execute("COMMIT TRANSACTION")
+        
+        # for Stations; clear any old, get new from list, and insert in DB
+        scidb.removeRecsOfTableID('NDVIcalcStations', recID)
+        self.StationsList = parentFrame.FindWindowById(ID_STATIONS_LIST)
         lSelectedStationKeys = scidb.getListCtrlSelectionsAsKeysList(self.StationsList)
         print 'selected station keys', lSelectedStationKeys
 
