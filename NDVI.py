@@ -966,6 +966,10 @@ class NDVIPanel(wx.Panel):
         
     def onCbxRetrievePanel(self, event):
         print 'self.cbxGetPanel selected, choice: "', self.cbxGetPanel.GetValue(), '"'
+        i = self.cbxGetPanel.GetSelection()
+        print 'self.cbxGetPanel selected, index:', i
+        k = scidb.getComboboxIndex(self.cbxGetPanel)
+        print 'self.cbxGetPanel selected, key:', k
         
 
     def onCbxTasks(self, event):
