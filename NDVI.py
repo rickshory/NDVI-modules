@@ -965,11 +965,11 @@ class NDVIPanel(wx.Panel):
         recID = self.calcDict('ID')
         
     def onCbxRetrievePanel(self, event):
-        print 'self.cbxGetPanel selected, choice: "', self.cbxGetPanel.GetValue(), '"'
-        i = self.cbxGetPanel.GetSelection()
-        print 'self.cbxGetPanel selected, index:', i
         k = scidb.getComboboxIndex(self.cbxGetPanel)
         print 'self.cbxGetPanel selected, key:', k
+        self.calcDict = scidb.dictFromTableID('NDVIcalc', k)
+        print 'self.calcDict', self.calcDict
+        self.FillNDVISetupPanelFromCalcDict()
         
 
     def onCbxTasks(self, event):
