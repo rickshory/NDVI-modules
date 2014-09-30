@@ -18,6 +18,9 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
+ID_DATES_LIST = wx.NewId()
+ID_STATIONS_LIST = wx.NewId()
+
 sFmt = '%Y-%m-%d %H:%M:%S'
 
 class ndviDatesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
@@ -122,6 +125,7 @@ class NDVIPanel(wx.Panel):
 
         self.cbxGetPanel = wx.ComboBox(pnl, -1, style=wx.CB_READONLY)
         stpSiz.Add(self.cbxGetPanel, pos=(gRow, 1), span=(1, 3), flag=wx.LEFT, border=5)
+        self.cbxGetPanel.Bind(wx.EVT_COMBOBOX, lambda evt: self.onCbxRetrievePanel(evt))
         self.refresh_cbxPanelsChoices(-1)
 
         gRow += 1
@@ -414,7 +418,7 @@ class NDVIPanel(wx.Panel):
 
         lTasks = ['Make this NDVI dataset','Copy the current panel, which you can then vary']
         self.cbxTasks = wx.ComboBox(pnl, -1, choices=lTasks, style=wx.CB_READONLY)
-        self.cbxTasks.Bind(wx.EVT_COMBOBOX, self.onCbxTasks)
+        self.cbxTasks.Bind(wx.EVT_COMBOBOX, lambda evt: self.onCbxTasks(evt))
         stpSiz.Add(self.cbxTasks, pos=(gRow, 2), span=(1, 3), flag=wx.LEFT, border=5)
 
         pnl.SetSizer(stpSiz)
@@ -792,7 +796,7 @@ class NDVIPanel(wx.Panel):
 #        dtSiz.Add(datesLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
 #        gRow += 1
-        self.datesList = ndviDatesList(pnl, style = wx.LC_REPORT)
+        self.datesList = ndviDatesList(pnl, id = ID_DATES_LIST, style = wx.LC_REPORT)
         dtSiz.Add(self.datesList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         dtSiz.AddGrowableRow(gRow)
         pnl.SetSizer(dtSiz)
@@ -851,11 +855,23 @@ class NDVIPanel(wx.Panel):
         print 'existing record ID:', self.calcDict['ID']
         self.calcNameToValidate = self.calcDict['CalcName']
         self.callsValidation = 'save' # flag for which fn calls validation
-        if self.validateCalcName():
-            recID = scidb.dictIntoTable_InsertOrReplace('NDVIcalc', self.calcDict)
-            self.calcDict['ID'] = recID
-            print 'new record ID:', self.calcDict['ID']
-            self.refresh_cbxPanelsChoices(-1)
+        if not self.validateCalcName():
+            return
+        
+        recID = scidb.dictIntoTable_InsertOrReplace('NDVIcalc', self.calcDict)
+        self.calcDict['ID'] = recID
+        print 'new record ID:', self.calcDict['ID']
+        self.refresh_cbxPanelsChoices(-1)
+        # save corresponding Dates and Stations
+        # get a reference to the Dates list
+
+        parObject1 = self.GetParent() # 
+        print "Parent 1:", parObject1, ", Class", parObject1.GetClassName()
+        parObject2 = parObject1.GetParent() # 
+        print "Parent 2:", parObject2, ", Class", parObject2.GetClassName()
+        parObject3 = parObject2.GetParent() # 
+        print "Parent 3:", parObject3, ", Class", parObject3.GetClassName()
+
 
     def validateCalcName(self):
         """
@@ -940,6 +956,17 @@ class NDVIPanel(wx.Panel):
                 self.calcDict['OutputFolder'] = stS
             else:
                 self.calcDict['OutputFolder'] = None
+
+    def SaveDatesAndStations(self):
+        """
+        Saves the selcted Dates and Stations for the relevent Panel
+        """
+        print self.calcDict('ID')
+        recID = self.calcDict('ID')
+        
+    def onCbxRetrievePanel(self, event):
+        print 'self.cbxGetPanel selected, choice: "', self.cbxGetPanel.GetValue(), '"'
+        
 
     def onCbxTasks(self, event):
         print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
