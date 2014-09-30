@@ -852,7 +852,7 @@ class NDVIPanel(wx.Panel):
 #        stSiz.Add(stationsLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
 #        gRow += 1
-        self.stationsList = ndviStationsList(pnl, style = wx.LC_REPORT)
+        self.stationsList = ndviStationsList(pnl, id = ID_STATIONS_LIST, style = wx.LC_REPORT)
         stSiz.Add(self.stationsList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         stSiz.AddGrowableRow(gRow)
         pnl.SetSizer(stSiz)
@@ -909,6 +909,12 @@ class NDVIPanel(wx.Panel):
         self.DatesList = parObject1.FindWindowById(ID_DATES_LIST)
         lSelectedDates = scidb.getListCtrlSelectionsAsTextList(self.DatesList)
         print 'selected dates', lSelectedDates
+
+        self.StationsList = parObject1.FindWindowById(ID_STATIONS_LIST)
+        lSelectedStationKeys = scidb.getListCtrlSelectionsAsKeysList(self.StationsList)
+        print 'selected station keys', lSelectedStationKeys
+
+#getListCtrlSelectionsAsKeysList
 
 
     def validateCalcName(self):
