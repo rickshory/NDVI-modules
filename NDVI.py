@@ -729,41 +729,78 @@ class NDVIPanel(wx.Panel):
         return # end of if CSV
 
     def FillNDVISetupPanelFromCalcDict(self):
-        if self.calcDict['CalcName'] != None:
+        """
+        Fills the NDVI Setup panel from calcDict.
+        Must explicitly clear a panel control if corresponding dictionary item is None because
+        the panel may already have controls filled in from previous work.
+        If all comboboxes in the panel correspond the dictionary items, maybe use a form like this:
+            for object in self.parent.GetChildren(): 
+                if type(object) == wx._controls.ComboBox: 
+                    object.SetSelection(-1)
+        """
+        if self.calcDict['CalcName'] == None:
+            self.tcCalcName.SetValue('')
+        else:
             self.tcCalcName.SetValue('%s' % self.calcDict['CalcName'])
         # following is rarely used, not implemented yet
 #        self.ckChartFromRefDay.SetValue(self.calcDict['ChartFromRefDay'])
 #        if self.calcDict['RefDay'] != None:
 #            self.tcRefDay.SetValue('%s' % self.calcDict['RefDay'])
-        if self.calcDict['RefStationID'] != None:
+        if self.calcDict['RefStationID'] == None:
+            self.cbxRefStationID.SetSelection(-1)
+        else:
             scidb.setComboboxToClientData(self.cbxRefStationID, self.calcDict['RefStationID'])
-        if self.calcDict['IRRefSeriesID'] != None:
+        if self.calcDict['IRRefSeriesID'] == None:
+            self.cbxIRRefSeriesID.SetSelection(-1)
+        else:
             scidb.setComboboxToClientData(self.cbxIRRefSeriesID, self.calcDict['IRRefSeriesID'])
-        if self.calcDict['VISRefSeriesID'] != None:
+        if self.calcDict['VISRefSeriesID'] == None:
+            self.cbxVISRefSeriesID.SetSelection(-1)
+        else:
             scidb.setComboboxToClientData(self.cbxVISRefSeriesID, self.calcDict['VISRefSeriesID'])
         self.ckUseRef.SetValue(self.calcDict['UseRef'])
-        if self.calcDict['IRDataSeriesID'] != None:
+        if self.calcDict['IRDataSeriesID'] == None:
+            self.cbxIRDataSeriesID.SetSelection(-1)
+        else:
             scidb.setComboboxToClientData(self.cbxIRDataSeriesID, self.calcDict['IRDataSeriesID'])
-        if self.calcDict['VisDataSeriesID'] != None:
+        if self.calcDict['VisDataSeriesID'] == None:
+            self.cbxVisDataSeriesID.SetSelection(-1)
+        else:
             scidb.setComboboxToClientData(self.cbxVisDataSeriesID, self.calcDict['VisDataSeriesID'])
-        if self.calcDict['IRFunction'] != None:
+        if self.calcDict['IRFunction'] == None:
+            self.tcIRFunction.SetValue('=i')
+        else:
             self.tcIRFunction.SetValue('%s' % self.calcDict['IRFunction'])
-        if self.calcDict['VISFunction'] != None:
+        if self.calcDict['VISFunction'] == None:
+            self.tcVISFunction.SetValue('=v')
+        else:
             self.tcVISFunction.SetValue('%s' % self.calcDict['VISFunction'])
-        if self.calcDict['PlusMinusCutoffHours'] != None:
+        if self.calcDict['PlusMinusCutoffHours'] == None:
+            self.tcPlusMinusCutoffHours.SetValue('2')
+        else:
             self.tcPlusMinusCutoffHours.SetValue('%.1f' % self.calcDict['PlusMinusCutoffHours'])
         # Opt1ClrDayVsSetTholds ignored, always use percent thresholds of clear day
-        if self.calcDict['ClearDay'] != None:
+        if self.calcDict['ClearDay'] == None:
+            self.tcClearDay.SetValue('')
+        else:
             self.tcClearDay.SetValue('%s' % self.calcDict['ClearDay'])
-        if self.calcDict['ThresholdPctLow'] != None:
+        if self.calcDict['ThresholdPctLow'] == None:
+            self.tcThresholdPctLow.SetValue('75')
+        else:
             self.tcThresholdPctLow.SetValue('%d' % self.calcDict['ThresholdPctLow'])
-        if self.calcDict['ThresholdPctHigh'] != None:
+        if self.calcDict['ThresholdPctHigh'] == None:
+            self.tcThresholdPctHigh.SetValue('125')
+        else:
             self.tcThresholdPctHigh.SetValue('%d' % self.calcDict['ThresholdPctHigh'])
         # not implemented: IRRefCutoff, VISRefCutoff, IRDatCutoff, VISDatCutoff
         self.ckUseOnlyValidNDVI.SetValue(self.calcDict['UseOnlyValidNDVI'])
-        if self.calcDict['NDVIvalidMin'] != None:
+        if self.calcDict['NDVIvalidMin'] == None:
+            self.tcNDVIvalidMin.SetValue('-1')
+        else:
             self.tcNDVIvalidMin.SetValue('%.2f' % self.calcDict['NDVIvalidMin'])
-        if self.calcDict['NDVIvalidMax'] != None:
+        if self.calcDict['NDVIvalidMax'] == None:
+            self.tcNDVIvalidMax.SetValue('1')
+        else:
             self.tcNDVIvalidMax.SetValue('%.2f' % self.calcDict['NDVIvalidMax'])
         self.ckIncludeSummaries.SetValue(self.calcDict['CreateSummaries'])
         self.ckIncludeSAS.SetValue(self.calcDict['OutputSAS'])
@@ -778,7 +815,9 @@ class NDVIPanel(wx.Panel):
             self.rbTabDelim.SetValue(1)
         if self.calcDict['OutputFormat'] == 3:
             self.rbCommaDelim.SetValue(1)
-        if self.calcDict['OutputBaseName'] != None:
+        if self.calcDict['OutputBaseName'] == None:
+            self.tcBaseName.SetValue('')
+        else:
             self.tcBaseName.SetValue('%s' % self.calcDict['OutputBaseName'])
         if self.calcDict['OutputFolder'] == None:
             self.tcDir.SetValue('(save output in default directory)')
@@ -929,7 +968,7 @@ class NDVIPanel(wx.Panel):
         self.calcDict['IRFunction'] = scidb.getTextFromTC(self.tcIRFunction, default = '=i')
         self.calcDict['VISFunction'] = scidb.getTextFromTC(self.tcVISFunction, default = '=v')
         self.calcDict['PlusMinusCutoffHours'] = scidb.getFloatFromTC(self.tcPlusMinusCutoffHours, default = 2)
-        self.calcDict['ClearDay'] = scidb.getDateFromTC(self.tcClearDay)
+        self.calcDict['ClearDay'] = scidb.getDateFromTC(self.tcClearDay) # if DateTime format, retrieve record will fail
         self.calcDict['ThresholdPctLow'] = scidb.getIntFromTC(self.tcThresholdPctLow, default = 75)
         self.calcDict['ThresholdPctHigh'] = scidb.getIntFromTC(self.tcThresholdPctHigh, default = 125)
         # not implemented: IRRefCutoff, VISRefCutoff, IRDatCutoff, VISDatCutoff
