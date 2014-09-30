@@ -664,7 +664,7 @@ def dictIntoTable_InsertOrReplace(stTable, dict):
     stVs = ', '.join(lVs)
     stSQL = 'INSERT OR REPLACE INTO ' + stTable + ' (' + stKs + ') '  \
             ' VALUES (' + stVs + ')'
-    print stSQL
+#    print stSQL
     # for development, let any errors occur and display to output
 #    try:
     curD.execute(stSQL, dict)
