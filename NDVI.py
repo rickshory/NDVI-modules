@@ -910,23 +910,21 @@ class NDVIPanel(wx.Panel):
         lSelectedDates = scidb.getListCtrlSelectionsAsTextList(self.DatesList)
         print 'selected dates', lSelectedDates
         stSQLInsertDates = 'INSERT INTO NDVIcalcDates(CalcID, CalcDate) VALUES(?, ?)'
-#        lInsertDates = []
-#        for d in lSelectedDates:
-#            lInsertDates.append((recID, d))
         lInsertDates = [(recID, d) for d in lSelectedDates]
-#        print 'lInsertDates', lInsertDates
         scidb.datConn.execute("BEGIN DEFERRED TRANSACTION") # much faster
         scidb.curD.executemany(stSQLInsertDates, lInsertDates)
         scidb.datConn.execute("COMMIT TRANSACTION")
-        
         # for Stations; clear any old, get new from list, and insert in DB
-        scidb.removeRecsOfTableID('NDVIcalcStations', recID)
+        stSQLDelStas = 'DELETE FROM NDVIcalcStations WHERE CalcID = ?'
+        scidb.curD.execute(stSQLDelStas, (recID,))
         self.StationsList = parentFrame.FindWindowById(ID_STATIONS_LIST)
         lSelectedStationKeys = scidb.getListCtrlSelectionsAsKeysList(self.StationsList)
         print 'selected station keys', lSelectedStationKeys
-
-#getListCtrlSelectionsAsKeysList
-
+        stSQLInsertStas = 'INSERT INTO NDVIcalcStations(CalcID, StationID) VALUES(?, ?)'
+        lInsertStas = [(recID, s) for s in lSelectedStationKeys]
+        scidb.datConn.execute("BEGIN DEFERRED TRANSACTION") # much faster
+        scidb.curD.executemany(stSQLInsertStas, lInsertStas)
+        scidb.datConn.execute("COMMIT TRANSACTION")
 
     def validateCalcName(self):
         """
