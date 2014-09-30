@@ -944,6 +944,23 @@ def getBoolFromCB(objCheckBox):
     else:
         return 0
 
+def getListCtrlSelectionsAsTextList(objListCtrl):
+    """
+    Given a wx ListCtrl, returns all the selected items as a
+    list of text strings. This would be for a ListCtrl that has only one column,
+    and the items are text strings such as dates.
+    If none are selected, returns an empty list.
+    """
+    l = []
+    i = -1
+    while 1:
+        i = objListCtrl.GetNextItem(i, wx.LIST_NEXT_ALL, wx.LIST_STATE_SELECTED)
+        if i == -1:
+            break
+        # found a selected item, add to list
+        l.append(objListCtrl.GetItemText(i))
+    return l
+
 def fillComboboxFromSQL(objComboBox, stSQL, keyCol=0, visibleCol=1):
     """
     Given a combobox and an SQL statement that returns at least two columns;

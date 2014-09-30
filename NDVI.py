@@ -907,11 +907,8 @@ class NDVIPanel(wx.Panel):
         parObject1 = self.GetParent() # the enclosing NDVI frame
 #        print "Parent 1:", parObject1, ", Class", parObject1.GetClassName()
         self.DatesList = parObject1.FindWindowById(ID_DATES_LIST)
-        sel1 = self.DatesList.GetFirstSelected()
-        print 'self.DatesList first selection', sel1
-        if sel1 != -1:
-            stDt = self.DatesList.GetItemText(sel1)
-            print 'first item text ', stDt
+        lSelectedDates = scidb.getListCtrlSelectionsAsTextList(self.DatesList)
+        print 'selected dates', lSelectedDates
 
 
     def validateCalcName(self):
