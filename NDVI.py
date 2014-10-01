@@ -943,20 +943,27 @@ class NDVIPanel(wx.Panel):
                 wx.OK | wx.ICON_INFORMATION)
             return 0
         if len(self.calcNameToValidate) > maxLen:
-            wx.MessageBox('Max length for Panel name is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
-                wx.OK | wx.ICON_INFORMATION)
-            self.calcNameToValidate = self.calcNameToValidate[:(maxLen)]
             if self.callsValidation == 'save':
+                wx.MessageBox('Max length for Panel name is %d characters.\n\nIf trimmed version is acceptable, retry.' % maxLen, 'Invalid',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.calcNameToValidate = self.calcNameToValidate[:(maxLen)]
                 self.tcCalcName.SetValue(self.calcNameToValidate)
                 self.tcCalcName.SetFocus()
-            # if from Duplicate, write that part here
 #                self.Scroll(0, 0) # scroll to the top
+            if self.callsValidation == 'copy':
+                wx.MessageBox('Max length for Panel name is %d characters.' % maxLen, 'Invalid',
+                    wx.OK | wx.ICON_INFORMATION)
             return 0
 
         # check if there is a record with a different ID that already has this CalcName
         stSQLCk = 'SELECT ID FROM NDVIcalc WHERE CalcName = ?'
         rec = scidb.curD.execute(stSQLCk, (self.calcNameToValidate, )).fetchone()
         if rec != None:
+            if self.callsValidation == 'copy':
+                # if there is any record at all, attempt to copy onto same name
+                wx.MessageBox('There is already a panel named "' + self.calcNameToValidate + '"', 'Duplicate',
+                    wx.OK | wx.ICON_INFORMATION)
+                return 0
             if rec['ID'] != self.calcDict['ID']:
                 wx.MessageBox('There is already another panel named "' + self.calcNameToValidate + '"', 'Duplicate',
                     wx.OK | wx.ICON_INFORMATION)
@@ -1067,11 +1074,14 @@ class NDVIPanel(wx.Panel):
         dlg = wx.TextEntryDialog(None, "Name for the new copy of this panel.", "New Name", " ")
         answer = dlg.ShowModal()
         if answer == wx.ID_OK:
-            stNewCalcName = dlg.GetValue()
-            print 'Name:', stNewCalcName
-            # verification here
-
+            self.calcNameToValidate = dlg.GetValue()
+        else:
+            self.calcNameToValidate = None
         dlg.Destroy()
+        self.callsValidation = 'copy' # flag for which fn calls validation
+        if not self.validateCalcName():
+            return
+
 
         dlg = wx.MessageDialog(self, 'Not Implemented Yet', 'Under Construction')
         result = dlg.ShowModal()
