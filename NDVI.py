@@ -1050,6 +1050,45 @@ class NDVIPanel(wx.Panel):
 
     def onCbxTasks(self, event):
         print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
+        
+        """
+        if duplicate:
+            check if current panel is valid; if so, save
+            ask for new name
+            create new records in DB
+            retrieve into form
+            give user message that it is done (because it looks just the same)
+        if make dataset:
+            check that CalcName is valid
+            check that at least one date is selected
+            check that at least one station is selected
+            if UseReference:
+                check that reference Station, IR & Vis series are selected
+            if UseOnlyValidNDVI:
+                check that min is less than max
+            Check that clear day has been entered
+            if not, give clue about floatover to preview
+            if not centered correctly, give clue about Longitude
+            if Excel output:
+                check for duplicate sheetnames in first 25 characters
+            get column header strings:
+                if UseRef:
+                    get for IR ref
+                    get for vis ref
+                get for IR data
+                get for vis data
+            get Stations list
+            get Dates list
+            get high and low cutoffs based on clear day, for IR and vis
+            write fn 'GetHighLowCutoffs' that gets numbers based on the percent high and low cutoffs for
+                a station/series/clearDay. Can use with either ref or data series.
+            write fn 'GetBeginEndTimes' based on a date, a longitude, and +/- hour cutoffs
+            write fn 'GetDaySpectralData' that fills table "_tmp_SpectralData" given
+                date, beginTime, endTime,
+                refStation, refIR, refVis,
+                datStation, datIR, datVis
+            
+        """
 
 class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
