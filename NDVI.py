@@ -1020,6 +1020,26 @@ class NDVIPanel(wx.Panel):
         self.calcDict = scidb.dictFromTableID('NDVIcalc', k)
 #        print 'self.calcDict', self.calcDict
         self.FillNDVISetupPanelFromCalcDict()
+
+        # select stored stations
+        for i in range(self.stationsList.GetItemCount()):
+            # first deselect all
+            self.stationsList.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
+        
+        stSQLStaSels = 'SELECT StationID FROM NDVIcalcStations WHERE CalcID = ? ORDER BY StationID DESC;'
+        StaRecs = scidb.curD.execute(stSQLStaSels, (k, )).fetchall()
+        for staRec in StaRecs:
+            print 'StationID', staRec['StationID']
+            # self.stationsList.SetItemState(item, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+
+        # select stored dates
+        for i in range(self.datesList.GetItemCount()):
+            # first deselect all
+            self.datesList.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
+        stSQLDtSels = 'SELECT CalcDate FROM NDVIcalcDates WHERE CalcID = ? ORDER BY CalcDate DESC;'
+        DtRecs = scidb.curD.execute(stSQLDtSels, (k, )).fetchall()
+        for dtRec in DtRecs:
+            print 'CalcDate', dtRec['CalcDate']
         
         
 
