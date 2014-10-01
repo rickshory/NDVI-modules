@@ -1029,7 +1029,7 @@ class NDVIPanel(wx.Panel):
 
     def retrievePanelFromDict(self):
         k = self.calcDict['ID']
-#        print 'self.calcDict', self.calcDict
+        print 'in retrievePanelFromDict, k=', k
         self.FillNDVISetupPanelFromCalcDict()
 
         # retrieve stored Dates for this panel
@@ -1056,8 +1056,6 @@ class NDVIPanel(wx.Panel):
                 self.stationsList.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
             else:
                 self.stationsList.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
-        
-        
 
     def onCbxTasks(self, event):
 #        print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
@@ -1107,7 +1105,7 @@ class NDVIPanel(wx.Panel):
                         'SELECT ? AS NewCalcID, StationID FROM NDVIcalcStations ' \
                         'WHERE CalcID = ?'
         scidb.curD.execute(stSQLdupStations, (recID, prevRecID))
-        
+        self.calcDict['ID'] = recID
         self.retrievePanelFromDict()
         self.refresh_cbxPanelsChoices(-1)
 
