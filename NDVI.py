@@ -1058,20 +1058,23 @@ class NDVIPanel(wx.Panel):
 
 
     def replicateCurrentPanel(self):
-        print 'replicate panel'
         if self.calcDict['ID'] == None:
             stMsg = 'This is a new empty panel.\nIf you really want to copy it, Save it first.'
             dlg = wx.MessageDialog(self, stMsg, 'Empty')
             result = dlg.ShowModal()
             dlg.Destroy()
             return
-        return 
         dlg = wx.TextEntryDialog(None, "Name for the new copy of this panel.", "New Name", " ")
         answer = dlg.ShowModal()
         if answer == wx.ID_OK:
             stNewCalcName = dlg.GetValue()
-            # verification
+            print 'Name:', stNewCalcName
+            # verification here
 
+        dlg.Destroy()
+
+        dlg = wx.MessageDialog(self, 'Not Implemented Yet', 'Under Construction')
+        result = dlg.ShowModal()
         dlg.Destroy()
             
 
