@@ -1074,7 +1074,14 @@ class NDVIPanel(wx.Panel):
         dlg = wx.TextEntryDialog(None, "Name for the new copy of this panel.", "New Name", " ")
         answer = dlg.ShowModal()
         if answer == wx.ID_OK:
-            self.calcNameToValidate = dlg.GetValue()
+
+            # clean up whitespace; remove leading/trailing & multiples
+            stS = " ".join(dlg.GetValue().split())
+            if stS == '':
+                self.calcNameToValidate = None
+            else:
+                self.calcNameToValidate = stS
+#            self.calcNameToValidate = dlg.GetValue()
         else:
             self.calcNameToValidate = None
         dlg.Destroy()
