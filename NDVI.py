@@ -1024,7 +1024,8 @@ class NDVIPanel(wx.Panel):
         # retrieve stored Dates for this panel
         stSQLDtSels = 'SELECT CalcDate FROM NDVIcalcDates WHERE CalcID = ? ORDER BY CalcDate;'
         DtRecs = scidb.curD.execute(stSQLDtSels, (k, )).fetchall()
-        lDts = [dtRec['CalcDate'] for dtRec in DtRecs]
+        lDts = [dtRec['CalcDate'].strftime('%Y-%m-%d') for dtRec in DtRecs]
+#        print 'lDts', lDts
         # go through the list and select/deselect
         for i in range(self.datesList.GetItemCount()):
             if self.datesList.GetItemText(i) in lDts:
