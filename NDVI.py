@@ -1049,7 +1049,17 @@ class NDVIPanel(wx.Panel):
         
 
     def onCbxTasks(self, event):
-        print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
+#        print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
+#        stCmd = self.cbxTasks.GetValue()
+#        print 'Command:', stCmd
+        iCmd = self.cbxTasks.GetSelection()
+#        print 'Command index:', iCmd
+        if iCmd == 0: # make this dataset
+            print 'make the dataset'
+        if iCmd == 1: # duplicate the current panel
+            print 'duplicate this panel'
+        return
+        
         
         """
         if duplicate:
