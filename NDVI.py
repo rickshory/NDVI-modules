@@ -1020,35 +1020,30 @@ class NDVIPanel(wx.Panel):
         self.calcDict = scidb.dictFromTableID('NDVIcalc', k)
 #        print 'self.calcDict', self.calcDict
         self.FillNDVISetupPanelFromCalcDict()
-        
-        stSQLStaSels = 'SELECT StationID FROM NDVIcalcStations WHERE CalcID = ? ORDER BY StationID DESC;'
-        StaRecs = scidb.curD.execute(stSQLStaSels, (k, )).fetchall()
-        lStas = [staRec['StationID'] for staRec in StaRecs]
-        print 'lStas', lStas
-#        for staRec in StaRecs:
-#            print 'StationID', staRec['StationID']
-#            # self.stationsList.SetItemState(item, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
 
-        # select/deselect stored stations
-        for i in range(self.stationsList.GetItemCount()):
-            if self.stationsList.GetItemData(i) in lStas:
-                # select item
-                self.stationsList.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
-            else:
-                # deselect item
-                self.stationsList.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
-
-        stSQLDtSels = 'SELECT CalcDate FROM NDVIcalcDates WHERE CalcID = ? ORDER BY CalcDate DESC;'
+        # retrieve stored Dates for this panel
+        stSQLDtSels = 'SELECT CalcDate FROM NDVIcalcDates WHERE CalcID = ? ORDER BY CalcDate;'
         DtRecs = scidb.curD.execute(stSQLDtSels, (k, )).fetchall()
         lDts = [dtRec['CalcDate'] for dtRec in DtRecs]
-#        for dtRec in DtRecs:
-#            print 'CalcDate', dtRec['CalcDate']
-
-
-        # select stored dates
+        # go through the list and select/deselect
         for i in range(self.datesList.GetItemCount()):
-            # first deselect all
-            self.datesList.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
+            if self.datesList.GetItemText(i) in lDts:
+                # select item
+                self.datesList.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+            else:
+                # deselect item
+                self.datesList.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
+
+        # retrieve stored Stations for this panel
+        stSQLStaSels = 'SELECT StationID FROM NDVIcalcStations WHERE CalcID = ? ORDER BY StationID;'
+        StaRecs = scidb.curD.execute(stSQLStaSels, (k, )).fetchall()
+        lStas = [staRec['StationID'] for staRec in StaRecs]
+        # go through the list and select/deselect
+        for i in range(self.stationsList.GetItemCount()):
+            if self.stationsList.GetItemData(i) in lStas:
+                self.stationsList.SetItemState(i, wx.LIST_STATE_SELECTED, wx.LIST_STATE_SELECTED)
+            else:
+                self.stationsList.SetItemState(i, 0, wx.LIST_STATE_SELECTED)
         
         
 
