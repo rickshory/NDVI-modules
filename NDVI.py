@@ -1055,11 +1055,18 @@ class NDVIPanel(wx.Panel):
         iCmd = self.cbxTasks.GetSelection()
 #        print 'Command index:', iCmd
         if iCmd == 0: # make this dataset
-            print 'make the dataset'
+#            print 'make the dataset'
+            self.createDataSet()
         if iCmd == 1: # duplicate the current panel
-            print 'duplicate this panel'
-        return
-        
+#            print 'duplicate this panel'
+            self.replicateCurrentPanel()
+
+
+    def replicateCurrentPanel(self):
+        print 'replicate panel'
+
+    def createDataSet(self):
+        print 'create dataset'
         
         """
         if duplicate:
