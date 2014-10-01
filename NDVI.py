@@ -1024,6 +1024,7 @@ class NDVIPanel(wx.Panel):
 #        print 'self.calcDict', self.calcDict
         self.FillNDVISetupPanelFromCalcDict()
         
+        
 
     def onCbxTasks(self, event):
         print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
@@ -1044,12 +1045,9 @@ class NDVIFrame(wx.Frame):
         self.NC = framePanel.NC
         self.Canvas = framePanel.Canvas
         self.CreateStatusBar()
-        self.SetStatusText("Hello, world!")
         self.stDateToPreview = ''
         self.cbxRefStationID = framePanel.cbxRefStationID
         self.cbxIRRefSeriesID = framePanel.cbxIRRefSeriesID
-        self.previewSeries = 5 # for testing, use IrUP
-        self.previewStation = 1 # for testing, use P19
 
     def onMouseMotion( self, event ):
         index, flags = self.DtList.HitTest(event.GetPosition())
