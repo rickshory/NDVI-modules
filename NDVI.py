@@ -902,12 +902,10 @@ class NDVIPanel(wx.Panel):
         print 'new record ID:', self.calcDict['ID']
         self.refresh_cbxPanelsChoices(-1)
         # update the corresponding Dates and Stations from the selection lists
-        parentFrame = self.GetParent() # the enclosing NDVI frame
         # for Dates; clear any old, get new from list, and insert in DB
         stSQLDelDates = 'DELETE FROM NDVIcalcDates WHERE CalcID = ?'
         scidb.curD.execute(stSQLDelDates, (recID,))
-        self.DatesList = parentFrame.FindWindowById(ID_DATES_LIST)
-        lSelectedDates = scidb.getListCtrlSelectionsAsTextList(self.DatesList)
+        lSelectedDates = scidb.getListCtrlSelectionsAsTextList(self.datesList)
         print 'selected dates', lSelectedDates
         stSQLInsertDates = 'INSERT INTO NDVIcalcDates(CalcID, CalcDate) VALUES(?, ?)'
         lInsertDates = [(recID, d) for d in lSelectedDates]
@@ -917,8 +915,7 @@ class NDVIPanel(wx.Panel):
         # for Stations; clear any old, get new from list, and insert in DB
         stSQLDelStas = 'DELETE FROM NDVIcalcStations WHERE CalcID = ?'
         scidb.curD.execute(stSQLDelStas, (recID,))
-        self.StationsList = parentFrame.FindWindowById(ID_STATIONS_LIST)
-        lSelectedStationKeys = scidb.getListCtrlSelectionsAsKeysList(self.StationsList)
+        lSelectedStationKeys = scidb.getListCtrlSelectionsAsKeysList(self.stationsList)
         print 'selected station keys', lSelectedStationKeys
         stSQLInsertStas = 'INSERT INTO NDVIcalcStations(CalcID, StationID) VALUES(?, ?)'
         lInsertStas = [(recID, s) for s in lSelectedStationKeys]
