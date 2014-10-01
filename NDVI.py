@@ -1050,20 +1050,30 @@ class NDVIPanel(wx.Panel):
 
     def onCbxTasks(self, event):
 #        print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
-#        stCmd = self.cbxTasks.GetValue()
-#        print 'Command:', stCmd
         iCmd = self.cbxTasks.GetSelection()
-#        print 'Command index:', iCmd
         if iCmd == 0: # make this dataset
-#            print 'make the dataset'
             self.createDataSet()
         if iCmd == 1: # duplicate the current panel
-#            print 'duplicate this panel'
             self.replicateCurrentPanel()
 
 
     def replicateCurrentPanel(self):
         print 'replicate panel'
+        if self.calcDict['ID'] == None:
+            stMsg = 'This is a new empty panel.\nIf you really want to copy it, Save it first.'
+            dlg = wx.MessageDialog(self, stMsg, 'Empty')
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            return
+        return 
+        dlg = wx.TextEntryDialog(None, "Name for the new copy of this panel.", "New Name", " ")
+        answer = dlg.ShowModal()
+        if answer == wx.ID_OK:
+            stNewCalcName = dlg.GetValue()
+            # verification
+
+        dlg.Destroy()
+            
 
     def createDataSet(self):
         print 'create dataset'
