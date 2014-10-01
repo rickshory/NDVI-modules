@@ -1025,6 +1025,10 @@ class NDVIPanel(wx.Panel):
         k = scidb.getComboboxIndex(self.cbxGetPanel)
 #        print 'self.cbxGetPanel selected, key:', k
         self.calcDict = scidb.dictFromTableID('NDVIcalc', k)
+        self.retrievePanelFromDict()
+
+    def retrievePanelFromDict(self):
+        k = self.calcDict['ID']
 #        print 'self.calcDict', self.calcDict
         self.FillNDVISetupPanelFromCalcDict()
 
@@ -1098,9 +1102,16 @@ class NDVIPanel(wx.Panel):
                         'SELECT ? AS NewCalcID, CalcDate FROM NDVIcalcDates ' \
                         'WHERE CalcID = ?'
         scidb.curD.execute(stSQLdupDates, (recID, prevRecID))
-        
 
-        dlg = wx.MessageDialog(self, 'Not Implemented Yet', 'Under Construction')
+        stSQLdupStations = 'INSERT INTO NDVIcalcStations (CalcID, StationID) ' \
+                        'SELECT ? AS NewCalcID, StationID FROM NDVIcalcStations ' \
+                        'WHERE CalcID = ?'
+        scidb.curD.execute(stSQLdupStations, (recID, prevRecID))
+        
+        self.retrievePanelFromDict()
+        self.refresh_cbxPanelsChoices(-1)
+
+        dlg = wx.MessageDialog(self, 'You will now be viewing the copy, which you can edit', 'Panel Copied')
         result = dlg.ShowModal()
         dlg.Destroy()
             
