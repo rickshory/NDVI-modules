@@ -931,7 +931,8 @@ class NDVIPanel(wx.Panel):
             wx.MessageBox('Need a Name for this Panel', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
             if self.callsValidation == 'save': # flag for which fn called validation
-                self.tcCalcName.SetValue('') # called in normal Save from main panel
+                # called in normal Save from main panel
+                self.tcCalcName.SetValue('') 
                 self.tcCalcName.SetFocus()
 #            self.Scroll(0, 0) # at the top
             return 0
@@ -955,12 +956,12 @@ class NDVIPanel(wx.Panel):
                     wx.OK | wx.ICON_INFORMATION)
             return 0
 
-        # check if there is a record with a different ID that already has this CalcName
+        # check for existing CalcName
         stSQLCk = 'SELECT ID FROM NDVIcalc WHERE CalcName = ?'
         rec = scidb.curD.execute(stSQLCk, (self.calcNameToValidate, )).fetchone()
         if rec != None:
             if self.callsValidation == 'copy':
-                # if there is any record at all, attempt to copy onto same name
+                # if there is any record at all, disallow attempt to copy onto same name
                 wx.MessageBox('There is already a panel named "' + self.calcNameToValidate + '"', 'Duplicate',
                     wx.OK | wx.ICON_INFORMATION)
                 return 0
@@ -973,7 +974,6 @@ class NDVIPanel(wx.Panel):
                     self.Scroll(0, 0) # at the top
                 return 0
         return 1
-
 
     def FillDictFromNDVISetupPanel(self):
         self.calcDict['CalcName'] = scidb.getTextFromTC(self.tcCalcName)
@@ -1071,6 +1071,7 @@ class NDVIPanel(wx.Panel):
             result = dlg.ShowModal()
             dlg.Destroy()
             return
+        self.SavePanel() # attempt to save panel, will catch errors
         dlg = wx.TextEntryDialog(None, "Name for the new copy of this panel.", "New Name", " ")
         answer = dlg.ShowModal()
         if answer == wx.ID_OK:
@@ -1088,7 +1089,16 @@ class NDVIPanel(wx.Panel):
         self.callsValidation = 'copy' # flag for which fn calls validation
         if not self.validateCalcName():
             return
-
+        # insert any more validation here
+        self.calcDict['CalcName'] = self.calcNameToValidate # substitute the validated name
+        prevRecID = self.calcDict['ID'] # remember
+        self.calcDict['ID'] = None # so it will save as a new record
+        recID = scidb.dictIntoTable_InsertOrReplace('NDVIcalc', self.calcDict) # store the new record
+        stSQLdupDates = 'INSERT INTO NDVIcalcDates (CalcID, CalcDate) ' \
+                        'SELECT ? AS NewCalcID, CalcDate FROM NDVIcalcDates ' \
+                        'WHERE CalcID = ?'
+        scidb.curD.execute(stSQLdupDates, (recID, prevRecID))
+        
 
         dlg = wx.MessageDialog(self, 'Not Implemented Yet', 'Under Construction')
         result = dlg.ShowModal()
