@@ -1334,31 +1334,22 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     # get the first series; will hang others on this if specified
     # query out any records for the day
     stSQL = """INSERT INTO tmpSpectralData (Timestamp, IRRef)
-    SELECT Data.UTTimestamp, Data.Value 
-    """
+    SELECT Data.UTTimestamp, Data.Value
+    FROM ChannelSegments LEFT JOIN Data
+    ON ChannelSegments.ChannelID = Data.ChannelID
+    WHERE (((ChannelSegments.StationID) = {iSt})
+    AND ((ChannelSegments.SeriesID) = {iSe})
+    AND ((Data.UTTimestamp) >= ChannelSegments.SegmentBegin
+    AND (Data.UTTimestamp) < COALESCE(ChannelSegments.SegmentEnd, datetime("now"))
+    AND (Data.UTTimestamp) >= '{dBe}'
+    AND (Data.UTTimestamp) < '{dEn}')
+    AND ((Data.Use) == 1)) ORDER BY Data.UTTimestamp;
+    """.format(iSt=iStation, iSe=iSeries, dBe=datetimeBegin, dEn=datetimeEnd)
+    print stSQL
 
     tmpComments = """
-    Dim iHowManySeries As Integer, boolUseNormalRef As Boolean
-    Dim stSQL As String, stTblNm As String, lngDayOffset As Long, lngCt As Long
-    Dim iStation As Long, iSeries As Long, stFldNm As String
-    Dim dblTimeSpacing As Double, rstSpect As Recordset, rstDiff As Recordset
 
-     if ValidTable(stTblNm): # build & run SQL statement to append any records
-      stSQL = "INSERT INTO tmpSpectralData ( [Timestamp], IRRef ) " & _
-           "SELECT Data.UTTimestamp, Data.Value " & _
-           "FROM ChannelSegments LEFT JOIN Data " & _
-           "ON ChannelSegments.ChannelID = Data.ChannelID " & _
-           "WHERE (((ChannelSegments.StationID) = " & iStation & ") " & _
-           "AND ((ChannelSegments.SeriesID) = " & iSeries & ") " & _
-           "AND ((Data.UTTimestamp) >= [SegmentBegin] " & _
-           "AND (Data.UTTimestamp) < IIf(IsNull([SegmentEnd]), Now(), [SegmentEnd]) " & _
-           "AND (Data.UTTimestamp) >= #" & datetimeBegin & "# " & _
-           "AND (Data.UTTimestamp) < #" & datetimeEnd & "#) " & _
-           "AND ((Data.Use) = 1)) ORDER BY Data.UTTimestamp;"
-    #  Debug.Print stSQL
-      DoCmd.SetWarnings False
-      DoCmd.RunSQL stSQL
-      DoCmd.SetWarnings True
+
      End if
     Next
     'probably no null records, but delete any just to be sure
