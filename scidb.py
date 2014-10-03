@@ -1182,7 +1182,7 @@ def equationOfTime(stDate):
     except:
         return 0
 
-def minutesCorrection(stDate, fLongitude):
+def localSolarCorrectionMinutes(stDate, fLongitude):
     """
     Given a date and a longitude, returns a correction from Universal Time
         (UT, same as Greenwich Mean Time) to solar time at that longitude
@@ -1201,7 +1201,7 @@ def minutesCorrection(stDate, fLongitude):
     fCorr = fCorr + equationOfTime(stDate)
     return fCorr
 
-def solarCorrection(stDate, fLongitude):
+def localSolarCorrectionTimedelta(stDate, fLongitude):
     """
     Given a date and a longitude, returns a timedelta which is the correction from Universal Time
         (UT, same as Greenwich Mean Time) to solar time at that longitude
@@ -1211,7 +1211,7 @@ def solarCorrection(stDate, fLongitude):
         "equation of time".  This is usually a smaller correction factor
     If no longitude is given, returns the equation-of-time correction only
     """
-    return datetime.timedelta(minutes = minutesCorrection(stDate, fLongitude))
+    return datetime.timedelta(minutes = localSolarCorrectionMinutes(stDate, fLongitude))
 
 def GetBeginEndTimes(dt, fLongitude, fPlusMinusCutoff):
     """
@@ -1231,16 +1231,16 @@ def GetBeginEndTimes(dt, fLongitude, fPlusMinusCutoff):
         dateBase = dt.date()
     else:
         return None
-    print 'dateBase', dateBase
+#    print 'dateBase', dateBase
     # get datetime equal to the date
     datetimeBase = datetime.datetime(dateBase.year, dateBase.month, dateBase.day)
-    print 'datetimeBase', datetimeBase
+#    print 'datetimeBase', datetimeBase
     datetimeNoon = datetimeBase + datetime.timedelta(hours=12) # adjust to clock noon
-    print 'datetimeNoon', datetimeNoon
+#    print 'datetimeNoon', datetimeNoon
     # correct for longitude, solar anamoly, etc. if possible
     stDate = dateBase.strftime('%Y-%m-%d')
-    datetimeSolarNoon = datetimeNoon + solarCorrection(stDate, fLongitude)
-    print 'datetimeSolarNoon', datetimeSolarNoon
+    datetimeSolarNoon = datetimeNoon + localSolarCorrectionTimedelta(stDate, fLongitude)
+#    print 'datetimeSolarNoon', datetimeSolarNoon
     datetimeBegin = datetimeSolarNoon - datetime.timedelta(hours=fPlusMinusCutoff)
     datetimeEnd = datetimeSolarNoon + datetime.timedelta(hours=fPlusMinusCutoff)
     return (datetimeBegin, datetimeEnd)
