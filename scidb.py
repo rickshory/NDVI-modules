@@ -1314,7 +1314,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         boolUseNormalRef = 1
         iStation = iRefStation # station to start with
         if iIRRefSeries != 0:
-            lngSeries = iIRRefSeries # series to start with
+            iSeries = iIRRefSeries # series to start with
             if iVisRefSeries == 0:
                 iHowManySeries = 1 # ignore the rest of the serieses
             else: # iVisRefSeries != 0
@@ -1324,19 +1324,17 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     else: # iRefStation == 0
         boolUseNormalRef = 0 # flag that we will do a switcheroo
         if iDataStation != 0 and iIRDataSeries != 0 and iVisDataSeries != 0:
+            iHowManySeries = 2 # only these two
+            
 
     tmpComments = """
     Dim iHowManySeries As Integer, boolUseNormalRef As Boolean
     Dim stSQL As String, stTblNm As String, lngDayOffset As Long, lngCt As Long
-    Dim lngStation As Long, lngSeries As Long, stFldNm As String
+    Dim iStation As Long, iSeries As Long, stFldNm As String
     Dim dblTimeSpacing As Double, rstSpect As Recordset, rstDiff As Recordset
 
-    
-     
-     
-      iHowManySeries = 2 # only these two
-      lngStation = iDataStation # station to start with
-      lngSeries = iIRDataSeries # series to start with
+      iStation = iDataStation # station to start with
+      iSeries = iIRDataSeries # series to start with
      End if
     End if
 
@@ -1360,8 +1358,8 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
            "SELECT [" & stTblNm & "].UTTimestamp, [" & stTblNm & "].Value " & _
            "FROM ChannelSegments LEFT JOIN [" & stTblNm & "] " & _
            "ON ChannelSegments.ChannelID = [" & stTblNm & "].ChannelID " & _
-           "WHERE (((ChannelSegments.StationID) = " & lngStation & ") " & _
-           "AND ((ChannelSegments.SeriesID) = " & lngSeries & ") " & _
+           "WHERE (((ChannelSegments.StationID) = " & iStation & ") " & _
+           "AND ((ChannelSegments.SeriesID) = " & iSeries & ") " & _
            "AND (([" & stTblNm & "].UTTimestamp) >= [SegmentBegin] " & _
            "AND ([" & stTblNm & "].UTTimestamp) < IIf(IsNull([SegmentEnd]), Now(), [SegmentEnd]) " & _
            "AND ([" & stTblNm & "].UTTimestamp) >= #" & datetimeBegin & "# " & _
@@ -1395,21 +1393,21 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         Select Case lngCt
          Case 1
           if boolUseNormalRef = 1:
-           lngStation = iRefStation
-           lngSeries = iVisRefSeries
+           iStation = iRefStation
+           iSeries = iVisRefSeries
            stFldNm = "VISRef"
           else: # boolUseNormalRef = 0
-           lngStation = iDataStation
-           lngSeries = iVisDataSeries
+           iStation = iDataStation
+           iSeries = iVisDataSeries
            stFldNm = "VISRef" # will move date to "VISData" field when done
           End if # boolUseNormalRef
          Case 2
-          lngStation = iDataStation
-          lngSeries = iIRDataSeries
+          iStation = iDataStation
+          iSeries = iIRDataSeries
           stFldNm = "IRData"
          Case 3
-          lngStation = iDataStation
-          lngSeries = iVisDataSeries
+          iStation = iDataStation
+          iSeries = iVisDataSeries
           stFldNm = "VISData"
         End Select
         # put into tmpSpectralDataForUpdate any timestamps for the station/series
@@ -1427,8 +1425,8 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
                "SELECT [" & stTblNm & "].UTTimestamp, [" & stTblNm & "].Value " & _
                "FROM ChannelSegments LEFT JOIN [" & stTblNm & "] " & _
                "ON ChannelSegments.ChannelID = [" & stTblNm & "].ChannelID " & _
-               "WHERE (((ChannelSegments.StationID) = " & lngStation & ") " & _
-               "And ((ChannelSegments.SeriesID) = " & lngSeries & ") " & _
+               "WHERE (((ChannelSegments.StationID) = " & iStation & ") " & _
+               "And ((ChannelSegments.SeriesID) = " & iSeries & ") " & _
                "And (([" & stTblNm & "].Use) = 1)) " & _
                "ORDER BY [" & stTblNm & "].UTTimestamp;"
 
