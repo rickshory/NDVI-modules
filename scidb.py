@@ -1325,7 +1325,17 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         boolUseNormalRef = 0 # flag that we will do a switcheroo
         if iDataStation != 0 and iIRDataSeries != 0 and iVisDataSeries != 0:
             iHowManySeries = 2 # only these two
-            
+            iStation = iDataStation # station to start with
+            iSeries = iIRDataSeries # series to start with
+
+    if iHowManySeries == 0: # conditions not met
+        return 0
+
+    # get the first series; will hang others on this if specified
+    # query out any records for the day
+    stSQL = """INSERT INTO tmpSpectralData (Timestamp, IRRef)
+    SELECT Data.UTTimestamp, Data.Value 
+    """
 
     tmpComments = """
     Dim iHowManySeries As Integer, boolUseNormalRef As Boolean
@@ -1333,38 +1343,18 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     Dim iStation As Long, iSeries As Long, stFldNm As String
     Dim dblTimeSpacing As Double, rstSpect As Recordset, rstDiff As Recordset
 
-      iStation = iDataStation # station to start with
-      iSeries = iIRDataSeries # series to start with
-     End if
-    End if
-
-    if iHowManySeries = 0: # conditions not met
-     GetDaySpectralData = 0
-     Exit Function
-    End if
-
-    # get the first series; will hang others on this if specified
-    'clear the table
-    DoCmd.SetWarnings False
-    DoCmd.RunSQL "DELETE * FROM tmpSpectralData;"
-    DoCmd.SetWarnings True
-    'query out any records for the day before, the current date, and the day after
-    # these, allowing for shifts due to solar time being off from clock time, are the only days that might have applicable data
-    For lngDayOffset = -1 To 1
-     # make table name e.g. "Data_2010-05-22"
-     stTblNm = "Data_" & Format(DateAdd("d", lngDayOffset, dateCur), "yyyy-mm-dd")
      if ValidTable(stTblNm): # build & run SQL statement to append any records
       stSQL = "INSERT INTO tmpSpectralData ( [Timestamp], IRRef ) " & _
-           "SELECT [" & stTblNm & "].UTTimestamp, [" & stTblNm & "].Value " & _
-           "FROM ChannelSegments LEFT JOIN [" & stTblNm & "] " & _
-           "ON ChannelSegments.ChannelID = [" & stTblNm & "].ChannelID " & _
+           "SELECT Data.UTTimestamp, Data.Value " & _
+           "FROM ChannelSegments LEFT JOIN Data " & _
+           "ON ChannelSegments.ChannelID = Data.ChannelID " & _
            "WHERE (((ChannelSegments.StationID) = " & iStation & ") " & _
            "AND ((ChannelSegments.SeriesID) = " & iSeries & ") " & _
-           "AND (([" & stTblNm & "].UTTimestamp) >= [SegmentBegin] " & _
-           "AND ([" & stTblNm & "].UTTimestamp) < IIf(IsNull([SegmentEnd]), Now(), [SegmentEnd]) " & _
-           "AND ([" & stTblNm & "].UTTimestamp) >= #" & datetimeBegin & "# " & _
-           "AND ([" & stTblNm & "].UTTimestamp) < #" & datetimeEnd & "#) " & _
-           "AND (([" & stTblNm & "].Use) = 1)) ORDER BY [" & stTblNm & "].UTTimestamp;"
+           "AND ((Data.UTTimestamp) >= [SegmentBegin] " & _
+           "AND (Data.UTTimestamp) < IIf(IsNull([SegmentEnd]), Now(), [SegmentEnd]) " & _
+           "AND (Data.UTTimestamp) >= #" & datetimeBegin & "# " & _
+           "AND (Data.UTTimestamp) < #" & datetimeEnd & "#) " & _
+           "AND ((Data.Use) = 1)) ORDER BY Data.UTTimestamp;"
     #  Debug.Print stSQL
       DoCmd.SetWarnings False
       DoCmd.RunSQL stSQL
@@ -1422,13 +1412,13 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
          if ValidTable(stTblNm): # build & run SQL statement, will test later if there were any records
 
           stSQL = "INSERT INTO tmpSpectralDataForUpdate ( NearTimestamp, ValForUpdate ) " & _
-               "SELECT [" & stTblNm & "].UTTimestamp, [" & stTblNm & "].Value " & _
-               "FROM ChannelSegments LEFT JOIN [" & stTblNm & "] " & _
-               "ON ChannelSegments.ChannelID = [" & stTblNm & "].ChannelID " & _
+               "SELECT Data.UTTimestamp, Data.Value " & _
+               "FROM ChannelSegments LEFT JOIN Data " & _
+               "ON ChannelSegments.ChannelID = Data.ChannelID " & _
                "WHERE (((ChannelSegments.StationID) = " & iStation & ") " & _
                "And ((ChannelSegments.SeriesID) = " & iSeries & ") " & _
-               "And (([" & stTblNm & "].Use) = 1)) " & _
-               "ORDER BY [" & stTblNm & "].UTTimestamp;"
+               "And ((Data.Use) = 1)) " & _
+               "ORDER BY Data.UTTimestamp;"
 
           Debug.Print stSQL
           DoCmd.SetWarnings False
