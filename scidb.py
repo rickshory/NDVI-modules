@@ -1314,30 +1314,26 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         boolUseNormalRef = 1
         iStation = iRefStation # station to start with
         if iIRRefSeries != 0:
+            lngSeries = iIRRefSeries # series to start with
+            if iVisRefSeries == 0:
+                iHowManySeries = 1 # ignore the rest of the serieses
+            else: # iVisRefSeries != 0
+                iHowManySeries = 2 # there may be more
+                if iDataStation != 0 and iIRDataSeries != 0 and iVisDataSeries != 0:
+                    iHowManySeries = iHowManySeries + 2
+    else: # iRefStation == 0
+        boolUseNormalRef = 0 # flag that we will do a switcheroo
+        if iDataStation != 0 and iIRDataSeries != 0 and iVisDataSeries != 0:
 
     tmpComments = """
     Dim iHowManySeries As Integer, boolUseNormalRef As Boolean
     Dim stSQL As String, stTblNm As String, lngDayOffset As Long, lngCt As Long
     Dim lngStation As Long, lngSeries As Long, stFldNm As String
     Dim dblTimeSpacing As Double, rstSpect As Recordset, rstDiff As Recordset
-    :
-     boolUseNormalRef = 1
+
+    
      
-     lngStation = iRefStation # station to start with
      
-     if iIRRefSeries != 0:
-      lngSeries = iIRRefSeries # series to start with
-      if iVisRefSeries = 0:
-       iHowManySeries = 1 'ignore the rest of the serieses
-      Else 'iVisRefSeries != 0
-       iHowManySeries = 2 # there may be more
-       if iDataStation != 0 And iIRDataSeries != 0 And iVisDataSeries != 0: _
-             iHowManySeries = iHowManySeries + 2
-      End if 'iVisRefSeries
-     End if # iIRRefSeries != 0
-    Else # iRefStation = 0
-     boolUseNormalRef = 0 # flag that we will do a switcheroo
-     if iDataStation != 0 And iIRDataSeries != 0 And iVisDataSeries != 0:
       iHowManySeries = 2 # only these two
       lngStation = iDataStation # station to start with
       lngSeries = iIRDataSeries # series to start with
@@ -1388,7 +1384,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     # first, see how far apart the existing records' timestamps are; don't allow a mismatch further than that
     if GetDaySpectralData = 1:
      dblTimeSpacing = 0.5 # if there is only one record, the "time difference between them" is meaningless, allow all day
-    Else
+    else:
      'look in the query that gets the minimum nonzero time difference between records
      'there will only be one record in this query
      dblTimeSpacing = DFirst("[RefTimestampSpacing]", "[MinimumTimeSpacingInSpectralData]") / 2
@@ -1402,7 +1398,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
            lngStation = iRefStation
            lngSeries = iVisRefSeries
            stFldNm = "VISRef"
-          Else # boolUseNormalRef = 0
+          else: # boolUseNormalRef = 0
            lngStation = iDataStation
            lngSeries = iVisDataSeries
            stFldNm = "VISRef" # will move date to "VISData" field when done
