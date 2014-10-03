@@ -1309,6 +1309,9 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         "VISData" FLOAT
         );"""
     curT.execute(stCreate)
+    stAttach = 'ATTACH DATABASE "tmp.db" as tmp;'
+    curD.execute(stAttach)
+    
     iHowManySeries = 0 # default unless conditions met
     if iRefStation != 0:
         boolUseNormalRef = 1
@@ -1333,7 +1336,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
 
     # get the first series; will hang others on this if specified
     # query out any records for the day
-    stSQL = """INSERT INTO tmpSpectralData (Timestamp, IRRef)
+    stSQL = """INSERT INTO tmp.tmpSpectralData (Timestamp, IRRef)
     SELECT Data.UTTimestamp, Data.Value
     FROM ChannelSegments LEFT JOIN Data
     ON ChannelSegments.ChannelID = Data.ChannelID
@@ -1343,9 +1346,12 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     AND (Data.UTTimestamp) < COALESCE(ChannelSegments.SegmentEnd, datetime("now"))
     AND (Data.UTTimestamp) >= '{dBe}'
     AND (Data.UTTimestamp) < '{dEn}')
-    AND ((Data.Use) == 1)) ORDER BY Data.UTTimestamp;
+    AND ((Data.Use) = 1)) ORDER BY Data.UTTimestamp;
     """.format(iSt=iStation, iSe=iSeries, dBe=datetimeBegin, dEn=datetimeEnd)
     print stSQL
+    curD.execute(stCreate)
+
+    return 0 # for testing
 
     tmpComments = """
 
