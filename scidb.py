@@ -1255,6 +1255,22 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
                        iRefStation, iIRRefSeries, iVisRefSeries,
                        iDataStation, iIRDataSeries, iVisDataSeries):
     """
+    dateCur = the day we want data from
+    datetimeBegin = timestamp for the start of the time period we want to get data for. e.g. 2 hours before noon
+    datetimeEnd = timestamp for the end of the time period we want data for, e.g. 2 hours after noon
+    iRefStation = the station we are using for this reference data
+    iIRRefSeries = the series that has the IR reference readings
+    iVisRefSeries = the series that has the visible reference readings
+    iDataStation = the station's data we are matching to the reference, can be the same as the ref station
+    iIRDataSeries = the series from the data station that has the IR readings
+    iVisDataSeries = the series from the data station that has the visible readings
+    returns with the day's spectral data, if any, in the table "tmpSpectralData"
+    the field "Timestamp" will hold any timestamps for the data
+    the field "IRRef" will hold the IR reference values
+    the field "VISRef" will hold the visible reference values
+    the field "IRData" will hold the IR data values
+    the field "VISData" will hold the visible data values
+
     Options for this function:
      if iRefStation valid
         iIRRefSeries valid
@@ -1283,22 +1299,6 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
             records having Null in either of these fields are removed, other fields all Null
     return value is the number of records remaining in the table after invalid ones removed
      other combinations give undefined results
-
-    dateCur = the day we want data from
-    datetimeBegin = timestamp for the start of the time period we want to get data for. e.g. 2 hours before noon
-    datetimeEnd = timestamp for the end of the time period we want data for, e.g. 2 hours after noon
-    iRefStation = the station we are using for this reference data
-    iIRRefSeries = the series that has the IR reference readings
-    iVisRefSeries = the series that has the visible reference readings
-    iDataStation = the station's data we are matching to the reference, can be the same as the ref station
-    iIRDataSeries = the series from the data station that has the IR readings
-    iVisDataSeries = the series from the data station that has the visible readings
-    returns with the day's spectral data, if any, in the table "tmpSpectralData"
-    the field "Timestamp" will hold any timestamps for the data
-    the field "IRRef" will hold the IR reference values
-    the field "VISRef" will hold the visible reference values
-    the field "IRData" will hold the IR data values
-    the field "VISData" will hold the visible data values
     """
     curT.execute('DROP TABLE IF EXISTS "tmpSpectralData"')
     stCreate = """CREATE TABLE IF NOT EXISTS "tmpSpectralData" (
@@ -1309,51 +1309,51 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         "VISData" FLOAT
         );"""
     curT.execute(stCreate)
+    iHowManySeries = 0 # default unless conditions met
     
     tmpComments = """
-    Dim intHowManySeries As Integer, boolUseNormalRef As Boolean
+    Dim iHowManySeries As Integer, boolUseNormalRef As Boolean
     Dim stSQL As String, stTblNm As String, lngDayOffset As Long, lngCt As Long
     Dim lngStation As Long, lngSeries As Long, stFldNm As String
     Dim dblTimeSpacing As Double, rstSpect As Recordset, rstDiff As Recordset
-    intHowManySeries = 0 ' default unless conditions met
     If iRefStation <> 0 Then
      boolUseNormalRef = True
-     lngStation = iRefStation ' station to start with
+     lngStation = iRefStation # station to start with
      If iIRRefSeries <> 0 Then
-      lngSeries = iIRRefSeries ' series to start with
+      lngSeries = iIRRefSeries # series to start with
       If iVisRefSeries = 0 Then
-       intHowManySeries = 1 'ignore the rest of the serieses
+       iHowManySeries = 1 'ignore the rest of the serieses
       Else 'iVisRefSeries <> 0
-       intHowManySeries = 2 ' there may be more
+       iHowManySeries = 2 # there may be more
        If iDataStation <> 0 And iIRDataSeries <> 0 And iVisDataSeries <> 0 Then _
-             intHowManySeries = intHowManySeries + 2
+             iHowManySeries = iHowManySeries + 2
       End If 'iVisRefSeries
-     End If ' iIRRefSeries <> 0
-    Else ' iRefStation = 0
-     boolUseNormalRef = False ' flag that we will do a switcheroo
+     End If # iIRRefSeries <> 0
+    Else # iRefStation = 0
+     boolUseNormalRef = False # flag that we will do a switcheroo
      If iDataStation <> 0 And iIRDataSeries <> 0 And iVisDataSeries <> 0 Then
-      intHowManySeries = 2 ' only these two
-      lngStation = iDataStation ' station to start with
-      lngSeries = iIRDataSeries ' series to start with
+      iHowManySeries = 2 # only these two
+      lngStation = iDataStation # station to start with
+      lngSeries = iIRDataSeries # series to start with
      End If
     End If
 
-    If intHowManySeries = 0 Then ' conditions not met
+    If iHowManySeries = 0 Then # conditions not met
      GetDaySpectralData = 0
      Exit Function
     End If
 
-    ' get the first series; will hang others on this if specified
+    # get the first series; will hang others on this if specified
     'clear the table
     DoCmd.SetWarnings False
     DoCmd.RunSQL "DELETE * FROM tmpSpectralData;"
     DoCmd.SetWarnings True
     'query out any records for the day before, the current date, and the day after
-    ' these, allowing for shifts due to solar time being off from clock time, are the only days that might have applicable data
+    # these, allowing for shifts due to solar time being off from clock time, are the only days that might have applicable data
     For lngDayOffset = -1 To 1
-     ' make table name e.g. "Data_2010-05-22"
+     # make table name e.g. "Data_2010-05-22"
      stTblNm = "Data_" & Format(DateAdd("d", lngDayOffset, dateCur), "yyyy-mm-dd")
-     If ValidTable(stTblNm) Then ' build & run SQL statement to append any records
+     If ValidTable(stTblNm) Then # build & run SQL statement to append any records
       stSQL = "INSERT INTO tmpSpectralData ( [Timestamp], IRRef ) " & _
            "SELECT [" & stTblNm & "].UTTimestamp, [" & stTblNm & "].Value " & _
            "FROM ChannelSegments LEFT JOIN [" & stTblNm & "] " & _
@@ -1365,7 +1365,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
            "AND ([" & stTblNm & "].UTTimestamp) >= #" & datetimeBegin & "# " & _
            "AND ([" & stTblNm & "].UTTimestamp) < #" & datetimeEnd & "#) " & _
            "AND (([" & stTblNm & "].Use) = True)) ORDER BY [" & stTblNm & "].UTTimestamp;"
-    '  Debug.Print stSQL
+    #  Debug.Print stSQL
       DoCmd.SetWarnings False
       DoCmd.RunSQL stSQL
       DoCmd.SetWarnings True
@@ -1376,31 +1376,31 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     DoCmd.RunSQL "DELETE * FROM tmpSpectralData WHERE (((IRRef) Is Null));"
     DoCmd.SetWarnings True
     GetDaySpectralData = DCount("*", "[tmpSpectralData]")
-    If GetDaySpectralData = 0 Then Exit Function ' if no records we are done
-    If intHowManySeries = 1 Then Exit Function ' case if IRRef only, we are done
-    ' to line up additional series, we will match "nearest" timestamps
-    ' first, see how far apart the existing records' timestamps are; don't allow a mismatch further than that
+    If GetDaySpectralData = 0 Then Exit Function # if no records we are done
+    If iHowManySeries = 1 Then Exit Function # case if IRRef only, we are done
+    # to line up additional series, we will match "nearest" timestamps
+    # first, see how far apart the existing records' timestamps are; don't allow a mismatch further than that
     If GetDaySpectralData = 1 Then
-     dblTimeSpacing = 0.5 ' if there is only one record, the "time difference between them" is meaningless, allow all day
+     dblTimeSpacing = 0.5 # if there is only one record, the "time difference between them" is meaningless, allow all day
     Else
      'look in the query that gets the minimum nonzero time difference between records
      'there will only be one record in this query
      dblTimeSpacing = DFirst("[RefTimestampSpacing]", "[MinimumTimeSpacingInSpectralData]") / 2
     End If
        
-       For lngCt = 1 To 3 ' we are going to do almost exactly the same thing up
-            ' to 3 times, for the additional data series
+       For lngCt = 1 To 3 # we are going to do almost exactly the same thing up
+            # to 3 times, for the additional data series
         Select Case lngCt
          Case 1
           If boolUseNormalRef = True Then
            lngStation = iRefStation
            lngSeries = iVisRefSeries
            stFldNm = "VISRef"
-          Else ' boolUseNormalRef = False
+          Else # boolUseNormalRef = False
            lngStation = iDataStation
            lngSeries = iVisDataSeries
-           stFldNm = "VISRef" ' will move date to "VISData" field when done
-          End If ' boolUseNormalRef
+           stFldNm = "VISRef" # will move date to "VISData" field when done
+          End If # boolUseNormalRef
          Case 2
           lngStation = iDataStation
           lngSeries = iIRDataSeries
@@ -1410,16 +1410,16 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
           lngSeries = iVisDataSeries
           stFldNm = "VISData"
         End Select
-        ' put into tmpSpectralDataForUpdate any timestamps for the station/series
+        # put into tmpSpectralDataForUpdate any timestamps for the station/series
         DoCmd.SetWarnings False
         DoCmd.RunSQL "DELETE * FROM tmpSpectralDataForUpdate;"
         DoCmd.SetWarnings True
         DoEvents
-        ' collect data for day previous, current day, and day following; all that might possibly match
+        # collect data for day previous, current day, and day following; all that might possibly match
         For lngDayOffset = -1 To 1
-         ' make table name e.g. "Data_2010-05-22"
+         # make table name e.g. "Data_2010-05-22"
          stTblNm = "Data_" & Format(DateAdd("d", lngDayOffset, dateCur), "yyyy-mm-dd")
-         If ValidTable(stTblNm) Then ' build & run SQL statement, will test later if there were any records
+         If ValidTable(stTblNm) Then # build & run SQL statement, will test later if there were any records
 
           stSQL = "INSERT INTO tmpSpectralDataForUpdate ( NearTimestamp, ValForUpdate ) " & _
                "SELECT [" & stTblNm & "].UTTimestamp, [" & stTblNm & "].Value " & _
@@ -1438,13 +1438,13 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
          End If
         Next
         If DCount("*", "[tmpSpectralDataForUpdate]") > 0 Then
-         ' Update the (originally null) spectral data field to the value having the nearest timestamp.
-         '  This uses an odd form of a query where the tables are not joined, and so includes every possible
-         '  combination of the fields, constrained here by their differences being <= 1/2 the difference
-         '  between reference timestamps.
-         ' Use temporary table to remove any rare cases when there are multiple timestamps within the range.
+         # Update the (originally null) spectral data field to the value having the nearest timestamp.
+         #  This uses an odd form of a query where the tables are not joined, and so includes every possible
+         #  combination of the fields, constrained here by their differences being <= 1/2 the difference
+         #  between reference timestamps.
+         # Use temporary table to remove any rare cases when there are multiple timestamps within the range.
          
-    '     stSQL = "SELECT CLng([tmpSpectralData].[ID]) AS SpectID, " & _
+    #     stSQL = "SELECT CLng([tmpSpectralData].[ID]) AS SpectID, " & _
               "Abs([tmpSpectralData]![Timestamp]-[tmpSpectralDataForUpdate]![NearTimestamp]) " & _
               "AS TimeDifference, " & _
               "[tmpSpectralDataForUpdate].ValForUpdate " & _
@@ -1453,18 +1453,18 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
               "[tmpSpectralDataForUpdate]![NearTimestamp])) <= " & dblTimeSpacing & ")) " & _
               "ORDER BY Abs([tmpSpectralData]![Timestamp]-[tmpSpectralDataForUpdate]![NearTimestamp]);"
          
-    '     stSQL = "UPDATE tmpSpectralData, tmpSpectralDataForUpdate " & _
+    #     stSQL = "UPDATE tmpSpectralData, tmpSpectralDataForUpdate " & _
               "SET [tmpSpectralData].[" & stFldNm & "] = [ValForUpdate] " & _
               "WHERE (((Abs([tmpSpectralData]![Timestamp]-" & _
               "[tmpSpectralDataForUpdate]![NearTimestamp]))<=" & dblTimeSpacing & "));"
               
-         ' fill temporary table
+         # fill temporary table
          DoCmd.SetWarnings False
          DoCmd.RunSQL "DELETE * FROM [tmpSpectralDataToUpdate];"
          DoCmd.SetWarnings True
          DoEvents
          
-    '     stSQL = "SELECT CLng([tmpSpectralData].[ID]) AS SpectID, " & _
+    #     stSQL = "SELECT CLng([tmpSpectralData].[ID]) AS SpectID, " & _
               "Abs([tmpSpectralData]![Timestamp]-[tmpSpectralDataForUpdate]![NearTimestamp]) " & _
               "AS TimeDifference, " & _
               "[tmpSpectralDataForUpdate].ValForUpdate " & _
@@ -1482,13 +1482,13 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
               "WHERE (((Abs([tmpSpectralData]![Timestamp]-" & _
               "[tmpSpectralDataForUpdate]![NearTimestamp]))<=" & dblTimeSpacing & "));"
          
-    '     Debug.Print stSQL
+    #     Debug.Print stSQL
          DoCmd.SetWarnings False
          DoCmd.RunSQL stSQL
          DoCmd.SetWarnings True
          DoEvents
          
-         ' remove any duplicates where time difference is greater than the minimum
+         # remove any duplicates where time difference is greater than the minimum
          DoCmd.SetWarnings False
          stSQL = "DELETE * FROM tmpSpectralDataToUpdate " & _
               "WHERE ((([tmpSpectralDataToUpdate].ID) " & _
@@ -1498,7 +1498,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
               "AND (([tmpSpectralDataToUpdate].[TimeDifference]>[tmpSpectralDataToUpdate_1].[TimeDifference])=True)))));"
          DoCmd.RunSQL stSQL
          DoEvents
-         ' remove any duplicates where time difference is the same
+         # remove any duplicates where time difference is the same
          stSQL = "DELETE * FROM tmpSpectralDataToUpdate " & _
               "WHERE ((([tmpSpectralDataToUpdate].ID) " & _
               "Not In (SELECT First([tmpSpectralDataToUpdate].ID) AS FirstOfID " & _
@@ -1507,25 +1507,25 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
          DoCmd.SetWarnings True
          DoEvents
          
-         ' update the spectral data
-         ' match on ID, because timestamps do not always match exactly even when the "same"
+         # update the spectral data
+         # match on ID, because timestamps do not always match exactly even when the "same"
          stSQL = "UPDATE tmpSpectralData LEFT JOIN tmpSpectralDataToUpdate " & _
               "ON [tmpSpectralData].ID = [tmpSpectralDataToUpdate].SpectID " & _
               "SET [tmpSpectralData].[" & stFldNm & "] = [ValForUpdate] " & _
               "WHERE ((([tmpSpectralDataToUpdate].ValForUpdate) Like '*'));"
-    '     Debug.Print stSQL
+    #     Debug.Print stSQL
          DoCmd.SetWarnings False
          DoCmd.RunSQL stSQL
          DoCmd.SetWarnings True
          DoEvents
         
-        End If ' any tmpSpectralDataForUpdate records
+        End If # any tmpSpectralDataForUpdate records
         
-        If intHowManySeries = 2 Then ' if we were only to add on VIS, we are done
+        If iHowManySeries = 2 Then # if we were only to add on VIS, we are done
          DoCmd.SetWarnings False
          DoCmd.RunSQL "DELETE * FROM tmpSpectralData WHERE (((IRRef) Is Null) OR ((VISRef) Is Null));"
          DoCmd.SetWarnings True
-         If boolUseNormalRef = False Then ' was generated as if Dat were Ref, now move fields over
+         If boolUseNormalRef = False Then # was generated as if Dat were Ref, now move fields over
           DoCmd.SetWarnings False
           DoCmd.RunSQL "UPDATE tmpSpectralData " & _
                "SET [tmpSpectralData].IRData = [IRRef], [tmpSpectralData].VISData = [VISRef];"
@@ -1536,7 +1536,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
          GetDaySpectralData = DCount("*", "[tmpSpectralData]")
          Exit Function
         End If
-       Next lngCt ' next of IR or VIS data column
+       Next lngCt # next of IR or VIS data column
       
       'remove any null records
       DoCmd.SetWarnings False
@@ -1545,7 +1545,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
       DoEvents
       'see if there are any left
       GetDaySpectralData = DCount("*", "[tmpSpectralData]")
-    ' End If
+    # End If
     'End If
     End Function
 
