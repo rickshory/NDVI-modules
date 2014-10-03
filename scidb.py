@@ -498,6 +498,10 @@ def getSciDataCursor():
         sys.exit(1)
         return None
 
+def cleanup(): # routine cleanup e.g. orphaned records that might remain after deletes from parent tables
+    curD.execute('DELETE FROM NDVIcalcDates WHERE CalcID NOT IN (SELECT ID FROM NDVIcalc)')
+    curD.execute('DELETE FROM NDVIcalcStations WHERE CalcID NOT IN (SELECT ID FROM NDVIcalc)')
+
 def refreshDataDates(): # make externally callable
     curD.executescript("""
         DROP TABLE IF EXISTS "DataDates";
@@ -1191,8 +1195,8 @@ def minutesCorrection(stDate, fLongitude):
         fpLn = float(fLongitude)
     except: # no valid longitude, use zero
         fpLn = 0
-    else: #Correct for longitude
-        fCorr = 60 * ((-fpLn / 15))
+    #Correct for longitude
+    fCorr = 60 * ((-fpLn / 15))
     # even if no valid longitude, at least correct for astonomical "equation of time"
     fCorr = fCorr + equationOfTime(stDate)
     return fCorr
@@ -1207,15 +1211,45 @@ def solarCorrection(stDate, fLongitude):
         "equation of time".  This is usually a smaller correction factor
     If no longitude is given, returns the equation-of-time correction only
     """
-    try:
-        fpLn = float(fLongitude)
-    except: # no valid longitude, use zero
-        fpLn = 0.0
-    else: #Correct for longitude
-        fCorr = 60.0 * ((-fpLn / 15))
-    # even if no valid longitude, at least correct for astonomical "equation of time"
-    fCorr = fCorr + equationOfTime(stDate)
-    return datetime.timedelta(minutes = fCorr)
+    return datetime.timedelta(minutes = minutesCorrection(stDate, fLongitude))
+
+def GetBeginEndTimes(dt, fLongitude, fPlusMinusCutoff):
+    """
+    Input:
+     dt: a string in UNIX format (yyyy-mm-dd) or a Python date or datetime
+     fLongitude: longitude as decimal degrees (east positive, west negative); no error if None
+          but then will calculate as if on Greenwich meridian.
+     fPlusMinusCutoff: hours before and after solar noon to produce Beginning and End times
+    Returns:
+     a tuple (datetimeBegin, datetimeEnd): the beginning and end times
+    """
+    if isinstance(dt, basestring): # if it's a string
+        # convert string to date
+        dateBase = datetime.datetime.strptime(dt, "%Y-%m-%d").date()
+    elif isinstance(dt, (datetime.datetime, datetime.date)):
+        # get date from datetime or (trivially) date
+        dateBase = dt.date()
+    else:
+        return None
+    print 'dateBase', dateBase
+    # get datetime equal to the date
+    datetimeBase = datetime.datetime(dateBase.year, dateBase.month, dateBase.day)
+    print 'datetimeBase', datetimeBase
+    datetimeNoon = datetimeBase + datetime.timedelta(hours=12) # adjust to clock noon
+    print 'datetimeNoon', datetimeNoon
+    # correct for longitude, solar anamoly, etc. if possible
+    stDate = dateBase.strftime('%Y-%m-%d')
+    datetimeSolarNoon = datetimeNoon + solarCorrection(stDate, fLongitude)
+    print 'datetimeSolarNoon', datetimeSolarNoon
+    datetimeBegin = datetimeSolarNoon - datetime.timedelta(hours=fPlusMinusCutoff)
+    datetimeEnd = datetimeSolarNoon + datetime.timedelta(hours=fPlusMinusCutoff)
+    return (datetimeBegin, datetimeEnd)
+
+def GetBeginEndTimeStrings(dt, fLongitude, fPlusMinusCutoff):
+    be = GetBeginEndTimes(dt, fLongitude, fPlusMinusCutoff)
+    stBegin = be[0].strftime('%Y-%m-%d %H:%M:%S')
+    stEnd = be[1].strftime('%Y-%m-%d %H:%M:%S')
+    return (stBegin, stEnd)
 
 def countOfSheetRows(sheetID):
     """
