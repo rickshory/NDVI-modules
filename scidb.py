@@ -1251,13 +1251,14 @@ def GetBeginEndTimeStrings(dt, fLongitude, fPlusMinusCutoff):
     stEnd = be[1].strftime('%Y-%m-%d %H:%M:%S')
     return (stBegin, stEnd)
 
-def testGD(stDCur = '2010-06-13', stBegin = '2010-06-13 10:00:00', stEnd = '2010-06-13 10:00:00',
+def testGD(stDCur = '2010-06-13', stBegin = '2010-06-13 10:00:00', stEnd = '2010-06-13 14:00:00',
            refSt = 3, irRef = 3, visRef = 4, datSt = 2, irDat = 1, visDat = 2):
     dCur = datetime.datetime.strptime(stDCur, '%Y-%m-%d').date()
     dtBegin = datetime.datetime.strptime(stBegin, '%Y-%m-%d %H:%M:%S')
     dtEnd = datetime.datetime.strptime(stEnd, '%Y-%m-%d %H:%M:%S')
-    print 'GetDaySpectralData return:', GetDaySpectralData(dCur, dtBegin, dtEnd,
+    result = GetDaySpectralData(dCur, dtBegin, dtEnd,
             refSt, irRef, visRef, datSt, irDat, visDat)
+    print 'GetDaySpectralData return:', result
 
 
 def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
