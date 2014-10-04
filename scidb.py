@@ -411,8 +411,22 @@ try:
         "VISRef" FLOAT,
         "IRData" FLOAT,
         "VISData" FLOAT,
-        "NearestTimestamp timestamp"
+        "NearestTimestamp" timestamp
         );
+
+        CREATE TABLE IF NOT EXISTS "tmpSpectralDataForUpdate" (
+        "ID" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
+        "NearTimestamp" timestamp,
+        "ValForUpdate" FLOAT
+        );
+
+        CREATE TABLE IF NOT EXISTS "tmpSpectralDataToUpdate" (
+        "ID" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
+        "SpectID" INTEGER,
+        "TimeDifference" FLOAT,
+        "ValForUpdate" FLOAT
+        );
+
 
         """)
 
