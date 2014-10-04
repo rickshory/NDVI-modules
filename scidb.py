@@ -1360,30 +1360,35 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     """.format(iSt=iStation, iSe=iSeries, dBe=datetimeBegin, dEn=datetimeEnd)
     print stSQL
     curD.execute(stSQL)
+    # probably no null records, but delete any just to be sure
+    curD.execute('DELETE FROM tmpSpectralData WHERE IRRef Is Null;')
+    recCt = countTableFieldItems('tmpSpectralData', 'ID')
+    if recCt == 0:
+        return 0 # if no records we are done
+    if iHowManySeries == 1:
+        return recCt # if IRRef only, we are done
+    # to line up additional series, we will match "nearest" timestamps
+    # first, see how far apart the existing records' timestamps are; don't
+    # allow a mismatch further than that
+    if recCt == 1:
+        # if there is only one record, the "time difference between
+        # them" is meaningless, allow all day
+        fTimeSpacing = 0.5
+    else:
+        # get the minimum nonzero time difference between records
+        stSQL = """SELECT MIN(ABS(JULIANDAY(tmpSpectralData.Timestamp) -
+        JULIANDAY(tSD.Timestamp))) AS RefTimestampSpacing
+        FROM tmpSpectralData, tmpSpectralData AS tSD
+        GROUP BY tmpSpectralData.Timestamp = tSD.Timestamp
+        HAVING (tmpSpectralData.Timestamp != tSD.Timestamp);"""
+        fTimeSpacing = curD.execute(stSQL).fetchone()['RefTimestampSpacing']
+    print 'fTimeSpacing', fTimeSpacing # testing
 
-    return 0 # for testing
+    return recCt # for testing
 
     tmpComments = """
 
 
-     End if
-    Next
-    'probably no null records, but delete any just to be sure
-    DoCmd.SetWarnings False
-    DoCmd.RunSQL "DELETE * FROM tmpSpectralData WHERE (((IRRef) Is Null));"
-    DoCmd.SetWarnings True
-    GetDaySpectralData = DCount("*", "[tmpSpectralData]")
-    if GetDaySpectralData = 0: Exit Function # if no records we are done
-    if iHowManySeries = 1: Exit Function # case if IRRef only, we are done
-    # to line up additional series, we will match "nearest" timestamps
-    # first, see how far apart the existing records' timestamps are; don't allow a mismatch further than that
-    if GetDaySpectralData = 1:
-     dblTimeSpacing = 0.5 # if there is only one record, the "time difference between them" is meaningless, allow all day
-    else:
-     'look in the query that gets the minimum nonzero time difference between records
-     'there will only be one record in this query
-     dblTimeSpacing = DFirst("[RefTimestampSpacing]", "[MinimumTimeSpacingInSpectralData]") / 2
-    End if
        
        For lngCt = 1 To 3 # we are going to do almost exactly the same thing up
             # to 3 times, for the additional data series
@@ -1447,13 +1452,13 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
               "[tmpSpectralDataForUpdate].ValForUpdate " & _
               "FROM tmpSpectralDataForUpdate, tmpSpectralData " & _
               "WHERE (((Abs([tmpSpectralData]![Timestamp] - " & _
-              "[tmpSpectralDataForUpdate]![NearTimestamp])) <= " & dblTimeSpacing & ")) " & _
+              "[tmpSpectralDataForUpdate]![NearTimestamp])) <= " & fTimeSpacing & ")) " & _
               "ORDER BY Abs([tmpSpectralData]![Timestamp]-[tmpSpectralDataForUpdate]![NearTimestamp]);"
          
     #     stSQL = "UPDATE tmpSpectralData, tmpSpectralDataForUpdate " & _
               "SET [tmpSpectralData].[" & stFldNm & "] = [ValForUpdate] " & _
               "WHERE (((Abs([tmpSpectralData]![Timestamp]-" & _
-              "[tmpSpectralDataForUpdate]![NearTimestamp]))<=" & dblTimeSpacing & "));"
+              "[tmpSpectralDataForUpdate]![NearTimestamp]))<=" & fTimeSpacing & "));"
               
          # fill temporary table
          DoCmd.SetWarnings False
@@ -1468,7 +1473,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
               "INTO tmpSpectralDataToUpdate " & _
               "FROM tmpSpectralDataForUpdate, tmpSpectralData " & _
               "WHERE (((Abs([tmpSpectralData]![Timestamp] - " & _
-              "[tmpSpectralDataForUpdate]![NearTimestamp])) <= " & dblTimeSpacing & "));"
+              "[tmpSpectralDataForUpdate]![NearTimestamp])) <= " & fTimeSpacing & "));"
          
          stSQL = "INSERT INTO tmpSpectralDataToUpdate ( SpectID, TimeDifference, ValForUpdate ) " & _
               "SELECT CLng([tmpSpectralData].[ID]) AS SpectID, " & _
@@ -1477,7 +1482,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
               "[tmpSpectralDataForUpdate].ValForUpdate " & _
               "FROM tmpSpectralDataForUpdate, tmpSpectralData " & _
               "WHERE (((Abs([tmpSpectralData]![Timestamp]-" & _
-              "[tmpSpectralDataForUpdate]![NearTimestamp]))<=" & dblTimeSpacing & "));"
+              "[tmpSpectralDataForUpdate]![NearTimestamp]))<=" & fTimeSpacing & "));"
          
     #     Debug.Print stSQL
          DoCmd.SetWarnings False
