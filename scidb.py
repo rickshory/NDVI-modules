@@ -404,6 +404,16 @@ try:
         ON "tmpChanSegSeries"
         ("ChannelID" ASC, "SeriesID" ASC);
 
+        CREATE TABLE IF NOT EXISTS "tmpSpectralData" (
+        "ID" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
+        "Timestamp" timestamp,
+        "IRRef" FLOAT,
+        "VISRef" FLOAT,
+        "IRData" FLOAT,
+        "VISData" FLOAT,
+        "NearestTimestamp timestamp"
+        );
+
         """)
 
 except sqlite3.Error, e:
@@ -1310,18 +1320,8 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     return value is the number of records remaining in the table after invalid ones removed
      other combinations give undefined results
     """
-    curD.execute('DROP TABLE IF EXISTS "tmpSpectralData"')
-    stCreate = """CREATE TABLE IF NOT EXISTS "tmpSpectralData" (
-        "ID" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
-        "Timestamp" timestamp,
-        "IRRef" FLOAT,
-        "VISRef" FLOAT,
-        "IRData" FLOAT,
-        "VISData" FLOAT,
-        "NearestTimestamp timestamp"
-        );"""
-    curD.execute(stCreate)
-    
+    curD.execute('DELETE FROM "tmpSpectralData"')
+
     iHowManySeries = 0 # default unless conditions met
     if iRefStation != 0:
         boolUseNormalRef = 1
@@ -1350,13 +1350,13 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     SELECT Data.UTTimestamp, Data.Value
     FROM ChannelSegments LEFT JOIN Data
     ON ChannelSegments.ChannelID = Data.ChannelID
-    WHERE (((ChannelSegments.StationID) = {iSt})
-    AND ((ChannelSegments.SeriesID) = {iSe})
-    AND ((Data.UTTimestamp) >= ChannelSegments.SegmentBegin
-    AND (Data.UTTimestamp) < COALESCE(ChannelSegments.SegmentEnd, datetime("now"))
-    AND (Data.UTTimestamp) >= '{dBe}'
-    AND (Data.UTTimestamp) < '{dEn}')
-    AND ((Data.Use) = 1)) ORDER BY Data.UTTimestamp;
+    WHERE ChannelSegments.StationID = {iSt}
+    AND ChannelSegments.SeriesID = {iSe}
+    AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
+    AND Data.UTTimestamp < COALESCE(ChannelSegments.SegmentEnd, datetime("now"))
+    AND Data.UTTimestamp >= '{dBe}'
+    AND Data.UTTimestamp < '{dEn}'
+    AND Data.Use = 1 ORDER BY Data.UTTimestamp;
     """.format(iSt=iStation, iSe=iSeries, dBe=datetimeBegin, dEn=datetimeEnd)
     print stSQL
     curD.execute(stSQL)
