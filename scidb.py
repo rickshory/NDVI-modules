@@ -1383,35 +1383,34 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         HAVING (tmpSpectralData.Timestamp != tSD.Timestamp);"""
         fTimeSpacing = curD.execute(stSQL).fetchone()['RefTimestampSpacing']
     print 'fTimeSpacing', fTimeSpacing # testing
+    For iDs in range(3): # we are going to do almost exactly the same thing up
+        # to 3 times, for the additional data series
+        if iDs == 0:
+            if boolUseNormalRef == 1:
+                iStation = iRefStation
+                iSeries = iVisRefSeries
+                stFldNm = "VISRef"
+            else: # boolUseNormalRef == 0
+                iStation = iDataStation
+                iSeries = iVisDataSeries
+                stFldNm = "VISRef" # will move date to "VISData" field when done
+
+        if iDs == 1:
+            iStation = iDataStation
+            iSeries = iIRDataSeries
+            stFldNm = "IRData"
+
+        if iDs == 2:
+            iStation = iDataStation
+            iSeries = iVisDataSeries
+            stFldNm = "VISData"
+
+
 
     return recCt # for testing
 
     tmpComments = """
 
-
-       
-       For iDs = 1 To 3 # we are going to do almost exactly the same thing up
-            # to 3 times, for the additional data series
-        Select Case iDs
-         Case 1
-          if boolUseNormalRef = 1:
-           iStation = iRefStation
-           iSeries = iVisRefSeries
-           stFldNm = "VISRef"
-          else: # boolUseNormalRef = 0
-           iStation = iDataStation
-           iSeries = iVisDataSeries
-           stFldNm = "VISRef" # will move date to "VISData" field when done
-          End if # boolUseNormalRef
-         Case 2
-          iStation = iDataStation
-          iSeries = iIRDataSeries
-          stFldNm = "IRData"
-         Case 3
-          iStation = iDataStation
-          iSeries = iVisDataSeries
-          stFldNm = "VISData"
-        End Select
         # put into tmpSpectralDataForUpdate any timestamps for the station/series
         DoCmd.SetWarnings False
         DoCmd.RunSQL "DELETE * FROM tmpSpectralDataForUpdate;"
@@ -1523,11 +1522,11 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         
         End if # any tmpSpectralDataForUpdate records
         
-        if iHowManySeries = 2: # if we were only to add on VIS, we are done
+        if iHowManySeries == 2: # if we were only to add on VIS, we are done
          DoCmd.SetWarnings False
          DoCmd.RunSQL "DELETE * FROM tmpSpectralData WHERE (((IRRef) Is Null) OR ((VISRef) Is Null));"
          DoCmd.SetWarnings True
-         if boolUseNormalRef = 0: # was generated as if Dat were Ref, now move fields over
+         if boolUseNormalRef == 0: # was generated as if Dat were Ref, now move fields over
           DoCmd.SetWarnings False
           DoCmd.RunSQL "UPDATE tmpSpectralData " & _
                "SET [tmpSpectralData].IRData = [IRRef], [tmpSpectralData].VISData = [VISRef];"
