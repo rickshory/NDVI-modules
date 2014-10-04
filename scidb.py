@@ -1310,7 +1310,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     return value is the number of records remaining in the table after invalid ones removed
      other combinations give undefined results
     """
-    curT.execute('DROP TABLE IF EXISTS "tmpSpectralData"')
+    curD.execute('DROP TABLE IF EXISTS "tmpSpectralData"')
     stCreate = """CREATE TABLE IF NOT EXISTS "tmpSpectralData" (
         "Timestamp" timestamp,
         "IRRef" FLOAT,
@@ -1318,9 +1318,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         "IRData" FLOAT,
         "VISData" FLOAT
         );"""
-    curT.execute(stCreate)
-    stAttach = 'ATTACH DATABASE "tmp.db" as tmp;'
-    curD.execute(stAttach)
+    curD.execute(stCreate)
     
     iHowManySeries = 0 # default unless conditions met
     if iRefStation != 0:
@@ -1346,7 +1344,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
 
     # get the first series; will hang others on this if specified
     # query out any records for the day
-    stSQL = """INSERT INTO tmp.tmpSpectralData (Timestamp, IRRef)
+    stSQL = """INSERT INTO tmpSpectralData (Timestamp, IRRef)
     SELECT Data.UTTimestamp, Data.Value
     FROM ChannelSegments LEFT JOIN Data
     ON ChannelSegments.ChannelID = Data.ChannelID
@@ -1359,7 +1357,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     AND ((Data.Use) = 1)) ORDER BY Data.UTTimestamp;
     """.format(iSt=iStation, iSe=iSeries, dBe=datetimeBegin, dEn=datetimeEnd)
     print stSQL
-    curD.execute(stCreate)
+    curD.execute(stSQL)
 
     return 0 # for testing
 
