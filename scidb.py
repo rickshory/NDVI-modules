@@ -1419,17 +1419,13 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
             iSeries = iVisDataSeries
             stFldNm = "VISData"
 
-
+        # put into tmpSpectralDataForUpdate any timestamps for the station/series
+        curD.execute('DELETE FROM "tmpSpectralDataForUpdate"')
 
     return recCt # for testing
 
     tmpComments = """
 
-        # put into tmpSpectralDataForUpdate any timestamps for the station/series
-        DoCmd.SetWarnings False
-        DoCmd.RunSQL "DELETE * FROM tmpSpectralDataForUpdate;"
-        DoCmd.SetWarnings True
-        DoEvents
         # collect data for day previous, current day, and day following; all that might possibly match
         For lngDayOffset = -1 To 1
          # make table name e.g. "Data_2010-05-22"
