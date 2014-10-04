@@ -1352,10 +1352,10 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     ON ChannelSegments.ChannelID = Data.ChannelID
     WHERE ChannelSegments.StationID = {iSt}
     AND ChannelSegments.SeriesID = {iSe}
-    AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
-    AND Data.UTTimestamp < COALESCE(ChannelSegments.SegmentEnd, datetime("now"))
     AND Data.UTTimestamp >= '{dBe}'
     AND Data.UTTimestamp < '{dEn}'
+    AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
+    AND Data.UTTimestamp < COALESCE(ChannelSegments.SegmentEnd, datetime("now"))
     AND Data.Use = 1 ORDER BY Data.UTTimestamp;
     """.format(iSt=iStation, iSe=iSeries, dBe=datetimeBegin, dEn=datetimeEnd)
     print stSQL
