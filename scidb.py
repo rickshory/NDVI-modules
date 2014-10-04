@@ -1390,9 +1390,9 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
 
 
        
-       For lngCt = 1 To 3 # we are going to do almost exactly the same thing up
+       For iDs = 1 To 3 # we are going to do almost exactly the same thing up
             # to 3 times, for the additional data series
-        Select Case lngCt
+        Select Case iDs
          Case 1
           if boolUseNormalRef = 1:
            iStation = iRefStation
@@ -1538,7 +1538,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
          GetDaySpectralData = DCount("*", "[tmpSpectralData]")
          Exit Function
         End if
-       Next lngCt # next of IR or VIS data column
+       Next iDs # next of IR or VIS data column
       
       'remove any null records
       DoCmd.SetWarnings False
