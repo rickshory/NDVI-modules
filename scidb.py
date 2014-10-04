@@ -1312,11 +1312,13 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     """
     curD.execute('DROP TABLE IF EXISTS "tmpSpectralData"')
     stCreate = """CREATE TABLE IF NOT EXISTS "tmpSpectralData" (
+        "ID" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
         "Timestamp" timestamp,
         "IRRef" FLOAT,
         "VISRef" FLOAT,
         "IRData" FLOAT,
-        "VISData" FLOAT
+        "VISData" FLOAT,
+        "NearestTimestamp timestamp"
         );"""
     curD.execute(stCreate)
     
