@@ -1429,12 +1429,12 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         FROM ChannelSegments LEFT JOIN Data
         ON ChannelSegments.ChannelID = Data.ChannelID
         WHERE ChannelSegments.StationID = {iSt}
-        AND ChannelSegments.SeriesID = {iSe})
+        AND ChannelSegments.SeriesID = {iSe}
         AND Data.UTTimestamp >= DATETIME('{dBe}', '-{fTs} days')
         AND Data.UTTimestamp < DATETIME('{dEn}', '+{fTs} days')
         AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
         AND Data.UTTimestamp < COALESCE(ChannelSegments.SegmentEnd, datetime("now"))
-        AND Data.Use) = 1
+        AND Data.Use = 1
         ORDER BY Data.UTTimestamp;""".format(iSt=iStation, iSe=iSeries,
                 dBe=datetimeBegin, dEn=datetimeEnd, fTs=fTimeSpacing * 2)
         print stSQL
@@ -1458,7 +1458,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
                 JULIANDAY(tmpSpectralDataForUpdate.NearTimestamp)) AS TimeDifference,
                 tmpSpectralDataForUpdate.ValForUpdate
                 FROM tmpSpectralDataForUpdate, tmpSpectralData
-                WHERE TimeDifference<={fTs}));
+                WHERE TimeDifference<={fTs};
             """.format(fTs=fTimeSpacing)
             print stSQL
             curD.execute(stSQL)
