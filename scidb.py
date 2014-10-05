@@ -1474,19 +1474,20 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
             print stSQL
             curD.execute(stSQL)
 
+            # remove any duplicates where time difference is the same
+            stSQL = """DELETE FROM tmpSpectralDataToUpdate
+            WHERE tmpSpectralDataToUpdate.ID
+            NOT IN (SELECT MIN(tmpSpectralDataToUpdate.ID) AS MinID
+            FROM tmpSpectralDataToUpdate GROUP BY tmpSpectralDataToUpdate.SpectID);"""
+            print stSQL
+            curD.execute(stSQL)
+
+
     return recCt # for testing
 
     tmpComments = """
          
         
-         # remove any duplicates where time difference is the same
-         stSQL = "DELETE * FROM tmpSpectralDataToUpdate " & _
-              "WHERE ((([tmpSpectralDataToUpdate].ID) " & _
-              "Not In (SELECT First([tmpSpectralDataToUpdate].ID) AS FirstOfID " & _
-              "FROM tmpSpectralDataToUpdate GROUP BY [tmpSpectralDataToUpdate].SpectID)));"
-         DoCmd.RunSQL stSQL
-         DoCmd.SetWarnings True
-         DoEvents
          
          # update the spectral data
          # match on ID, because timestamps do not always match exactly even when the "same"
