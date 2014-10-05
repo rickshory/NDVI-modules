@@ -1462,28 +1462,23 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
             """.format(fTs=fTimeSpacing)
             print stSQL
             curD.execute(stSQL)
-        
+
+            # if there are multiple with a range of time difference
+            # keep only the one(s) with minimum time difference
+            stSQL = """DELETE FROM tmpSpectralDataToUpdate
+            WHERE tmpSpectralDataToUpdate.ID
+            IN (SELECT tmpSpectralDataToUpdate.ID
+            FROM tmpSpectralDataToUpdate, tmpSpectralDataToUpdate AS tSDTU
+            WHERE tmpSpectralDataToUpdate.SpectID=tSDTU.SpectID
+            AND tmpSpectralDataToUpdate.TimeDifference>tSDTU.TimeDifference);"""
+            print stSQL
+            curD.execute(stSQL)
+
     return recCt # for testing
 
     tmpComments = """
          
-         
-    #     Debug.Print stSQL
-         DoCmd.SetWarnings False
-         DoCmd.RunSQL stSQL
-         DoCmd.SetWarnings True
-         DoEvents
-         
-         # remove any duplicates where time difference is greater than the minimum
-         DoCmd.SetWarnings False
-         stSQL = "DELETE * FROM tmpSpectralDataToUpdate " & _
-              "WHERE ((([tmpSpectralDataToUpdate].ID) " & _
-              "In (SELECT [tmpSpectralDataToUpdate].ID " & _
-              "FROM tmpSpectralDataToUpdate, tmpSpectralDataToUpdate AS tmpSpectralDataToUpdate_1 " & _
-              "WHERE ((([tmpSpectralDataToUpdate].[SpectID]=[tmpSpectralDataToUpdate_1].[SpectID])=1) " & _
-              "AND (([tmpSpectralDataToUpdate].[TimeDifference]>[tmpSpectralDataToUpdate_1].[TimeDifference])=1)))));"
-         DoCmd.RunSQL stSQL
-         DoEvents
+        
          # remove any duplicates where time difference is the same
          stSQL = "DELETE * FROM tmpSpectralDataToUpdate " & _
               "WHERE ((([tmpSpectralDataToUpdate].ID) " & _
