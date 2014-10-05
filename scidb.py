@@ -1437,59 +1437,24 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         AND Data.Use) = 1
         ORDER BY Data.UTTimestamp;""".format(iSt=iStation, iSe=iSeries,
                 dBe=datetimeBegin, dEn=datetimeEnd, fTs=fTimeSpacing * 2)
+        print stSQL
+        curD.execute(stSQL)
+        if countTableFieldItems('tmpSpectralDataForUpdate', 'ID') > 0:
+            # Update the (originally null) spectral data field to the
+            # value having the nearest timestamp. This uses an odd 
+            # form of a query where the tables are not joined, and so
+            # includes every possible combination of the fields, constrained
+            # here by their differences being <= 1/2 the difference between
+            # reference timestamps.
+            # Use temporary table to remove any rare cases when there are
+            # multiple timestamps within the range.
+            
+            # fill temporary table
+            curD.execute('DELETE FROM tmpSpectralDataToUpdate')
         
     return recCt # for testing
 
     tmpComments = """
-
-        For lngDayOffset = -1 To 1
-         # make table name e.g. "Data_2010-05-22"
-         stTblNm = "Data_" & Format(DateAdd("d", lngDayOffset, dateCur), "yyyy-mm-dd")
-         if ValidTable(stTblNm): # build & run SQL statement, will test later if there were any records
-
-
-          Debug.Print stSQL
-          DoCmd.SetWarnings False
-          DoCmd.RunSQL stSQL
-          DoCmd.SetWarnings True
-          DoEvents
-         End if
-        Next
-        if DCount("*", "[tmpSpectralDataForUpdate]") > 0:
-         # Update the (originally null) spectral data field to the value having the nearest timestamp.
-         #  This uses an odd form of a query where the tables are not joined, and so includes every possible
-         #  combination of the fields, constrained here by their differences being <= 1/2 the difference
-         #  between reference timestamps.
-         # Use temporary table to remove any rare cases when there are multiple timestamps within the range.
-         
-    #     stSQL = "SELECT CLng([tmpSpectralData].[ID]) AS SpectID, " & _
-              "Abs([tmpSpectralData]![Timestamp]-[tmpSpectralDataForUpdate]![NearTimestamp]) " & _
-              "AS TimeDifference, " & _
-              "[tmpSpectralDataForUpdate].ValForUpdate " & _
-              "FROM tmpSpectralDataForUpdate, tmpSpectralData " & _
-              "WHERE (((Abs([tmpSpectralData]![Timestamp] - " & _
-              "[tmpSpectralDataForUpdate]![NearTimestamp])) <= " & fTimeSpacing & ")) " & _
-              "ORDER BY Abs([tmpSpectralData]![Timestamp]-[tmpSpectralDataForUpdate]![NearTimestamp]);"
-         
-    #     stSQL = "UPDATE tmpSpectralData, tmpSpectralDataForUpdate " & _
-              "SET [tmpSpectralData].[" & stFldNm & "] = [ValForUpdate] " & _
-              "WHERE (((Abs([tmpSpectralData]![Timestamp]-" & _
-              "[tmpSpectralDataForUpdate]![NearTimestamp]))<=" & fTimeSpacing & "));"
-              
-         # fill temporary table
-         DoCmd.SetWarnings False
-         DoCmd.RunSQL "DELETE * FROM [tmpSpectralDataToUpdate];"
-         DoCmd.SetWarnings True
-         DoEvents
-         
-    #     stSQL = "SELECT CLng([tmpSpectralData].[ID]) AS SpectID, " & _
-              "Abs([tmpSpectralData]![Timestamp]-[tmpSpectralDataForUpdate]![NearTimestamp]) " & _
-              "AS TimeDifference, " & _
-              "[tmpSpectralDataForUpdate].ValForUpdate " & _
-              "INTO tmpSpectralDataToUpdate " & _
-              "FROM tmpSpectralDataForUpdate, tmpSpectralData " & _
-              "WHERE (((Abs([tmpSpectralData]![Timestamp] - " & _
-              "[tmpSpectralDataForUpdate]![NearTimestamp])) <= " & fTimeSpacing & "));"
          
          stSQL = "INSERT INTO tmpSpectralDataToUpdate ( SpectID, TimeDifference, ValForUpdate ) " & _
               "SELECT CLng([tmpSpectralData].[ID]) AS SpectID, " & _
