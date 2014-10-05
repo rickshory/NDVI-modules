@@ -1452,13 +1452,13 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
             # fill temporary table
             curD.execute('DELETE FROM tmpSpectralDataToUpdate')
             stSQL = """INSERT INTO tmpSpectralDataToUpdate
-            (SpectID, TimeDifference, ValForUpdate)
-            SELECT tmpSpectralData.ID AS SpectID,
-            ABS(JULIANDAY(tmpSpectralData.Timestamp)-
-            JULIANDAY(tmpSpectralDataForUpdate.NearTimestamp)) AS TimeDifference,
-            tmpSpectralDataForUpdate.ValForUpdate
-            FROM tmpSpectralDataForUpdate, tmpSpectralData
-            WHERE TimeDifference<={fTs}));
+                (SpectID, TimeDifference, ValForUpdate)
+                SELECT tmpSpectralData.ID AS SpectID,
+                ABS(JULIANDAY(tmpSpectralData.Timestamp)-
+                JULIANDAY(tmpSpectralDataForUpdate.NearTimestamp)) AS TimeDifference,
+                tmpSpectralDataForUpdate.ValForUpdate
+                FROM tmpSpectralDataForUpdate, tmpSpectralData
+                WHERE TimeDifference<={fTs}));
             """.format(fTs=fTimeSpacing)
             print stSQL
             curD.execute(stSQL)
@@ -1466,22 +1466,34 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
             # if there are multiple with a range of time difference
             # keep only the one(s) with minimum time difference
             stSQL = """DELETE FROM tmpSpectralDataToUpdate
-            WHERE tmpSpectralDataToUpdate.ID
-            IN (SELECT tmpSpectralDataToUpdate.ID
-            FROM tmpSpectralDataToUpdate, tmpSpectralDataToUpdate AS tSDTU
-            WHERE tmpSpectralDataToUpdate.SpectID=tSDTU.SpectID
-            AND tmpSpectralDataToUpdate.TimeDifference>tSDTU.TimeDifference);"""
+                WHERE tmpSpectralDataToUpdate.ID
+                IN (SELECT tmpSpectralDataToUpdate.ID
+                FROM tmpSpectralDataToUpdate, tmpSpectralDataToUpdate AS tSDTU
+                WHERE tmpSpectralDataToUpdate.SpectID=tSDTU.SpectID
+                AND tmpSpectralDataToUpdate.TimeDifference>tSDTU.TimeDifference);"""
             print stSQL
             curD.execute(stSQL)
 
             # remove any duplicates where time difference is the same
             stSQL = """DELETE FROM tmpSpectralDataToUpdate
-            WHERE tmpSpectralDataToUpdate.ID
-            NOT IN (SELECT MIN(tmpSpectralDataToUpdate.ID) AS MinID
-            FROM tmpSpectralDataToUpdate GROUP BY tmpSpectralDataToUpdate.SpectID);"""
+                WHERE tmpSpectralDataToUpdate.ID
+                NOT IN (SELECT MIN(tmpSpectralDataToUpdate.ID) AS MinID
+                FROM tmpSpectralDataToUpdate GROUP BY tmpSpectralDataToUpdate.SpectID);"""
             print stSQL
             curD.execute(stSQL)
 
+            # update the spectral data
+            # match on ID, because timestamps do not always match exactly even when the "same"
+            stSQL = """UPDATE tmpSpectralData SET {sFn} = (
+                SELECT tmpSpectralDataToUpdate.ValForUpdate
+                FROM tmpSpectralDataToUpdate
+                WHERE tmpSpectralDataToUpdate.SpectID = tmpSpectralData.ID)
+                WHERE EXISTS (SELECT *
+                FROM tmpSpectralDataToUpdate
+                WHERE tmpSpectralDataToUpdate.SpectID = tmpSpectralData.ID)
+                """.format(sFn=stFldNm)
+            print stSQL
+            curD.execute(stSQL)
 
     return recCt # for testing
 
@@ -1489,18 +1501,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
          
         
          
-         # update the spectral data
-         # match on ID, because timestamps do not always match exactly even when the "same"
-         stSQL = "UPDATE tmpSpectralData LEFT JOIN tmpSpectralDataToUpdate " & _
-              "ON [tmpSpectralData].ID = [tmpSpectralDataToUpdate].SpectID " & _
-              "SET [tmpSpectralData].[" & stFldNm & "] = [ValForUpdate] " & _
-              "WHERE ((([tmpSpectralDataToUpdate].ValForUpdate) Like '*'));"
-    #     Debug.Print stSQL
-         DoCmd.SetWarnings False
-         DoCmd.RunSQL stSQL
-         DoCmd.SetWarnings True
-         DoEvents
-        
+       
         End if # any tmpSpectralDataForUpdate records
         
         if iHowManySeries == 2: # if we were only to add on VIS, we are done
