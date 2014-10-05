@@ -1503,35 +1503,18 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
                     stSQL = """UPDATE tmpSpectralData
                         SET IRData = IRRef,
                         VISData = VISRef
-                        SET IRRef = NULL,
+                        IRRef = NULL,
                         VISRef = NULL;"""
                     curD.execute(stSQL)
                 return countTableFieldItems('tmpSpectralData', 'ID')
     # next of IR or VIS data column
     # done with iterations over iDs
-    
-    return recCt # for testing
-
-    tmpComments = """
-                 
-
-        End if
-       Next iDs # next of IR or VIS data column
-      
-      'remove any null records
-      DoCmd.SetWarnings False
-      DoCmd.OpenQuery "ClearIncompleteSpectralRecs"
-      DoCmd.SetWarnings True
-      DoEvents
-      'see if there are any left
-      GetDaySpectralData = DCount("*", "[tmpSpectralData]")
-    # End if
-    'End if
-    End Function
-
-
-    """
-
+    # remove any incomplete records, cannot be used in calculations
+    stSQL = """DELETE FROM tmpSpectralData
+        WHERE IRRef IS NULL OR VISRef IS NULL
+        OR IRData IS NULL OR VISData IS NULL;"""
+    curD.execute(stSQL)
+    return countTableFieldItems('tmpSpectralData', 'ID')
 
 def countOfSheetRows(sheetID):
     """
