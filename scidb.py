@@ -1334,7 +1334,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
     return value is the number of records remaining in the table after invalid ones removed
      other combinations give undefined results
     """
-    curD.execute('DELETE FROM "tmpSpectralData"')
+    curD.execute('DELETE FROM tmpSpectralData')
 
     iHowManySeries = 0 # default unless conditions met
     if iRefStation != 0:
@@ -1396,6 +1396,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         GROUP BY tmpSpectralData.Timestamp = tSD.Timestamp
         HAVING (tmpSpectralData.Timestamp != tSD.Timestamp);"""
         fTimeSpacing = curD.execute(stSQL).fetchone()['RefTimestampSpacing']
+        fTimeSpacing = fTimeSpacing / 2
     print 'fTimeSpacing', fTimeSpacing # testing
     For iDs in range(3): # we are going to do almost exactly the same thing up
         # to 3 times, for the additional data series
@@ -1420,26 +1421,32 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
             stFldNm = "VISData"
 
         # put into tmpSpectralDataForUpdate any timestamps for the station/series
-        curD.execute('DELETE FROM "tmpSpectralDataForUpdate"')
-
+        # collect data for the same time range as the first series, but
+        # enlarged by +/- fTimeSpacing, to be sure to include all data that might possibly match
+        curD.execute('DELETE FROM tmpSpectralDataForUpdate')
+        stSQL = """INSERT INTO tmpSpectralDataForUpdate ( NearTimestamp, ValForUpdate )
+        SELECT Data.UTTimestamp, Data.Value
+        FROM ChannelSegments LEFT JOIN Data
+        ON ChannelSegments.ChannelID = Data.ChannelID
+        WHERE ChannelSegments.StationID = {iSt}
+        AND ChannelSegments.SeriesID = {iSe})
+        AND Data.UTTimestamp >= DATETIME('{dBe}', '-{fTs} days')
+        AND Data.UTTimestamp < DATETIME('{dEn}', '+{fTs} days')
+        AND Data.UTTimestamp >= ChannelSegments.SegmentBegin
+        AND Data.UTTimestamp < COALESCE(ChannelSegments.SegmentEnd, datetime("now"))
+        AND Data.Use) = 1
+        ORDER BY Data.UTTimestamp;""".format(iSt=iStation, iSe=iSeries,
+                dBe=datetimeBegin, dEn=datetimeEnd, fTs=fTimeSpacing * 2)
+        
     return recCt # for testing
 
     tmpComments = """
 
-        # collect data for day previous, current day, and day following; all that might possibly match
         For lngDayOffset = -1 To 1
          # make table name e.g. "Data_2010-05-22"
          stTblNm = "Data_" & Format(DateAdd("d", lngDayOffset, dateCur), "yyyy-mm-dd")
          if ValidTable(stTblNm): # build & run SQL statement, will test later if there were any records
 
-          stSQL = "INSERT INTO tmpSpectralDataForUpdate ( NearTimestamp, ValForUpdate ) " & _
-               "SELECT Data.UTTimestamp, Data.Value " & _
-               "FROM ChannelSegments LEFT JOIN Data " & _
-               "ON ChannelSegments.ChannelID = Data.ChannelID " & _
-               "WHERE (((ChannelSegments.StationID) = " & iStation & ") " & _
-               "And ((ChannelSegments.SeriesID) = " & iSeries & ") " & _
-               "And ((Data.Use) = 1)) " & _
-               "ORDER BY Data.UTTimestamp;"
 
           Debug.Print stSQL
           DoCmd.SetWarnings False
