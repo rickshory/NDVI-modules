@@ -1495,29 +1495,26 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
             print stSQL
             curD.execute(stSQL)
 
+            if iHowManySeries == 2: # if we were only to add on VIS, we are done
+                stSQL = """DELETE FROM tmpSpectralData
+                    WHERE IRRef IS NULL OR VISRef IS NULL;"""
+                curD.execute(stSQL)
+                if boolUseNormalRef == 0: # was generated as if Dat were Ref, now move fields over
+                    stSQL = """UPDATE tmpSpectralData
+                        SET IRData = IRRef,
+                        VISData = VISRef
+                        SET IRRef = NULL,
+                        VISRef = NULL;"""
+                    curD.execute(stSQL)
+                return countTableFieldItems('tmpSpectralData', 'ID')
+    # next of IR or VIS data column
+    # done with iterations over iDs
+    
     return recCt # for testing
 
     tmpComments = """
-         
-        
-         
-       
-        End if # any tmpSpectralDataForUpdate records
-        
-        if iHowManySeries == 2: # if we were only to add on VIS, we are done
-         DoCmd.SetWarnings False
-         DoCmd.RunSQL "DELETE * FROM tmpSpectralData WHERE (((IRRef) Is Null) OR ((VISRef) Is Null));"
-         DoCmd.SetWarnings True
-         if boolUseNormalRef == 0: # was generated as if Dat were Ref, now move fields over
-          DoCmd.SetWarnings False
-          DoCmd.RunSQL "UPDATE tmpSpectralData " & _
-               "SET [tmpSpectralData].IRData = [IRRef], [tmpSpectralData].VISData = [VISRef];"
-          DoCmd.RunSQL "UPDATE tmpSpectralData " & _
-               "SET [tmpSpectralData].IRRef = Null, [tmpSpectralData].VISRef = Null;"
-          DoCmd.SetWarnings True
-         End if
-         GetDaySpectralData = DCount("*", "[tmpSpectralData]")
-         Exit Function
+                 
+
         End if
        Next iDs # next of IR or VIS data column
       
