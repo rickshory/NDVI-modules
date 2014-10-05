@@ -1398,7 +1398,7 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
         fTimeSpacing = curD.execute(stSQL).fetchone()['RefTimestampSpacing']
         fTimeSpacing = fTimeSpacing / 2
     print 'fTimeSpacing', fTimeSpacing # testing
-    For iDs in range(3): # we are going to do almost exactly the same thing up
+    for iDs in range(3): # we are going to do almost exactly the same thing up
         # to 3 times, for the additional data series
         if iDs == 0:
             if boolUseNormalRef == 1:
@@ -1451,19 +1451,22 @@ def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
             
             # fill temporary table
             curD.execute('DELETE FROM tmpSpectralDataToUpdate')
+            stSQL = """INSERT INTO tmpSpectralDataToUpdate
+            (SpectID, TimeDifference, ValForUpdate)
+            SELECT tmpSpectralData.ID AS SpectID,
+            ABS(JULIANDAY(tmpSpectralData.Timestamp)-
+            JULIANDAY(tmpSpectralDataForUpdate.NearTimestamp)) AS TimeDifference,
+            tmpSpectralDataForUpdate.ValForUpdate
+            FROM tmpSpectralDataForUpdate, tmpSpectralData
+            WHERE TimeDifference<={fTs}));
+            """.format(fTs=fTimeSpacing)
+            print stSQL
+            curD.execute(stSQL)
         
     return recCt # for testing
 
     tmpComments = """
          
-         stSQL = "INSERT INTO tmpSpectralDataToUpdate ( SpectID, TimeDifference, ValForUpdate ) " & _
-              "SELECT CLng([tmpSpectralData].[ID]) AS SpectID, " & _
-              "Abs([tmpSpectralData]![Timestamp]-" & _
-              "[tmpSpectralDataForUpdate]![NearTimestamp]) AS TimeDifference, " & _
-              "[tmpSpectralDataForUpdate].ValForUpdate " & _
-              "FROM tmpSpectralDataForUpdate, tmpSpectralData " & _
-              "WHERE (((Abs([tmpSpectralData]![Timestamp]-" & _
-              "[tmpSpectralDataForUpdate]![NearTimestamp]))<=" & fTimeSpacing & "));"
          
     #     Debug.Print stSQL
          DoCmd.SetWarnings False
