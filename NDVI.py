@@ -1118,8 +1118,6 @@ class NDVIPanel(wx.Panel):
         print 'create dataset'
         
         """
-        check that at least one date is selected
-        check that at least one station is selected
         if UseReference:
             check that reference Station, IR & Vis series are selected
         if UseOnlyValidNDVI:
@@ -1157,11 +1155,21 @@ class NDVIPanel(wx.Panel):
                         #errors including missing/invalid CalcName
         # check that at least one date is selected
         stSQL = 'SELECT CalcDate FROM NDVIcalcDates WHERE CalcID = ? ORDER BY CalcDate'
-        dateRecs = scidb.curD.execute(stSQL, (self.calcDict['ID'],)).fetchall()
-        if len(dateRecs) == 0:
+        recs = scidb.curD.execute(stSQL, (self.calcDict['ID'],)).fetchall()
+        if len(recs) == 0:
             wx.MessageBox('Please select at least one date you want data for.' % maxLen, 'missing',
                 wx.OK | wx.ICON_INFORMATION)
             return
+        lDates = [r['CalcDate'] for r in recs]
+        
+        # check that at least one station selected
+        stSQL = 'SELECT StationID FROM NDVIcalcStations WHERE CalcID = ? ORDER BY StationID'
+        recs = scidb.curD.execute(stSQL, (self.calcDict['ID'],)).fetchall()
+        if len(recs) == 0:
+            wx.MessageBox('Please select at least one station you want data for.' % maxLen, 'missing',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+        lStaIDs = [r['StationID'] for r in recs]
 
             
         
