@@ -1118,7 +1118,6 @@ class NDVIPanel(wx.Panel):
         print 'create dataset'
         
         """
-        check that CalcName is valid
         check that at least one date is selected
         check that at least one station is selected
         if UseReference:
@@ -1148,6 +1147,16 @@ class NDVIPanel(wx.Panel):
             datStation, datIR, datVis
             
         """
+        if self.calcDict['ID'] == None:
+            stMsg = 'This is a new empty panel.\nIf you really want to use it, Save it first.'
+            dlg = wx.MessageDialog(self, stMsg, 'Empty')
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            return
+        self.SavePanel() # attempt to save panel, will catch
+                        #errors including missing/invalid CalcName
+        # check that at least one date is selected
+        
 
 class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
