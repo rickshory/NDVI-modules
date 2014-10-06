@@ -1157,7 +1157,7 @@ class NDVIPanel(wx.Panel):
         stSQL = 'SELECT CalcDate FROM NDVIcalcDates WHERE CalcID = ? ORDER BY CalcDate'
         recs = scidb.curD.execute(stSQL, (self.calcDict['ID'],)).fetchall()
         if len(recs) == 0:
-            wx.MessageBox('Please select at least one date you want data for.' % maxLen, 'missing',
+            wx.MessageBox('Please select at least one date you want data for.', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
             return
         lDates = [r['CalcDate'] for r in recs]
@@ -1166,10 +1166,27 @@ class NDVIPanel(wx.Panel):
         stSQL = 'SELECT StationID FROM NDVIcalcStations WHERE CalcID = ? ORDER BY StationID'
         recs = scidb.curD.execute(stSQL, (self.calcDict['ID'],)).fetchall()
         if len(recs) == 0:
-            wx.MessageBox('Please select at least one station you want data for.' % maxLen, 'missing',
+            wx.MessageBox('Please select at least one station you want data for.', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
             return
         lStaIDs = [r['StationID'] for r in recs]
+
+        # if UseRef, check that reference Station, IR & Vis series are selected
+        if self.calcDict['UseRef'] == 1:
+            if self.calcDict['RefStationID'] == None:
+                wx.MessageBox('Please select the Reference station.', 'Missing',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            if self.calcDict['IRRefSeriesID'] == None:
+                wx.MessageBox('Please select the reference Infrared data series.', 'Missing',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            if self.calcDict['VISRefSeriesID'] == None:
+                wx.MessageBox('Please select the reference Visible data series.', 'Missing',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+
+                
 
             
         
