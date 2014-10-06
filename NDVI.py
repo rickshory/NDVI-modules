@@ -1156,6 +1156,14 @@ class NDVIPanel(wx.Panel):
         self.SavePanel() # attempt to save panel, will catch
                         #errors including missing/invalid CalcName
         # check that at least one date is selected
+        stSQL = 'SELECT CalcDate FROM NDVIcalcDates WHERE CalcID = ? ORDER BY CalcDate'
+        dateRecs = scidb.curD.execute(stSQL, (self.calcDict['ID'],)).fetchall()
+        if len(dateRecs) == 0:
+            wx.MessageBox('Please select at least one date you want data for.' % maxLen, 'missing',
+                wx.OK | wx.ICON_INFORMATION)
+            return
+
+            
         
 
 class NDVIFrame(wx.Frame):
