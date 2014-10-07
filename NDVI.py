@@ -1125,6 +1125,8 @@ class NDVIPanel(wx.Panel):
             return
         self.SavePanel() # attempt to save panel, will catch
                         #errors including missing/invalid CalcName
+        # display panel, including any automatic correction/formatting
+        self.FillNDVISetupPanelFromCalcDict()
         # check that at least one date is selected
         stSQL = 'SELECT CalcDate FROM NDVIcalcDates WHERE CalcID = ? ORDER BY CalcDate'
         recs = scidb.curD.execute(stSQL, (self.calcDict['ID'],)).fetchall()
