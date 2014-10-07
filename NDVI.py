@@ -1196,10 +1196,21 @@ class NDVIPanel(wx.Panel):
                 self.tcNDVIvalidMax.SetFocus()
                 return
 
+        # Check that clear day has been entered
+        if self.calcDict['ClearDay'] == None:
+            wx.MessageBox('Please enter a date that was clear ' \
+                'during the cutoff hours +/- solar noon.\n' \
+                'After you select a Reference station and IR series, you can ' \
+                'float over the Dates list to preview daily irradiance traces. ' \
+                'Clear days have a bell-shaped curve.\nIf curves are not ' \
+                'centered, make sure you have Longitude entered correctly using ' \
+                'the Stations module.', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.tcClearDay.SetFocus()
+            return
+
         validation = """
-                Check that clear day has been entered
-        if not, give clue about floatover to preview
-        if not centered correctly, give clue about Longitude
+                
         if Excel output:
             check for duplicate sheetnames in first 25 characters
         get column header strings:
