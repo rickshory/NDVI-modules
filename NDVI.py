@@ -1118,8 +1118,7 @@ class NDVIPanel(wx.Panel):
         print 'create dataset'
         
         """
-        if UseReference:
-            check that reference Station, IR & Vis series are selected
+
         if UseOnlyValidNDVI:
             check that min is less than max
         Check that clear day has been entered
@@ -1176,20 +1175,55 @@ class NDVIPanel(wx.Panel):
             if self.calcDict['RefStationID'] == None:
                 wx.MessageBox('Please select the Reference station.', 'Missing',
                     wx.OK | wx.ICON_INFORMATION)
+                self.cbxRefStationID.SetFocus()
                 return
             if self.calcDict['IRRefSeriesID'] == None:
-                wx.MessageBox('Please select the reference Infrared data series.', 'Missing',
+                wx.MessageBox('Please select the reference Infrared series.', 'Missing',
                     wx.OK | wx.ICON_INFORMATION)
+                self.cbxIRRefSeriesID.SetFocus()
                 return
             if self.calcDict['VISRefSeriesID'] == None:
-                wx.MessageBox('Please select the reference Visible data series.', 'Missing',
+                wx.MessageBox('Please select the reference Visible series.', 'Missing',
                     wx.OK | wx.ICON_INFORMATION)
+                self.cbxVISRefSeriesID.SetFocus()
                 return
 
-                
+        # check that IR data series is selected
+        if self.calcDict['IRDataSeriesID'] == None:
+            wx.MessageBox('Please select the data Infrared series.', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.cbxIRDataSeriesID.SetFocus()
+            return
 
-            
-        
+        # check that VIS data series is selected
+        if self.calcDict['VisDataSeriesID'] == None:
+            wx.MessageBox('Please select the data Visible series.', 'Missing',
+                wx.OK | wx.ICON_INFORMATION)
+            self.cbxVisDataSeriesID.SetFocus()
+            return
+
+        # if UseOnlyValidNDVI, check that min & max are entered, and min is less than max
+        if self.calcDict['UseOnlyValidNDVI'] == 1:
+            if self.calcDict['NDVIvalidMin'] == None:
+                wx.MessageBox('Please enter the minimum for NDVI (or un-check ' \
+                        '"Use only ... <= NDVI <= ...").', 'Missing',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.tcNDVIvalidMin.SetFocus()
+                return
+            if self.calcDict['NDVIvalidMax'] == None:
+                wx.MessageBox('Please enter the maximum for NDVI (or un-check ' \
+                        '"Use only ... <= NDVI <= ...").', 'Missing',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.tcNDVIvalidMax.SetFocus()
+                return
+            if self.calcDict['NDVIvalidMax'] <= self.calcDict['NDVIvalidMin']:
+                wx.MessageBox('Maximim NDVI cutoff must be greater than ' \
+                        'minimum.', 'Invalid',
+                    wx.OK | wx.ICON_INFORMATION)
+                self.tcNDVIvalidMax.SetFocus()
+                return
+
+
 
 class NDVIFrame(wx.Frame):
     def __init__(self, parent, id, title):
