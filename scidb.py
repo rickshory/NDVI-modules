@@ -952,11 +952,18 @@ def getDateFromTC(objTextControl, default = None):
     """
     dt = wx.DateTime() # Uninitialized datetime
     DateValid = dt.ParseDate(objTextControl.GetValue())
-    if DateValid == -1: # invalid date
-        return default
-    else: # store in standard format
+    if DateValid != -1: # valid date
+        # store in standard format
         return dt.Format('%Y-%m-%d')
-
+    else:
+        # try once more as datetime
+        DateTimeValid = dt.ParseDateTime(objTextControl.GetValue())
+        if DateTimeValid != -1: # valid datetime
+            # store in standard date format
+            return dt.Format('%Y-%m-%d')
+        else:
+            return default
+        
 def getDateTimeFromTC(objTextControl, default = None):
     """
     Given a wx text control, returns the contents converted to a string in standard UNIX
