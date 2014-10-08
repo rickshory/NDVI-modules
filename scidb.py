@@ -3,6 +3,14 @@ import sys, re
 datConn = None
 tmpConn = None
 
+def stringOKForSpreadsheetName(st):
+    """
+    Excel sheet names can't contain :\/?*[]
+    returns string with these replaced by underscore
+    If longer than 25 characters, returns only 1st 25
+    """
+    return st.translate('_', ':\/?*[]')[:25]
+
 try:
     datConn = sqlite3.connect('sci_data.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
     # importing the 'datetime' module declares some new SQLite field types: 'date' and 'timestamp'
@@ -19,6 +27,7 @@ try:
     datConn.execute('pragma auto_vacuum=ON')
     datConn.text_factory = str
     datConn.row_factory = sqlite3.Row
+    datConn.create_function("SpreadsheetName", 1, stringOKForSpreadsheetName)
 
     curD = datConn.cursor()
     # assure the Equation of Time table exists and is filled
@@ -427,6 +436,10 @@ try:
         "ValForUpdate" FLOAT
         );
 
+        CREATE TABLE IF NOT EXISTS "testBadStrings" (
+        "ID" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE,
+        "LongName" VARCHAR(100) NOT NULL UNIQUE
+        );
 
         """)
 
@@ -1290,6 +1303,19 @@ def testGD(stDCur = '2010-06-13', stBegin = '2010-06-13 10:00:00', stEnd = '2010
     result = GetDaySpectralData(dCur, dtBegin, dtEnd,
             refSt, irRef, visRef, datSt, irDat, visDat)
     print 'GetDaySpectralData return:', result
+
+def testLS():
+    stSQL = """SELECT testBadStrings.LongName,
+    SpreadsheetName(testBadStrings.LongName AS Fixed)
+    FROM testBadStrings"""
+    curD.execute(stSQL)
+    recs = curD.fetchall()
+    if len(recs) == 0:
+        print "No results"
+        return
+    for rec in recs:
+        print "Original:" , rec['LongName']
+        print "Fixed;", rec['Fixed']
 
 
 def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,

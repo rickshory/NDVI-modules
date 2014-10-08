@@ -1153,26 +1153,26 @@ class NDVIPanel(wx.Panel):
                 self.cbxRefStationID.SetFocus()
                 return
             if self.calcDict['IRRefSeriesID'] == None:
-                wx.MessageBox('Please select the reference Infrared series.', 'Missing',
+                wx.MessageBox('Please select the Series that includes IR for the reference station.', 'Missing',
                     wx.OK | wx.ICON_INFORMATION)
                 self.cbxIRRefSeriesID.SetFocus()
                 return
             if self.calcDict['VISRefSeriesID'] == None:
-                wx.MessageBox('Please select the reference Visible series.', 'Missing',
+                wx.MessageBox('Please select the Series that includes Visible for the reference station.', 'Missing',
                     wx.OK | wx.ICON_INFORMATION)
                 self.cbxVISRefSeriesID.SetFocus()
                 return
 
         # check that IR data series is selected
         if self.calcDict['IRDataSeriesID'] == None:
-            wx.MessageBox('Please select the data Infrared series.', 'Missing',
+            wx.MessageBox('Please select the Series that includes IR for the data stations.', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
             self.cbxIRDataSeriesID.SetFocus()
             return
 
         # check that VIS data series is selected
         if self.calcDict['VisDataSeriesID'] == None:
-            wx.MessageBox('Please select the data Visible series.', 'Missing',
+            wx.MessageBox('Please select the Series that includes Visible for the data stations.', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
             self.cbxVisDataSeriesID.SetFocus()
             return
