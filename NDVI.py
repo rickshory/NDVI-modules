@@ -1235,8 +1235,8 @@ class NDVIPanel(wx.Panel):
             if len(recs) > 0:
                 wx.MessageBox(' Excel output uses Station names for worksheet names. \n' \
                     ' Some of these either contain invalid characters or are too long ' \
-                    '(>25).\n The names, and validated versions, will be ' \
-                    'output as a spreadsheet. Change them using the "Stations" module', 'Info',
+                    '(>25 characters).\n The names, and validated versions, will be ' \
+                    'output as a spreadsheet. Change them using the "Stations" module.', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 # implement 'outputRecordsAsSpreadsheet'
                 # at least print them
