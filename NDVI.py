@@ -1212,7 +1212,7 @@ class NDVIPanel(wx.Panel):
             return
 
         # check if everything is OK for Excel output
-        if self.calcDict['OutputFormat'] = 1: # radio button for Excel format
+        if self.calcDict['OutputFormat'] == 1: # radio button for Excel format
             # verify we can create Excel files at all
             if hasCom == False: # we tested for this at the top of this module
                 wx.MessageBox(' This operating system cannot make Excel files.\n' \
