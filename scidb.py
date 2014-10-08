@@ -1320,9 +1320,8 @@ def testLS(stSQL = """SELECT testBadStrings.LongName,
         print "No results"
         return
     for rec in recs:
-        print "Original:" , rec['LongName']
-        print "Fixed;", rec['Fixed']
-
+        for recName in rec.keys():
+            print recName, rec[recName]
 
 def GetDaySpectralData(dateCur, datetimeBegin, datetimeEnd,
                        iRefStation, iIRRefSeries, iVisRefSeries,
