@@ -3,12 +3,11 @@ import sys, re
 datConn = None
 tmpConn = None
 
-def stringOKForSpreadsheetName(st, maxLen = 25):
+def stringOKForSpreadsheetName(st):
     """
     Excel sheet names can't contain :\/?*[]
     returns string with these replaced by underscore
     If longer than 25 characters, returns only 1st 25
-    unless that length is overridden
     """
     #return st.translate('_', ':\/?*[]')[:maxLen] # no, needs 256 char translation list, and won't work with unicode
     #st = re.sub(':\/?*[]', '_', st) # no, substitutes e.g '\n' with newline, and fails with unicode
@@ -17,7 +16,7 @@ def stringOKForSpreadsheetName(st, maxLen = 25):
     s = st[:]
     for bc in badChars:
         s = s.replace(bc, '_')
-    return s[:maxLen]
+    return s[:25]
 
 try:
     datConn = sqlite3.connect('sci_data.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
