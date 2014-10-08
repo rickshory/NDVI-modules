@@ -1213,24 +1213,29 @@ class NDVIPanel(wx.Panel):
 
         # check if everything is OK for Excel output
         if self.calcDict['OutputFormat'] == 1: # radio button for Excel format
+            print 'in Excel validation'
             # verify we can create Excel files at all
             if hasCom == False: # we tested for this at the top of this module
                 wx.MessageBox(' This operating system cannot make Excel files.\n' \
                     ' Choose another option under "Output As:"', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 return
+            print 'passed validation for being able to make Excel files'
             # check for invalid worksheet names
             stStationIDs = ",".join(str(n) for n in lStaIDs)
+            print 'Station IDs to check', stStationIDs
             stSQL = """SELECT StationName,
             SpreadsheetName(StationName) AS ValidName
             FROM Stations WHERE ID IN ({sSs})
             AND StationName != ValidName;
             """.format(sSs=stStationIDs)
+            print stSQL
             recs = scidb.curD.execute(stSQL).fetchall()
+            print 'number of invalid Station names found', len(recs)
             if len(recs) > 0:
                 wx.MessageBox(' Excel output uses Station names for worksheet names. \n' \
                     ' Some of these either contain invalid characters or are too long ' \
-                    '(>25).\n The names, and validated versions will be ' \
+                    '(>25).\n The names, and validated versions, will be ' \
                     'output as a spreadsheet. Change them using the "Stations" module', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 # implement 'outputRecordsAsSpreadsheet'
