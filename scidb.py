@@ -1304,10 +1304,9 @@ def testGD(stDCur = '2010-06-13', stBegin = '2010-06-13 10:00:00', stEnd = '2010
             refSt, irRef, visRef, datSt, irDat, visDat)
     print 'GetDaySpectralData return:', result
 
-def testLS():
-    stSQL = """SELECT testBadStrings.LongName,
-    SpreadsheetName(testBadStrings.LongName AS Fixed)
-    FROM testBadStrings"""
+def testLS(stSQL = """SELECT testBadStrings.LongName,
+    SpreadsheetName(testBadStrings.LongName) AS Fixed
+    FROM testBadStrings"""):
     curD.execute(stSQL)
     recs = curD.fetchall()
     if len(recs) == 0:
