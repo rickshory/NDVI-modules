@@ -1249,20 +1249,21 @@ class NDVIPanel(wx.Panel):
 #                    wx.OK | wx.ICON_INFORMATION)
                 return
             
-
-
+        print ">>>>validation complete"
+        # get column header strings
+        if self.calcDict['UseRef'] == 1:
+            stIRRefTxt = self.cbxIRRefSeriesID.GetStringSelection()
+            stVISRefTxt = self.cbxVISRefSeriesID.GetStringSelection()
+        stIRDatTxt = self.cbxIRDataSeriesID.GetStringSelection()
+        stVISDatTxt = self.cbxVisDataSeriesID.GetStringSelection()
+        # check
+        print 'stIRRefTxt', stIRRefTxt
+        print 'stVISRefTxt', stVISRefTxt
+        print 'stIRDatTxt', stIRDatTxt
+        print 'stVISDatTxt', stVISDatTxt
+        
         validation = """
                 
-        if Excel output:
-            check for duplicate sheetnames in first 25 characters
-        get column header strings:
-            if UseRef:
-                get for IR ref
-                get for vis ref
-            get for IR data
-            get for vis data
-        get Stations list
-        get Dates list
         get high and low cutoffs based on clear day, for IR and vis
         write fn 'GetHighLowCutoffs' that gets numbers based on the percent high and low cutoffs for
             a station/series/clearDay. Can use with either ref or data series.
@@ -1271,6 +1272,550 @@ class NDVIPanel(wx.Panel):
             date, beginTime, endTime,
             refStation, refIR, refVis,
             datStation, datIR, datVis
+'calculations used by most options:
+If boolUseReference Then
+ lngRefStationID = Me!cbxSelRefStation
+ 'look for longitude for logger
+ ' if no valid longitude, fn returns NULL
+ varLocLongitude = GetLongitude(Me!cbxSelRefStation, True)
+ ' get strings that will be spectral band columns headings
+ stIRRefTxt = "" & Me!cbxSelIRRefSeries.Column(1)
+ stVISRefTxt = "" & Me!cbxSelVISRefSeries.Column(1)
+Else
+ lngRefStationID = 0
+End If
+stIRDatTxt = "" & Me!cbxSelIRDataSeries.Column(1)
+stVISDatTxt = "" & Me!cbxSelVISDataSeries.Column(1)
+
+'if a plus/minus hour cutoff is entered use it, otherwise 12 hours (all day)
+If IsNumeric(Me!txbHoursPlusMinusSolarNoon) Then
+ dblPlusMinusHourCutoff = Me!txbHoursPlusMinusSolarNoon
+Else
+ dblPlusMinusHourCutoff = 12
+End If
+
+'if IR and VIS functions provided use them, otherwise default to raw bands
+' maybe better test for valid functions
+stTmp1 = Trim(Me!txbIRFunction)
+If stTmp1 <> "" Then
+ stIFn = stTmp1
+Else
+ stIFn = "=i"
+End If
+stTmp1 = Trim(Me!txbVISFunction)
+If stTmp1 <> "" Then
+ stVFn = stTmp1
+Else
+ stVFn = "=v"
+End If
+
+lngSheetCt = 1
+ boolHasSAS = False 'default
+ Select Case Me!cbxSelTask
+   
+  Case 2 ' chart daily IR reference
+   If dblPlusMinusHourCutoff < 12 Then
+    If MsgBox("The +/- hour cutoff is set to < 12. This will only chart the central " & _
+         dblPlusMinusHourCutoff * 2 & " hours of each day." & vbCr & vbCr & _
+         "(To chart complete days, set this to 12.)" & vbCr & vbCr & _
+         " Do you want to continue?", vbYesNo, "Check This") = vbNo Then Exit Sub
+   End If
+   For Each varItm In Me!lsbDates.ItemsSelected
+    dtTmp1 = GetBeginEndTimes(Me!lsbDates.ItemData(varItm), varLocLongitude, _
+         dblPlusMinusHourCutoff, dtBegin, dtEnd)
+    
+    If GetDaySpectralData(dtCur:=dtTmp1, dtBeginTime:=dtBegin, dtEndTime:=dtEnd, _
+         lngRefStationID:=lngRefStationID, _
+         lngIRRefSeries:=Me!cbxSelIRRefSeries, lngVISRefSeries:=0, _
+         lngDataStationID:=0, _
+         lngIRDataSeries:=0, lngVISDataSeries:=0) > 0 Then
+'     Set rst = CurrentDb.OpenRecordset("SELECT * FROM _tmp_SpectralData ORDER BY TimeStamp;", dbOpenSnapshot)
+    
+    
+'    If GetDayIRRefData(dtTmp1, Me!cbxSelRefStation, Me!cbxSelIRRefSeries, dtBegin, dtEnd) > 0 Then
+     stSQL = "SELECT [_tmp_SpectralData].Timestamp, [_tmp_SpectralData].IRRef " & _
+          "FROM _tmp_SpectralData ORDER BY [_tmp_SpectralData].Timestamp;"
+     Set rst = CurrentDb.OpenRecordset(stSQL, dbOpenSnapshot)
+      ' put into a spreadsheet
+      stSheetName = Format(dtTmp1, "yyyy-mm-dd")
+      Set XL = SetupExcelWorkbook(lngSheetCt, XL) 'either creates new or adds sheet to existing, returns with ActiveSheet blank
+      If lngSheetCt = 1 Then
+       InsertMetadataIntoCurrentSheet XL, lngSheetCt, _
+            lngJobEndSheetRow, lngJobEndSheetCol, _
+            lngJobElapsedSheetRow, lngJobElapsedSheetCol
+      End If
+      XL.ActiveSheet.Name = stSheetName
+      lngRw = 0
+      lngRw = lngRw + 1
+      XL.ActiveSheet.Cells(lngRw, 1).Value = "Timestamp"
+      XL.ActiveSheet.Cells(lngRw, 2).Value = stIRRefTxt
+      
+      Do Until rst.EOF
+       lngRw = lngRw + 1
+       XL.ActiveSheet.Cells(lngRw, 1).Value = rst!Timestamp
+       XL.ActiveSheet.Cells(lngRw, 2).Value = rst!IRRef
+       rst.MoveNext
+      Loop
+      rst.Close
+      Set rst = Nothing
+      XL.Columns("A:A").NumberFormat = "yyyy-mm-dd hh:mm:ss"
+     
+      XL.Charts.Add
+      XL.ActiveChart.ChartType = xlXYScatterLinesNoMarkers
+      XL.ActiveChart.SetSourceData Source:=XL.Sheets("" & stSheetName).Range("A1:A" & lngRw & ",B1:B" & lngRw & ""), _
+          PlotBy:=xlColumns
+      XL.ActiveChart.Location WHERE:=xlLocationAsObject, Name:=stSheetName
+      With XL.ActiveChart
+          .PlotArea.ClearFormats 'no background, better for sci pubs
+          .HasTitle = False
+          .Axes(xlCategory, xlPrimary).HasTitle = False
+          .Axes(xlValue, xlPrimary).HasTitle = False
+      End With
+      XL.ActiveChart.HasLegend = True
+      
+      With XL.ActiveChart.Axes(xlCategory)
+          .TickLabels.ReadingOrder = xlContext
+          .TickLabels.Orientation = xlUpward
+          .MinimumScaleIsAuto = True
+          .MaximumScaleIsAuto = True
+          .MinorUnitIsAuto = True
+          .MajorUnit = 0.25
+          .Crosses = xlAutomatic
+          .ReversePlotOrder = False
+          .ScaleType = xlLinear
+          .DisplayUnit = xlNone
+      End With
+      
+      lngSheetCt = lngSheetCt + 1
+    End If ' there were records for this date
+   Next 'date to display data for
+   
+  Case 3, 6, 7, 8, 13, 16, 17, 18
+  '3 = NDVI details
+  '6 = NDVI summary
+  '7 = same as 6 and also output a workbook for SAS
+  '8 = same as 7, but adjusted so whole-season minimum=0, maximum=1
+  '13 = same as 3 except no reference
+  '16 = same as 6 except no reference
+  '17 = same as 7 except no reference
+  '18 = same as 8 except no reference
+
+  'stSummaryShtNm
+   Dim XL_SAS As Object, lngShNumSAS As Long, stSheetNameSAS As String, lngRowSAS As Long
+   lngShNumSAS = 0
+   lngRowSAS = 0
+   
+   lngTotStationsToDo = Me!lsbDataStations.ItemsSelected.Count
+   lngTotDaysToDo = Me!lsbDates.ItemsSelected.Count
+   lngNumStationsDone = 0
+   
+   Select Case Me!Opt1ClrDayVsSetTholds
+    Case 1 'base thresholds on percent of maximum for clear day
+     'calculate the references here, to use for all loggers
+     dblTmp1 = GetHighLowCutoffs_RtnMax(Me!RefStationID, Me!IRRefSeries, _
+          Me!ThresholdPctLow, Me!ThresholdPctHigh, dblIRRefLowCutoff, dblIRRefHighCutoff, Me!ClearDay)
+     dblTmp1 = GetHighLowCutoffs_RtnMax(Me!RefStationID, Me!VISRefSeries, _
+          Me!ThresholdPctLow, Me!ThresholdPctHigh, dblVISRefLowCutoff, dblVISRefHighCutoff, Me!ClearDay)
+'     Debug.Print "Ref cutoffs, IRlow, " & dblIRRefLowCutoff & ", IRhigh, " & dblIRRefHighCutoff & _
+          ", VISlow, " & dblVISRefLowCutoff & ", VIShigh, " & dblVISRefHighCutoff
+     'calculate the data cutoffs later, for each logger
+    Case 2 ' use explicit stored values for thresholds
+     dblIRRefCutoff = Me![txbIRRefCutoff]
+     dblVISRefCutoff = Me![txbVISRefCutoff]
+     dblIRDatCutoff = Me![txbIRDatCutoff]
+     dblVISDatCutoff = Me![txbVISDatCutoff]
+   End Select
+   
+   For Each varItm In Me!lsbDataStations.ItemsSelected
+    lngNumStationsDone = lngNumStationsDone + 1
+    lngNumDaysDone = 0
+    Me!txbProgress = " Doing station " & lngNumStationsDone & " of " & lngTotStationsToDo & _
+         ", day " & lngNumDaysDone & " of " & lngTotDaysToDo
+    Me.Repaint
+    DoEvents
+
+   ' MsgBox "ID " & Me!lsbDataStations.ItemData(varItm)
+    lngDataStationID = Me!lsbDataStations.ItemData(varItm)
+    stDataStation = DLookup("StationName", "Stations", "ID=" & lngDataStationID)
+    If Me!Opt1ClrDayVsSetTholds = 1 Then
+     dblTmp1 = GetHighLowCutoffs_RtnMax(lngDataStationID, Me!IRDataSeries, _
+          Me!ThresholdPctLow, Me!ThresholdPctHigh, dblIRDatLowCutoff, dblIRDatHighCutoff, Me!ClearDay)
+     dblTmp1 = GetHighLowCutoffs_RtnMax(lngDataStationID, Me!VISDataSeries, _
+          Me!ThresholdPctLow, Me!ThresholdPctHigh, dblVISDatLowCutoff, dblVISDatHighCutoff, Me!ClearDay)
+'     Debug.Print "cutoffs, " & stDataStation & ", IRlow, " & dblIRDatLowCutoff & ", IRhigh, " & dblIRDatHighCutoff & _
+          ", VISlow, " & dblVISDatLowCutoff & ", VIShigh, " & dblVISDatHighCutoff
+    End If
+    stBaseShtNm = stDataStation
+    Set XL = SetupExcelWorkbook(lngSheetCt, XL) 'either creates new or adds sheet to existing, returns with ActiveSheet blank
+    If lngSheetCt = 1 Then
+     InsertMetadataIntoCurrentSheet XL, lngSheetCt, _
+          lngJobEndSheetRow, lngJobEndSheetCol, _
+          lngJobElapsedSheetRow, lngJobElapsedSheetCol
+    End If
+    stBaseShtNm = StringCleanForSpreadsheetName(stBaseShtNm)
+    stBaseShtNm = Left(stBaseShtNm, 30)
+    XL.ActiveSheet.Name = stBaseShtNm
+    lngRw = 0
+    lngRw = lngRw + 1
+    With XL.Sheets(stBaseShtNm)
+     .Cells(lngRw, 1).Value = "Timestamp"
+     If boolUseReference Then
+      .Cells(lngRw, 2).Value = stIRRefTxt & "_Ref"
+      .Cells(lngRw, 3).Value = stVISRefTxt & "_Ref"
+      .Cells(lngRw, 6).Value = "IR ref"
+      .Cells(lngRw, 7).Value = "VIS ref"
+     End If
+     .Cells(lngRw, 4).Value = stIRDatTxt & "_Data"
+     .Cells(lngRw, 5).Value = stVISDatTxt & "_Data"
+     .Cells(lngRw, 8).Value = "IR data"
+     .Cells(lngRw, 9).Value = "VIS data"
+     .Cells(lngRw, 10).Value = "use"
+     .Cells(lngRw, 11).Value = "NDVI"
+    End With
+    
+    If Me!cbxSelTask = 6 Or Me!cbxSelTask = 7 Or Me!cbxSelTask = 8 _
+         Or Me!cbxSelTask = 16 Or Me!cbxSelTask = 17 Or Me!cbxSelTask = 18 Then   'summary
+     stSummaryShtNm = stDataStation & " summary"
+     stSummaryShtNm = StringCleanForSpreadsheetName(stSummaryShtNm)
+     stSummaryShtNm = Left(stSummaryShtNm, 30)
+     
+     'XL.Sheets.Add
+     'add new sheet, becomes ActiveSheet; this is the one we will see
+     lngSheetCt = lngSheetCt + 1
+     Set XL = SetupExcelWorkbook(lngSheetCt, XL)
+     XL.ActiveSheet.Name = stSummaryShtNm
+     lngSummaryRw = 1
+     With XL.Sheets(stSummaryShtNm)
+      .Cells(lngSummaryRw, 1).Value = "Date"
+      .Cells(lngSummaryRw, 2).Value = "Avg"
+      .Cells(lngSummaryRw, 3).Value = "StDev"
+      .Cells(lngSummaryRw, 4).Value = "Count"
+      .Cells(lngSummaryRw, 5).Value = "Use?"
+      .Cells(lngSummaryRw, 6).Value = "NDVI"
+      .Cells(lngSummaryRw, 7).Value = "SEM"
+      If Me!cbxSelTask = 8 Or Me!cbxSelTask = 18 Then
+       .Cells(lngSummaryRw, 8).Value = "minNDVI"
+'       .Cells(lngSummaryRw, 9).Value = 0
+       .Cells(lngSummaryRw, 10).Value = "maxNDVI"
+'       .Cells(lngSummaryRw, 11).Value = 0
+       .Cells(lngSummaryRw, 12).Value = "relative NDVI"
+      End If
+     End With
+    End If
+    
+    If Me!cbxSelTask = 7 Or Me!cbxSelTask = 8 _
+         Or Me!cbxSelTask = 17 Or Me!cbxSelTask = 18 Then ' SAS output
+     boolHasSAS = True
+     stSheetNameSAS = "" & stDataStation
+     stSheetNameSAS = StringCleanForSpreadsheetName(stSheetNameSAS)
+     stSheetNameSAS = Left(stSheetNameSAS, 30)
+     
+     lngShNumSAS = lngShNumSAS + 1
+     Set XL_SAS = SetupExcelWorkbook(lngShNumSAS, XL_SAS)
+     XL_SAS.ActiveSheet.Name = stSheetNameSAS
+     lngRowSAS = 1
+     With XL_SAS.Sheets(stSheetNameSAS)
+      .Cells(lngRowSAS, 1).Value = "Date"
+      .Cells(lngRowSAS, 2).Value = "RefDay"
+      .Cells(lngRowSAS, 3).Value = "VI"
+      .Columns("A:A").NumberFormat = "d-mmm-yy"
+     End With
+     lngFirstSASRow = 2
+   End If
+    ' if not using a reference, get the longitude from the data set
+    If Not boolUseReference Then
+     varLocLongitude = GetLongitude(lngDataStationID, True)
+     
+    End If
+    For Each varTmp1 In Me!lsbDates.ItemsSelected
+     lngNumDaysDone = lngNumDaysDone + 1
+     Me!txbProgress = " Doing station " & lngNumStationsDone & " of " & lngTotStationsToDo & _
+          ", day " & lngNumDaysDone & " of " & lngTotDaysToDo & _
+         " (" & TimeIntervalAsStandardString(dtJobStarted, Now) & ")"
+     Me.Repaint
+     DoEvents
+
+     dtTmp1 = GetBeginEndTimes(Me!lsbDates.ItemData(varTmp1), varLocLongitude, _
+          dblPlusMinusHourCutoff, dtBegin, dtEnd)
+     If GetDaySpectralData(dtCur:=dtTmp1, dtBeginTime:=dtBegin, dtEndTime:=dtEnd, _
+          lngRefStationID:=lngRefStationID, _
+          lngIRRefSeries:=Me!cbxSelIRRefSeries, lngVISRefSeries:=Me!cbxSelVISRefSeries, _
+          lngDataStationID:=lngDataStationID, _
+          lngIRDataSeries:=Me!cbxSelIRDataSeries, lngVISDataSeries:=Me!cbxSelVISDataSeries) > 0 Then
+      Set rst = CurrentDb.OpenRecordset("SELECT * FROM _tmp_SpectralData ORDER BY TimeStamp;", dbOpenSnapshot)
+      
+      ' clear the _tmp_Values table, to store any NDVI values generated
+      DoCmd.SetWarnings False
+      DoCmd.RunSQL "DELETE * FROM _tmp_Values;"
+      DoCmd.SetWarnings True
+      
+      '
+      lngFirstRowOfSet = lngRw + 1
+      Do Until rst.EOF
+       lngRw = lngRw + 1
+       With XL.Sheets(stBaseShtNm)
+        .Cells(lngRw, 1).Value = rst!Timestamp
+        If boolUseReference Then
+         .Cells(lngRw, 2).Value = rst!IRRef
+         .Cells(lngRw, 3).Value = rst!VISref
+        End If
+        .Cells(lngRw, 4).Value = rst!IRData
+        .Cells(lngRw, 5).Value = rst!VISData
+        
+        'calculate signals to use from raw bands
+        stIRefCell = "B" & lngRw
+        stVRefCell = "C" & lngRw
+        stIDatCell = "D" & lngRw
+        stVDatCell = "E" & lngRw
+        If boolUseReference Then
+         ' IR ref signal
+         stTmp1 = ReplaceXwithYinZ("i", stIRefCell, stIFn)
+         stTmp1 = ReplaceXwithYinZ("v", stVRefCell, stTmp1)
+         .Cells(lngRw, 6).Formula = stTmp1
+         ' VIS ref signal
+         stTmp1 = ReplaceXwithYinZ("i", stIRefCell, stVFn)
+         stTmp1 = ReplaceXwithYinZ("v", stVRefCell, stTmp1)
+         .Cells(lngRw, 7).Formula = stTmp1
+        End If
+        ' IR data signal
+        stTmp1 = ReplaceXwithYinZ("i", stIDatCell, stIFn)
+        stTmp1 = ReplaceXwithYinZ("v", stVDatCell, stTmp1)
+        .Cells(lngRw, 8).Formula = stTmp1
+        ' VIS data signal
+        stTmp1 = ReplaceXwithYinZ("i", stIDatCell, stVFn)
+        stTmp1 = ReplaceXwithYinZ("v", stVDatCell, stTmp1)
+        .Cells(lngRw, 9).Formula = stTmp1
+        
+       End With
+       rst.MoveNext
+      Loop
+      lngLastRowOfSet = lngRw
+      rst.Close
+      Set rst = Nothing
+      '
+      ' band difference between readings
+      With XL.Sheets(stBaseShtNm)
+       ' NDVI
+       For lngRowPtr = lngFirstRowOfSet To lngLastRowOfSet
+        Select Case Me!Opt1ClrDayVsSetTholds
+         Case 1 'base thresholds on percent of maximum for clear day
+        
+          If (.Cells(lngRowPtr, 2).Value < dblIRRefLowCutoff And boolUseReference = True) _
+               Or (.Cells(lngRowPtr, 3).Value < dblVISRefLowCutoff And boolUseReference = True) _
+               Or .Cells(lngRowPtr, 4).Value < dblIRDatLowCutoff _
+               Or .Cells(lngRowPtr, 5).Value < dblVISDatLowCutoff _
+               Then
+           .Cells(lngRowPtr, 12).Value = "original band(s) < threshold"
+           .Cells(lngRowPtr, 10).Value = "NO"
+          ElseIf (.Cells(lngRowPtr, 2).Value > dblIRRefHighCutoff And boolUseReference = True) _
+               Or (.Cells(lngRowPtr, 3).Value > dblVISRefHighCutoff And boolUseReference = True) _
+               Or .Cells(lngRowPtr, 4).Value > dblIRDatHighCutoff _
+               Or .Cells(lngRowPtr, 5).Value > dblVISDatHighCutoff _
+               Then
+           .Cells(lngRowPtr, 12).Value = "original band(s) > threshold"
+           .Cells(lngRowPtr, 10).Value = "NO"
+          Else
+           .Cells(lngRowPtr, 10).Value = "YES"
+          End If
+         
+         Case 2 ' use explicit stored values for thresholds
+          If (.Cells(lngRowPtr, 2).Value > dblIRRefCutoff Or boolUseReference = False) _
+               And (.Cells(lngRowPtr, 3).Value > dblVISRefCutoff Or boolUseReference = False) _
+               And .Cells(lngRowPtr, 4).Value > dblIRDatCutoff _
+               And .Cells(lngRowPtr, 5).Value > dblVISDatCutoff _
+               Then
+          Else ' does not pass test of original bands' cutoff values
+           .Cells(lngRowPtr, 12).Value = "original band(s) < threshold"
+           .Cells(lngRowPtr, 10).Value = "NO"
+          End If
+         
+        End Select
+         
+        If .Cells(lngRowPtr, 10).Value = "YES" Then
+         'NDVI = (IR - VIS)/(IR + VIS)
+         If boolUseReference Then
+          'reflectance = data/ref
+          ' NDVI = ((IRdata/IRref) - (VISdata/VISref))/((IRdata/IRref) + (VISdata/VISref))
+          .Cells(lngRowPtr, 11).FormulaR1C1 = _
+               "=((RC[-3]/RC[-5]) - (RC[-2]/RC[-4]))/" & _
+               "((RC[-3]/RC[-5]) + (RC[-2]/RC[-4]))"
+         Else
+          ' NDVI = ((IRdata) - (VISdata))/((IRdata) + (VISdata))
+          .Cells(lngRowPtr, 11).FormulaR1C1 = _
+               "=((RC[-3]) - (RC[-2]))/" & _
+               "((RC[-3]) + (RC[-2]))"
+         
+         End If
+         
+         If (Me!UseOnlyValidNDVI = True) And (.Cells(lngRowPtr, 11).Value < Me!NDVIvalidMin) Then
+          .Cells(lngRowPtr, 12).Value = "NDVI < " & Me!NDVIvalidMin & " (" & Format(.Cells(lngRowPtr, 11).Value, "0.00") & ")"
+          .Cells(lngRowPtr, 10).Value = "NO"
+          .Cells(lngRowPtr, 11).Value = ""
+         ElseIf (Me!UseOnlyValidNDVI = True) And (.Cells(lngRowPtr, 11).Value > Me!NDVIvalidMax) Then
+           .Cells(lngRowPtr, 12).Value = "NDVI > " & Me!NDVIvalidMax & " (" & Format(.Cells(lngRowPtr, 11).Value, "0.00") & ")"
+           .Cells(lngRowPtr, 10).Value = "NO"
+           .Cells(lngRowPtr, 11).Value = ""
+         Else
+          ' store the value in the _tmp_Values table
+          DoCmd.SetWarnings False
+          DoCmd.RunSQL "INSERT INTO _tmp_Values (Val) VALUES (" & .Cells(lngRowPtr, 11).Value & ");"
+          DoCmd.SetWarnings True
+          If Me!cbxSelTask = 7 Or Me!cbxSelTask = 8 _
+               Or Me!cbxSelTask = 17 Or Me!cbxSelTask = 18 Then   ' SAS output
+           lngRowSAS = lngRowSAS + 1
+           XL_SAS.Sheets(stSheetNameSAS).Cells(lngRowSAS, 1).Value = .Cells(lngRowPtr, 1).Value
+           XL_SAS.Sheets(stSheetNameSAS).Cells(lngRowSAS, 2).Value = _
+                1 + DateDiff("d", CDate(Me!RefDay), CDate(.Cells(lngRowPtr, 1).Value))
+           XL_SAS.Sheets(stSheetNameSAS).Cells(lngRowSAS, 3).Value = .Cells(lngRowPtr, 11).Value
+          End If
+         End If
+'        Else ' does not pass test of original bands' cutoff values
+'         .Cells(lngRowPtr, 12).Value = "original band(s) < threshold"
+'         .Cells(lngRowPtr, 10).Value = "NO"
+        End If
+       Next
+      End With
+      If boolHasSAS = True Then lngLastSASRow = lngRowSAS
+      ' insert a line with only the timestamp, to break the chart line between days
+      lngRw = lngRw + 1
+      XL.Sheets(stBaseShtNm).Cells(lngRw, 1).Value = dtEnd
+     
+      If Me!cbxSelTask = 6 Or Me!cbxSelTask = 7 Or Me!cbxSelTask = 8 _
+           Or Me!cbxSelTask = 16 Or Me!cbxSelTask = 17 Or Me!cbxSelTask = 18 Then 'summary
+       If DCount("*", "_tmp_Values") > 0 Then 'some values to work with
+        stSQL = "SELECT Avg([_tmp_Values].Val) AS AvgOfVal, " & _
+             "Count([_tmp_Values].Val) AS CountOfVal, " & _
+             "StDev([_tmp_Values].Val) AS StDevOfVal " & _
+             "FROM _tmp_Values;"
+        Set rstSummary = CurrentDb.OpenRecordset(stSQL, dbOpenSnapshot) ' will only have one record
+        
+        lngSummaryRw = lngSummaryRw + 1
+        With XL.Sheets(stSummaryShtNm)
+         .Cells(lngSummaryRw, 1).Value = Me!lsbDates.ItemData(varTmp1)
+'         .Cells(lngSummaryRw, 2).Value = rstSummary!AvgOfVal
+         .Cells(lngSummaryRw, 2).Formula = _
+              "=AVERAGE('" & stBaseShtNm & "'!K" & lngFirstRowOfSet & ":K" & lngLastRowOfSet & ")"
+'         .Cells(lngSummaryRw, 3).Value = rstSummary!StDevOfVal
+         .Cells(lngSummaryRw, 3).Formula = _
+              "=STDEV.S('" & stBaseShtNm & "'!K" & lngFirstRowOfSet & ":K" & lngLastRowOfSet & ")"
+'         .Cells(lngSummaryRw, 4).Value = rstSummary!CountOfVal
+         .Cells(lngSummaryRw, 4).Formula = _
+              "=COUNT('" & stBaseShtNm & "'!K" & lngFirstRowOfSet & ":K" & lngLastRowOfSet & ")"
+         If .Cells(lngSummaryRw, 4).Value > 1 Then ' can put additional constraints here
+          .Cells(lngSummaryRw, 5).Value = "YES"
+         Else
+          .Cells(lngSummaryRw, 5).Value = "NO"
+         End If
+         If .Cells(lngSummaryRw, 5).Value = "YES" Then
+'          .Cells(lngSummaryRw, 6).Value = rstSummary!AvgOfVal
+          .Cells(lngSummaryRw, 6).Formula = "=B" & lngSummaryRw
+'          .Cells(lngSummaryRw, 7).FormulaR1C1 = "=RC[-4]/SQRT(RC[-3])"
+          .Cells(lngSummaryRw, 7).Formula = "=C" & lngSummaryRw & "/SQRT(D" & lngSummaryRw & ")"
+          If (Me!cbxSelTask = 8) Or (Me!cbxSelTask = 18) Then    'relative NDVI
+          ' maintain minNDVI
+           If .Cells(1, 9).Value = "" Then
+            .Cells(1, 9).Value = .Cells(lngSummaryRw, 6).Value ' set initial value
+           Else
+            If (.Cells(lngSummaryRw, 6).Value < .Cells(1, 9).Value) Then .Cells(1, 9).Value = .Cells(lngSummaryRw, 6).Value
+           End If
+           ' maintain maxNDVI
+           If .Cells(1, 11).Value = "" Then
+            .Cells(1, 11).Value = .Cells(lngSummaryRw, 6).Value ' set initial value
+           Else
+            If (.Cells(lngSummaryRw, 6).Value > .Cells(1, 11).Value) Then .Cells(1, 11).Value = .Cells(lngSummaryRw, 6).Value
+           End If
+           ' calculate relative NDVI
+           .Cells(lngSummaryRw, 12).Formula = "=(F" & lngSummaryRw & " - I1) / (K1 - I1)"
+          End If
+         
+         Else
+          '
+         End If
+        End With
+       End If ' some records
+      End If ' making a summary
+     
+     End If ' some records for this dataset
+'      End If ' valid tables for this date
+'     End If ' timestamps for this date
+    DoEvents
+    Next ' Date
+    XL.Sheets("" & stBaseShtNm).Columns("A:A").NumberFormat = "yyyy-mm-dd hh:mm:ss"
+    
+    XL.Charts.Add
+    
+    Select Case Me!cbxSelTask
+     Case 3, 13 'detail
+      XL.ActiveChart.ChartType = xlXYScatterLinesNoMarkers
+      XL.ActiveChart.SetSourceData Source:=XL.Sheets("" & stBaseShtNm).Range("A1:A" & lngRw & ",K1:K" & lngRw & ""), _
+          PlotBy:=xlColumns
+      XL.ActiveChart.Location WHERE:=xlLocationAsObject, Name:=stBaseShtNm
+     
+     Case 6, 7, 16, 17 'summary
+      XL.ActiveChart.ChartType = xlXYScatter ' no lines makes it easier to see what's going on with error bars
+      XL.ActiveChart.SetSourceData Source:=XL.Sheets("" & _
+           stSummaryShtNm).Range("A1:A" & lngSummaryRw & ",F1:F" & lngSummaryRw & ""), _
+           PlotBy:=xlColumns
+      XL.ActiveChart.Location WHERE:=xlLocationAsObject, Name:=stSummaryShtNm
+      XL.ActiveChart.SeriesCollection(1).ErrorBar Direction:=xlY, Include:=xlBoth, _
+        Type:=xlCustom, Amount:="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7", MinusValues _
+        :="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7"
+        
+     Case 8, 18 'summary of relative NDVI
+      'adjust SAS values to relative NDVI
+      dblMinNDVI = XL.Sheets(stSummaryShtNm).Cells(1, 9).Value
+      dblMaxNDVI = XL.Sheets(stSummaryShtNm).Cells(1, 11).Value
+      dblRangeNDVI = dblMaxNDVI - dblMinNDVI
+      ' if range is 0 then Max=Min, or all zero, or some other error; adjustment has no meaning
+      '  formula would give divide-by-zero error anyway
+      If dblRangeNDVI <> 0 Then
+       For lngTmp1 = lngFirstSASRow To lngLastSASRow
+        dblTmp1 = XL_SAS.Sheets(stSheetNameSAS).Cells(lngTmp1, 3).Value
+        dblTmp1 = (dblTmp1 - dblMinNDVI) / dblRangeNDVI
+        XL_SAS.Sheets(stSheetNameSAS).Cells(lngTmp1, 3).Value = dblTmp1
+       Next
+      End If
+      XL.ActiveChart.ChartType = xlXYScatter ' no lines makes it easier to see what's going on with error bars
+      XL.ActiveChart.SetSourceData Source:=XL.Sheets("" & _
+           stSummaryShtNm).Range("A1:A" & lngSummaryRw & ",L1:L" & lngSummaryRw & ""), _
+           PlotBy:=xlColumns
+      XL.ActiveChart.Location WHERE:=xlLocationAsObject, Name:=stSummaryShtNm
+      ' use original SEM values for error bars; not rigorous but gives some visual idea how good a point is
+      XL.ActiveChart.SeriesCollection(1).ErrorBar Direction:=xlY, Include:=xlBoth, _
+        Type:=xlCustom, Amount:="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7", MinusValues _
+        :="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7"
+    
+    
+    End Select
+    With XL.ActiveChart
+        .PlotArea.ClearFormats 'no background, better for sci pubs
+        .ChartTitle.Font.Size = 10
+        .Axes(xlValue).TickLabels.Font.Size = 10
+        .Legend.Font.Size = 10
+        .Axes(xlCategory).TickLabels.Font.Size = 10
+        .HasTitle = True
+        .Axes(xlCategory, xlPrimary).HasTitle = False
+        .Axes(xlValue, xlPrimary).HasTitle = False
+    End With
+    
+    With XL.ActiveChart.Axes(xlCategory).TickLabels
+        .ReadingOrder = xlContext
+        .Orientation = xlDownward
+    End With
+    XL.ActiveChart.HasLegend = False
+    
+    lngSheetCt = lngSheetCt + 1 ' in case any more stations selected to run
+    
+   Next ' Station
+   
+   ' AutoFit the columns in the SAS worksheet, if it exists
+   If boolHasSAS = True Then _
+     XL_SAS.Sheets(stSheetNameSAS).Columns("A:C").EntireColumn.AutoFit
+
+   Me!txbProgress = " Completed: Data for " & lngTotStationsToDo & _
+          " loggers, " & lngTotDaysToDo & " days."
+   Me.Repaint
+   DoEvents
             
 
         """
