@@ -549,10 +549,10 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                             wx.Yield()
                         try: # much faster to try and fail than to test first
                             # stripping commas from floats is a hack, but had to get this working
-                            if ',' in lData[iCol]:
-                                print lData[iCol], lData[iCol].replace(',',''), tsAsTime, lCh[iCol]
+#                            if ',' in lData[iCol]:
+#                                print lData[iCol], lData[iCol].replace(',',''), tsAsTime, lCh[iCol]
                             scidb.curD.execute(stSQL, (tsAsTime, lCh[iCol], lData[iCol].replace(',','')))
-                            print "record added"
+#                            print "record added"
                             dataRecsAdded += 1 # count it
                         except sqlite3.IntegrityError: # error adding item
                             # distinguish duplicate error from invalid Value error
@@ -560,9 +560,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                             # if Value is non-numeric, we get 'constraint failed'; silently ignore
                             if 'not unique' in repr(err_value): # only count these
                                 dataRecsDupSkipped += 1 # count but otherwise ignore
-                            if ',' in lData[iCol]:
-                                print "record not added:", repr(err_value)
-                                print tsAsTime, lCh[iCol], lData[iCol]
+#                            if ',' in lData[iCol]:
+#                                print "record not added:", repr(err_value)
+#                                print tsAsTime, lCh[iCol], lData[iCol]
                         finally:
                             wx.Yield()
 
