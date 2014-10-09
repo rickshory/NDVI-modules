@@ -1450,7 +1450,14 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
     else:
         return 0
 
-    fLongitude = GetStationLongitude(iRefStation)
+    if iRefStation != 0:
+        fLongitude = GetStationLongitude(iRefStation)
+    else:
+        if iDataStation != 0:
+            fLongitude = GetStationLongitude(iDataStation)
+        else:
+            return 0
+
     datetimeBegin, datetimeEnd = GetBeginEndTimes(dateBase, fLongitude, fPlusMinusCutoff)
 
     iHowManySeries = 0 # default unless conditions met
@@ -1558,6 +1565,10 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
                 dBe=datetimeBegin, dEn=datetimeEnd, fTs=fTimeSpacing * 2)
         print stSQL
         curD.execute(stSQL)
+        print 'iteration iDs:', iDs
+        recCt = countTableFieldItems('tmpSpectralDataForUpdate', 'ID')
+        print 'recCt in tmpSpectralDataForUpdate:', recCt
+        print ''
         if countTableFieldItems('tmpSpectralDataForUpdate', 'ID') > 0:
             # Update the (originally null) spectral data field to the
             # value having the nearest timestamp. This uses an odd 
@@ -1581,6 +1592,11 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
             """.format(fTs=fTimeSpacing)
             print stSQL
             curD.execute(stSQL)
+
+            print 'iteration iDs:', iDs
+            recCt = countTableFieldItems('tmpSpectralDataToUpdate', 'ID')
+            print 'recCt in tmpSpectralDataToUpdate, before delete:', recCt
+            print ''
 
             # if there are multiple with a range of time difference
             # keep only the one(s) with minimum time difference
