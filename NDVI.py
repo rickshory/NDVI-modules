@@ -1870,7 +1870,7 @@ class NDVIFrame(wx.Frame):
             self.pvLabel.SetLabel('Select IR series for the Reference Station, to preview dates')
             return
         # get the hour offset from the station longitude
-        longitude = scidb.stationLongitude(staID)
+        longitude = scidb.GetStationLongitude(staID)
         if longitude == None:
             hrOffLon = 0
         else:

@@ -1185,7 +1185,7 @@ def ckDupOutputColumnsMismatch():
         stWndHeader = 'Duplicate Column'
         return (stErr, stWndHeader)
 
-def stationLongitude(iStationID):
+def GetStationLongitude(iStationID):
     """
     given a Station ID
     returns the Longitude of the Station, either from the Stations table or the FieldSites table
@@ -1429,7 +1429,7 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff,
     return value is the number of records remaining in the table after invalid ones removed
      other combinations give undefined results
     """
-    fLongitude = stationLongitude(iRefStation)
+    fLongitude = GetStationLongitude(iRefStation)
     datetimeBegin, datetimeEnd = GetBeginEndTimes(dateCur, fLongitude, fPlusMinusCutoff)
 
     curD.execute('DELETE FROM tmpSpectralData')
