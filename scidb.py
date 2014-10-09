@@ -1309,6 +1309,55 @@ def GetBeginEndTimeStrings(dt, fLongitude, fPlusMinusCutoff):
     stEnd = be[1].strftime('%Y-%m-%d %H:%M:%S')
     return (stBegin, stEnd)
 
+def GetHighLowCutoffs(dtClearDay, iStationID, iSeriesID,
+        fPlusMinusCutoff, fPercentOfMaxLow, fPercentOfMaxHigh):
+    """
+    Input:
+     dtClearDay: a string in UNIX format (yyyy-mm-dd) or a Python date or datetime
+     iStationID: station to get cutoffs for
+     iSeriesID: series to get cutoffs for
+     fPlusMinusCutoff: hours before and after solar noon to use for cutoffs
+     fPercentOfMaxLow: low cutoff
+     fPercentOfMaxHigh: high cutoff
+    Returns:
+     a tuple (fLowCutoffVal, fHighCutoffVal): the low and high values
+
+Private Function GetHighLowCutoffs_RtnMax(
+     sngPercentOfMaxLow As Single, sngPercentOfMaxHigh As Single, _
+     dblLowCutoffVal As Double, dblHighCutoffVal As Double, ) As Double
+Dim varLocLongitude As Variant, dblPlusMinusHourCutoff As Double
+Dim dtTmp1 As Date, dtBegin As Date, dtEnd As Date, lngDayOffset As Long
+Dim lngLoggerID As Long, stClearDayDate As String
+Dim stTableName As String, stSQL As String
+Dim rst As Recordset, dblMaxVal As Double
+
+If IsNumeric(Me!txbHoursPlusMinusSolarNoon) Then
+ dblPlusMinusHourCutoff = Me!txbHoursPlusMinusSolarNoon
+Else
+ dblPlusMinusHourCutoff = 12
+End If
+
+varLocLongitude = GetLongitude(Me!cbxSelRefStation, True)
+stClearDayDate = Format(dtClearDay, "yyyy-mm-dd")
+dtTmp1 = GetBeginEndTimes(stClearDayDate, varLocLongitude, _
+     dblPlusMinusHourCutoff, dtBegin, dtEnd)
+dblMaxVal = 0 ' inital default
+If GetDaySpectralData(dtCur:=dtClearDay, dtBeginTime:=dtBegin, dtEndTime:=dtEnd, _
+     lngRefStationID:=lngStationID, _
+     lngIRRefSeries:=lngDataSeriesID, lngVISRefSeries:=0, _
+     lngDataStationID:=0, _
+     lngIRDataSeries:=0, lngVISDataSeries:=0) > 0 Then
+ dblMaxVal = DMax("IRRef", "_tmp_SpectralData")
+End If
+dblLowCutoffVal = sngPercentOfMaxLow * dblMaxVal
+dblHighCutoffVal = sngPercentOfMaxHigh * dblMaxVal
+GetHighLowCutoffs_RtnMax = dblMaxVal
+
+    """
+    fLowCutoffVal = 0
+    fHighCutoffVal = 0
+    return (fLowCutoffVal, fHighCutoffVal)
+
 def testGD(stDCur = '2010-06-13', stBegin = '2010-06-13 10:00:00', stEnd = '2010-06-13 14:00:00',
            refSt = 3, irRef = 3, visRef = 4, datSt = 2, irDat = 1, visDat = 2):
     dCur = datetime.datetime.strptime(stDCur, '%Y-%m-%d').date()
