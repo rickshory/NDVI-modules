@@ -1285,11 +1285,14 @@ def GetBeginEndTimes(dt, fLongitude, fPlusMinusCutoff):
     if isinstance(dt, basestring): # if it's a string
         # convert string to date
         dateBase = datetime.datetime.strptime(dt, "%Y-%m-%d").date()
-    elif isinstance(dt, (datetime.datetime, datetime.date)):
-        # get date from datetime or (trivially) date
+    elif isinstance(dt, datetime.date):
+        # already a date
+        dateBase = dt
+    elif isinstance(dt, datetime.datetime):
+        # get date from datetime
         dateBase = dt.date()
     else:
-        return None
+        return (dt, dt) # return the same, no span between
 #    print 'dateBase', dateBase
     # get datetime equal to the date
     datetimeBase = datetime.datetime(dateBase.year, dateBase.month, dateBase.day)
@@ -1438,8 +1441,11 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
     if isinstance(dateCur, basestring): # if it's a string
         # convert string to date
         dateBase = datetime.datetime.strptime(dateCur, "%Y-%m-%d").date()
-    elif isinstance(dateCur, (datetime.datetime, datetime.date)):
-        # get date from datetime or (trivially) date
+    elif isinstance(dateCur, datetime.date):
+        # already a date
+        dateBase = dateCur
+    elif isinstance(dateCur, datetime.datetime):
+        # get date from datetime
         dateBase = dateCur.date()
     else:
         return 0
@@ -1488,6 +1494,8 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
     # probably no null records, but delete any just to be sure
     curD.execute('DELETE FROM tmpSpectralData WHERE IRRef Is Null;')
     recCt = countTableFieldItems('tmpSpectralData', 'ID')
+    print 'recCt:', recCt
+    print 'iHowManySeries:', iHowManySeries
     if recCt == 0:
         return 0 # if no records we are done
     if iHowManySeries == 1:
@@ -1607,6 +1615,11 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
             curD.execute(stSQL)
 
             if iHowManySeries == 2: # if we were only to add on VIS, we are done
+                print 'before delete'
+                recCt = countTableFieldItems('tmpSpectralData', 'ID')
+                print 'recCt:', recCt
+                print 'iHowManySeries:', iHowManySeries
+
                 stSQL = """DELETE FROM tmpSpectralData
                     WHERE IRRef IS NULL OR VISRef IS NULL;"""
                 curD.execute(stSQL)
@@ -1617,14 +1630,32 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
                         IRRef = NULL,
                         VISRef = NULL;"""
                     curD.execute(stSQL)
+                print 'after delete'
+                recCt = countTableFieldItems('tmpSpectralData', 'ID')
+                print 'recCt:', recCt
+                print 'iHowManySeries:', iHowManySeries
+
                 return countTableFieldItems('tmpSpectralData', 'ID')
     # next of IR or VIS data column
     # done with iterations over iDs
     # remove any incomplete records, cannot be used in calculations
+
+    print 'done with iterations, before delete'
+    recCt = countTableFieldItems('tmpSpectralData', 'ID')
+    print 'recCt:', recCt
+    print 'iHowManySeries:', iHowManySeries
+
     stSQL = """DELETE FROM tmpSpectralData
         WHERE IRRef IS NULL OR VISRef IS NULL
         OR IRData IS NULL OR VISData IS NULL;"""
-    curD.execute(stSQL)
+# for testing, skip this
+#    curD.execute(stSQL)
+
+    print 'done with iterations, after delete'
+    recCt = countTableFieldItems('tmpSpectralData', 'ID')
+    print 'recCt:', recCt
+    print 'iHowManySeries:', iHowManySeries
+
     return countTableFieldItems('tmpSpectralData', 'ID')
 
 def countOfSheetRows(sheetID):
