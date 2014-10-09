@@ -1239,7 +1239,7 @@ class NDVIPanel(wx.Panel):
                     'output as a spreadsheet. Change them using the "Stations" module.', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 if scidb.outputRecsAsSpreadsheet(recs) == 0:
-                wx.MessageBox(' Excel output failed. Look at system window for bad sheet names.', 'Error',
+                    wx.MessageBox(' Excel output failed. Look at system window for bad sheet names.', 'Error',
                     wx.OK | wx.ICON_INFORMATION)
                     # at least print them
                     for rec in recs:
