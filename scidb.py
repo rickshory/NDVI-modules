@@ -1201,21 +1201,21 @@ def GetStationLongitude(iStationID):
             try:
                 siteID = curD.execute(stSQL_SiteID, (iStationID,)).fetchone()['SiteID']
                 if siteID == None: # SiteID is null in the Stations table
-                    return 0
+                    return None
                 else:
                     stSQL_Site= 'SELECT LongitudeDecDegrees FROM FieldSites WHERE ID = ?;'
                     try:
                         lon = curD.execute(stSQL_Site, (siteID,)).fetchone()['LongitudeDecDegrees']
                         if lon == None: # Longitude was null in the FieldSites table
-                            return 0
+                            return None
                         else: # got a valid value from the FieldSites table
                             return lon
                     except: #
-                        return 0 # no record in the FieldSites table for the passed ID 
+                        return None # no record in the FieldSites table for the passed ID 
             except:
-                return 0 # no record in the Stations table for the passed ID 
+                return None # no record in the Stations table for the passed ID 
     except:
-        return 0 # no record in the Stations table for the passed ID
+        return None # no record in the Stations table for the passed ID
 
 def ordinalDayOfYear(stDate):
     try:
