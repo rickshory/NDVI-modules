@@ -1,6 +1,8 @@
 import wx, sqlite3, datetime
 import os, sys, re, ast
 import scidb
+#from locale import *
+#setlocale(LC_NUMERIC, '')
 
 # add_data_TNP2
 # TNP 8-JUN-2014 If units not specified, add units as 'NA'
@@ -518,7 +520,17 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 lData = rec['Line'].split('\t')
                 # ignore item zero, a line number, not used
                 sTimeStamp = lData[1]
-                tsAsTime = datetime.datetime.strptime(sTimeStamp, "%Y-%m-%d %H:%M:%S")
+                try:
+                    tsAsTime = datetime.datetime.strptime(sTimeStamp, "%Y-%m-%d %H:%M:%S")
+                except: # time format is nonstandard, give a try to wx datetime parsing
+                    dt = wx.DateTime() # Uninitialized datetime
+                    DateTimeValid = dt.ParseDateTime(sTimeStamp)
+                    if DateTimeValid != -1: # valid datetime
+                        tsAsTime = datetime.datetime.fromtimestamp(dt.GetTicks()) 
+                    else:
+                        print 'unresolvable timestamp:', sTimeStamp
+                        self.msgArea.ChangeValue('unresolvable timestamp: ' + TimeStamp)
+                        return
                 tsAsTime.replace(tzinfo=None) # make sure it does not get local timezone info
                 tsAsTime = tsAsTime + datetime.timedelta(hours = -iHrOffset)
                 tsAsDate = tsAsTime.date()
@@ -534,7 +546,11 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                                 str(dataRecsDupSkipped) + " duplicates skipped.")
                             wx.Yield()
                         try: # much faster to try and fail than to test first
-                            scidb.curD.execute(stSQL, (tsAsTime, lCh[iCol], lData[iCol]))
+                            # stripping commas from floats is a hack, but had to get this working
+                            if ',' in lData[iCol]:
+                                print lData[iCol], lData[iCol].replace(',',''), tsAsTime, lCh[iCol]
+                            scidb.curD.execute(stSQL, (tsAsTime, lCh[iCol], lData[iCol].replace(',','')))
+                            print "record added"
                             dataRecsAdded += 1 # count it
                         except sqlite3.IntegrityError: # error adding item
                             # distinguish duplicate error from invalid Value error
@@ -542,6 +558,9 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                             # if Value is non-numeric, we get 'constraint failed'; silently ignore
                             if 'not unique' in repr(err_value): # only count these
                                 dataRecsDupSkipped += 1 # count but otherwise ignore
+                            if ',' in lData[iCol]:
+                                print "record not added:", repr(err_value)
+                                print tsAsTime, lCh[iCol], lData[iCol]
                         finally:
                             wx.Yield()
 
