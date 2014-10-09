@@ -1,5 +1,12 @@
 import wx, sqlite3, datetime, copy
 import sys, re
+
+try:
+    import win32com.client
+    hasCom = True
+except ImportError:
+    hasCom = False
+
 datConn = None
 tmpConn = None
 
@@ -1759,6 +1766,46 @@ def generateSheetRows(sheetID, formatValues = True, cr = curD):
     # get the data for the columns
     # fields:  ID, WorksheetID, ColumnHeading, ColType, TimeSystem, TimeIsInterval, IntervalIsFrom,
     #  Constant, Formula,AggType, AggStationID, AggDataSeriesID, Format_Python, Format_Excel, ListingOrder
+
+def outputRecsAsSpreadsheet(recs):
+    """
+    given a records object retrieved by fetchall()
+    outputs an Excel spreadsheet
+    """
+    if hasCom == False: # we tested for this at the top of this module
+        wx.MessageBox('This operating system cannot make Excel files', 'Info',
+            wx.OK | wx.ICON_INFORMATION)
+        return 0
+    try:
+        oXL = win32com.client.Dispatch("Excel.Application")
+        oXL.Visible = 1
+    except:
+        wx.MessageBox('Excel is not on this computer', 'Info',
+            wx.OK | wx.ICON_INFORMATION)
+        return 0
+    bXL = oXL.Workbooks.Add()
+    #remove any extra sheets
+    while bXL.Sheets.Count > 1:
+#                    print "Workbook has this many sheets:", bXL.Sheets.Count
+        bXL.Sheets(1).Delete()
+    shXL = bXL.Sheets(1)
+    boolSheetReady = True
+    dsRow = 1
+#    shXL.Name = shDict['WorksheetName']
+    for rec in recs:
+        dsCol = 1
+        if dsRow == 1: # put the headings
+            for recName in rec.keys():
+                shXL.Cells(dsRow, dsCol).Value = recName
+                dsCol += 1
+            dsCol = 1 # go back to the 1st column
+            dsRow += 1 # go to the next row to start data
+        for recName in rec.keys():
+            shXL.Cells(dsRow, dsCol).Value = rec[recName]
+            dsCol += 1
+        dsRow += 1 # go to the next row
+    shXL.Columns.AutoFit()
+    return 1
 
 def offerSeriesForChannels():
     """
