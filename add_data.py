@@ -523,14 +523,16 @@ class DropTargetForFilesToParse(wx.FileDropTarget):
                 try:
                     tsAsTime = datetime.datetime.strptime(sTimeStamp, "%Y-%m-%d %H:%M:%S")
                 except: # time format is nonstandard, give a try to wx datetime parsing
-                    dt = wx.DateTime() # Uninitialized datetime
-                    DateTimeValid = dt.ParseDateTime(sTimeStamp)
-                    if DateTimeValid != -1: # valid datetime
-                        tsAsTime = datetime.datetime.fromtimestamp(dt.GetTicks()) 
-                    else:
-                        print 'unresolvable timestamp:', sTimeStamp
-                        self.msgArea.ChangeValue('unresolvable timestamp: ' + TimeStamp)
-                        return
+                    # does not work, perhaps it's a wx/Python conversion problem
+                    # but string e.g. "05/16/10 12:00:00 PM" gives dates in 2106
+#                    dt = wx.DateTime() # Uninitialized datetime
+#                    DateTimeValid = dt.ParseDateTime(sTimeStamp)
+#                    if DateTimeValid != -1: # valid datetime
+#                        tsAsTime = datetime.datetime.fromtimestamp(dt.GetTicks()) 
+#                    else:
+                    print 'unresolvable timestamp:', sTimeStamp
+                    self.msgArea.ChangeValue('unresolvable timestamp: ' + TimeStamp)
+                    return
                 tsAsTime.replace(tzinfo=None) # make sure it does not get local timezone info
                 tsAsTime = tsAsTime + datetime.timedelta(hours = -iHrOffset)
                 tsAsDate = tsAsTime.date()
