@@ -1238,13 +1238,15 @@ class NDVIPanel(wx.Panel):
                     '(>25 characters).\n The names, and validated versions, will be ' \
                     'output as a spreadsheet. Change them using the "Stations" module.', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
-                # implement 'outputRecordsAsSpreadsheet'
-                # at least print them
-                for rec in recs:
-                    for recName in rec.keys():
-                        print recName, rec[recName]
-                wx.MessageBox(' Excel output not implemented yet', 'Under Construction',
+                if scidb.outputRecsAsSpreadsheet(recs) == 0:
+                wx.MessageBox(' Excel output failed. Look at system window for bad sheet names.', 'Error',
                     wx.OK | wx.ICON_INFORMATION)
+                    # at least print them
+                    for rec in recs:
+                        for recName in rec.keys():
+                            print recName, rec[recName]
+#                wx.MessageBox(' Excel output not implemented yet', 'Under Construction',
+#                    wx.OK | wx.ICON_INFORMATION)
                 return
             
 

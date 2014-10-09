@@ -1791,7 +1791,7 @@ def outputRecsAsSpreadsheet(recs):
     shXL = bXL.Sheets(1)
     boolSheetReady = True
     dsRow = 1
-#    shXL.Name = shDict['WorksheetName']
+    shXL.Name = 'Sheet1'
     for rec in recs:
         dsCol = 1
         if dsRow == 1: # put the headings
