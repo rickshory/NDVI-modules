@@ -1857,10 +1857,10 @@ def generateSheetRows(sheetID, formatValues = True, cr = curD):
                                 'LEFT JOIN Data ON ChannelSegments.ChannelID = Data.ChannelID ' \
                                 'WHERE OutputColumns.WorksheetID=? ' \
                                 'AND OutputColumns.ListingOrder=? ' \
-                                'AND Data.UTTimestamp>=ChannelSegments.SegmentBegin ' \
-                                'AND Data.UTTimestamp<COALESCE(ChannelSegments.SegmentEnd, datetime("now")) ' \
                                 'AND Data.UTTimestamp>=? ' \
                                 'AND Data.UTTimestamp<? ' \
+                                'AND Data.UTTimestamp>=ChannelSegments.SegmentBegin ' \
+                                'AND Data.UTTimestamp<COALESCE(ChannelSegments.SegmentEnd, datetime("now")) ' \
                                 'AND Data.Use=1;')
                         stSQL = ''.join(lSql)
 #                        print "stSQL:", stSQL
