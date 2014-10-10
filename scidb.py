@@ -1318,7 +1318,7 @@ def GetBeginEndTimeStrings(dt, fLongitude, fPlusMinusCutoff):
     return (stBegin, stEnd)
 
 def GetHighLowCutoffs(dtClearDay, iStationID, iSeriesID,
-        fPlusMinusCutoff, fPercentOfMaxLow, fPercentOfMaxHigh):
+        fPlusMinusHoursCutoff, fPercentOfMaxLow, fPercentOfMaxHigh):
     """
     Input:
      dtClearDay: a string in UNIX format (yyyy-mm-dd) or a Python date or datetime
@@ -1329,40 +1329,17 @@ def GetHighLowCutoffs(dtClearDay, iStationID, iSeriesID,
      fPercentOfMaxHigh: high cutoff
     Returns:
      a tuple (fLowCutoffVal, fHighCutoffVal): the low and high values
-
-
-Dim varLocLongitude As Variant, dblPlusMinusHourCutoff As Double
-Dim dtTmp1 As Date, dtBegin As Date, dtEnd As Date, lngDayOffset As Long
-Dim lngLoggerID As Long, stClearDayDate As String
-Dim stTableName As String, stSQL As String
-Dim rst As Recordset, dblMaxVal As Double
-
-If IsNumeric(Me!txbHoursPlusMinusSolarNoon) Then
- dblPlusMinusHourCutoff = Me!txbHoursPlusMinusSolarNoon
-Else
- dblPlusMinusHourCutoff = 12
-End If
-
-varLocLongitude = GetLongitude(Me!cbxSelRefStation, True)
-stClearDayDate = Format(dtClearDay, "yyyy-mm-dd")
-dtTmp1 = GetBeginEndTimes(stClearDayDate, varLocLongitude, _
-     dblPlusMinusHourCutoff, dtBegin, dtEnd)
-dblMaxVal = 0 ' inital default
-If GetDaySpectralData(dtCur:=dtClearDay, dtBeginTime:=dtBegin, dtEndTime:=dtEnd, _
-     lngRefStationID:=lngStationID, _
-     lngIRRefSeries:=lngDataSeriesID, lngVISRefSeries:=0, _
-     lngDataStationID:=0, _
-     lngIRDataSeries:=0, lngVISDataSeries:=0) > 0 Then
- dblMaxVal = DMax("IRRef", "_tmp_SpectralData")
-End If
-dblLowCutoffVal = sngPercentOfMaxLow * dblMaxVal
-dblHighCutoffVal = sngPercentOfMaxHigh * dblMaxVal
-GetHighLowCutoffs_RtnMax = dblMaxVal
-
     """
-    
-    fLowCutoffVal = 0
-    fHighCutoffVal = 0
+    # get relevent values into temporary table, in the 'IRRef' column
+    numRecs = GetDaySpectralData(dateCur = dtClearDay, fPlusMinusCutoff = fPlusMinusHoursCutoff,
+    iRefStation = iStationID, iIRRefSeries = iSeriesID)
+    if numRecs == 0:
+        return None
+    stSQL = """SELECT MAX(CAST(IRRef AS FLOAT)) AS MaxIrrad
+        FROM tmpSpectralData;"""
+    maxVal = curD.execute(stSQL).fetchone()['MaxIrrad']
+    fLowCutoffVal = maxVal * (fPercentOfMaxLow/100.0)
+    fHighCutoffVal = maxVal * (fPercentOfMaxHigh/100.0)
     return (fLowCutoffVal, fHighCutoffVal)
 
 def testGD(stDCur = '2010-06-13', fPlusMinusCutoff = 2,

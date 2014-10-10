@@ -1118,14 +1118,15 @@ class NDVIPanel(wx.Panel):
         """
         Creates NDVI datasets based on options selected in the form
         """
+        # first, a lot of validity checking
         if self.calcDict['ID'] == None:
             wx.MessageBox('This is a new empty panel.\nIf you really want ' \
                 'to use it, Save it first.', 'Empty',
                 wx.OK | wx.ICON_INFORMATION)
             return
         self.SavePanel() # attempt to save panel, will catch
-                        #errors including missing/invalid CalcName
-        # display panel, including any automatic correction/formatting
+                        #  errors including missing/invalid CalcName
+        # displaysaved panel, including any automatic correction/formatting
         self.FillNDVISetupPanelFromCalcDict()
         # check that at least one date is selected
         stSQL = 'SELECT CalcDate FROM NDVIcalcDates WHERE CalcID = ? ORDER BY CalcDate'
@@ -1134,6 +1135,7 @@ class NDVIPanel(wx.Panel):
             wx.MessageBox('Please select at least one date you want data for.', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
             return
+        # if OK, get dates list
         lDates = [r['CalcDate'] for r in recs]
         
         # check that at least one station selected
@@ -1143,6 +1145,7 @@ class NDVIPanel(wx.Panel):
             wx.MessageBox('Please select at least one station you want data for.', 'Missing',
                 wx.OK | wx.ICON_INFORMATION)
             return
+        # if OK, get stations list
         lStaIDs = [r['StationID'] for r in recs]
 
         # if UseRef, check that reference Station, IR & Vis series are selected
@@ -1213,25 +1216,25 @@ class NDVIPanel(wx.Panel):
 
         # check if everything is OK for Excel output
         if self.calcDict['OutputFormat'] == 1: # radio button for Excel format
-            print 'in Excel validation'
+#            print 'in Excel validation'
             # verify we can create Excel files at all
             if hasCom == False: # we tested for this at the top of this module
                 wx.MessageBox(' This operating system cannot make Excel files.\n' \
                     ' Choose another option under "Output As:"', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 return
-            print 'passed validation for being able to make Excel files'
+#            print 'passed validation for being able to make Excel files'
             # check for invalid worksheet names
             stStationIDs = ",".join(str(n) for n in lStaIDs)
-            print 'Station IDs to check', stStationIDs
+#            print 'Station IDs to check', stStationIDs
             stSQL = """SELECT StationName,
             SpreadsheetName(StationName) AS ValidName
             FROM Stations WHERE ID IN ({sSs})
             AND StationName != ValidName;
             """.format(sSs=stStationIDs)
-            print stSQL
+#            print stSQL
             recs = scidb.curD.execute(stSQL).fetchall()
-            print 'number of invalid Station names found', len(recs)
+#            print 'number of invalid Station names found', len(recs)
             if len(recs) > 0:
                 wx.MessageBox(' Excel output uses Station names for worksheet names. \n' \
                     ' Some of these either contain invalid characters or are too long ' \
@@ -1248,8 +1251,9 @@ class NDVIPanel(wx.Panel):
 #                wx.MessageBox(' Excel output not implemented yet', 'Under Construction',
 #                    wx.OK | wx.ICON_INFORMATION)
                 return
-            
-        print ">>>>validation complete"
+        # validation complete, enter any more above
+#        print ">>>>validation complete"
+
         # get column header strings
         if self.calcDict['UseRef'] == 1:
             stIRRefTxt = self.cbxIRRefSeriesID.GetStringSelection()
