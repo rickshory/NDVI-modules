@@ -1451,9 +1451,11 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
         return 0
 
     if iRefStation != 0:
+        # if a reference station is given, use that
         fLongitude = GetStationLongitude(iRefStation)
     else:
         if iDataStation != 0:
+            # otherwise, use the data station
             fLongitude = GetStationLongitude(iDataStation)
         else:
             return 0
@@ -1496,13 +1498,13 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
     AND Data.UTTimestamp < COALESCE(ChannelSegments.SegmentEnd, datetime("now"))
     AND Data.Use = 1 ORDER BY Data.UTTimestamp;
     """.format(iSt=iStation, iSe=iSeries, dBe=datetimeBegin, dEn=datetimeEnd)
-    print stSQL
+ #   print stSQL
     curD.execute(stSQL)
     # probably no null records, but delete any just to be sure
     curD.execute('DELETE FROM tmpSpectralData WHERE IRRef Is Null;')
     recCt = countTableFieldItems('tmpSpectralData', 'ID')
-    print 'recCt:', recCt
-    print 'iHowManySeries:', iHowManySeries
+ #   print 'recCt:', recCt
+ #   print 'iHowManySeries:', iHowManySeries
     if recCt == 0:
         return 0 # if no records we are done
     if iHowManySeries == 1:
@@ -1523,7 +1525,7 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
         HAVING (tmpSpectralData.Timestamp != tSD.Timestamp);"""
         fTimeSpacing = curD.execute(stSQL).fetchone()['RefTimestampSpacing']
         fTimeSpacing = fTimeSpacing / 2
-    print 'fTimeSpacing', fTimeSpacing # testing
+ #   print 'fTimeSpacing', fTimeSpacing # testing
     for iDs in range(3): # we are going to do almost exactly the same thing up
         # to 3 times, for the additional data series
         if iDs == 0:
@@ -1563,12 +1565,12 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
         AND Data.Use = 1
         ORDER BY Data.UTTimestamp;""".format(iSt=iStation, iSe=iSeries,
                 dBe=datetimeBegin, dEn=datetimeEnd, fTs=fTimeSpacing * 2)
-        print stSQL
+#        print stSQL
         curD.execute(stSQL)
-        print 'iteration iDs:', iDs
-        recCt = countTableFieldItems('tmpSpectralDataForUpdate', 'ID')
-        print 'recCt in tmpSpectralDataForUpdate:', recCt
-        print ''
+#        print 'iteration iDs:', iDs
+#        recCt = countTableFieldItems('tmpSpectralDataForUpdate', 'ID')
+#        print 'recCt in tmpSpectralDataForUpdate:', recCt
+#        print ''
         if countTableFieldItems('tmpSpectralDataForUpdate', 'ID') > 0:
             # Update the (originally null) spectral data field to the
             # value having the nearest timestamp. This uses an odd 
@@ -1590,13 +1592,13 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
                 FROM tmpSpectralDataForUpdate, tmpSpectralData
                 WHERE TimeDifference<={fTs};
             """.format(fTs=fTimeSpacing)
-            print stSQL
+#            print stSQL
             curD.execute(stSQL)
 
-            print 'iteration iDs:', iDs
-            recCt = countTableFieldItems('tmpSpectralDataToUpdate', 'ID')
-            print 'recCt in tmpSpectralDataToUpdate, before delete:', recCt
-            print ''
+#            print 'iteration iDs:', iDs
+#            recCt = countTableFieldItems('tmpSpectralDataToUpdate', 'ID')
+#            print 'recCt in tmpSpectralDataToUpdate, before delete:', recCt
+#            print ''
 
             # if there are multiple with a range of time difference
             # keep only the one(s) with minimum time difference
@@ -1606,7 +1608,7 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
                 FROM tmpSpectralDataToUpdate, tmpSpectralDataToUpdate AS tSDTU
                 WHERE tmpSpectralDataToUpdate.SpectID=tSDTU.SpectID
                 AND tmpSpectralDataToUpdate.TimeDifference>tSDTU.TimeDifference);"""
-            print stSQL
+#            print stSQL
             curD.execute(stSQL)
 
             # remove any duplicates where time difference is the same
@@ -1614,7 +1616,7 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
                 WHERE tmpSpectralDataToUpdate.ID
                 NOT IN (SELECT MIN(tmpSpectralDataToUpdate.ID) AS MinID
                 FROM tmpSpectralDataToUpdate GROUP BY tmpSpectralDataToUpdate.SpectID);"""
-            print stSQL
+#            print stSQL
             curD.execute(stSQL)
 
             # update the spectral data
@@ -1627,14 +1629,14 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
                 FROM tmpSpectralDataToUpdate
                 WHERE tmpSpectralDataToUpdate.SpectID = tmpSpectralData.ID)
                 """.format(sFn=stFldNm)
-            print stSQL
+#            print stSQL
             curD.execute(stSQL)
 
             if iHowManySeries == 2: # if we were only to add on VIS, we are done
-                print 'before delete'
-                recCt = countTableFieldItems('tmpSpectralData', 'ID')
-                print 'recCt:', recCt
-                print 'iHowManySeries:', iHowManySeries
+#                print 'before delete'
+#                recCt = countTableFieldItems('tmpSpectralData', 'ID')
+#                print 'recCt:', recCt
+#                print 'iHowManySeries:', iHowManySeries
 
                 stSQL = """DELETE FROM tmpSpectralData
                     WHERE IRRef IS NULL OR VISRef IS NULL;"""
@@ -1646,31 +1648,30 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
                         IRRef = NULL,
                         VISRef = NULL;"""
                     curD.execute(stSQL)
-                print 'after delete'
-                recCt = countTableFieldItems('tmpSpectralData', 'ID')
-                print 'recCt:', recCt
-                print 'iHowManySeries:', iHowManySeries
+#                print 'after delete'
+#                recCt = countTableFieldItems('tmpSpectralData', 'ID')
+#                print 'recCt:', recCt
+#                print 'iHowManySeries:', iHowManySeries
 
                 return countTableFieldItems('tmpSpectralData', 'ID')
-    # next of IR or VIS data column
-    # done with iterations over iDs
-    # remove any incomplete records, cannot be used in calculations
+    # loop here to next of IR or VIS data column
+    # done with iterations over iDs,  remove any incomplete records, cannot be used in calculations
 
-    print 'done with iterations, before delete'
-    recCt = countTableFieldItems('tmpSpectralData', 'ID')
-    print 'recCt:', recCt
-    print 'iHowManySeries:', iHowManySeries
+#    print 'done with iterations, before delete'
+#    recCt = countTableFieldItems('tmpSpectralData', 'ID')
+#    print 'recCt:', recCt
+#    print 'iHowManySeries:', iHowManySeries
 
     stSQL = """DELETE FROM tmpSpectralData
         WHERE IRRef IS NULL OR VISRef IS NULL
         OR IRData IS NULL OR VISData IS NULL;"""
 # for testing, skip this
-#    curD.execute(stSQL)
+    curD.execute(stSQL)
 
-    print 'done with iterations, after delete'
-    recCt = countTableFieldItems('tmpSpectralData', 'ID')
-    print 'recCt:', recCt
-    print 'iHowManySeries:', iHowManySeries
+#    print 'done with iterations, after delete'
+#    recCt = countTableFieldItems('tmpSpectralData', 'ID')
+#    print 'recCt:', recCt
+#    print 'iHowManySeries:', iHowManySeries
 
     return countTableFieldItems('tmpSpectralData', 'ID')
 
