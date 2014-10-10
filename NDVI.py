@@ -1254,6 +1254,7 @@ class NDVIPanel(wx.Panel):
         # validation complete, enter any more above
 #        print ">>>>validation complete"
 
+        # get values used by most options:
         # get column header strings
         if self.calcDict['UseRef'] == 1:
             stIRRefTxt = self.cbxIRRefSeriesID.GetStringSelection()
@@ -1277,26 +1278,7 @@ class NDVIPanel(wx.Panel):
             refStation, refIR, refVis,
             datStation, datIR, datVis
 'calculations used by most options:
-If boolUseReference Then
- lngRefStationID = Me!cbxSelRefStation
- 'look for longitude for logger
- ' if no valid longitude, fn returns NULL
- varLocLongitude = GetLongitude(Me!cbxSelRefStation, True)
- ' get strings that will be spectral band columns headings
- stIRRefTxt = "" & Me!cbxSelIRRefSeries.Column(1)
- stVISRefTxt = "" & Me!cbxSelVISRefSeries.Column(1)
-Else
- lngRefStationID = 0
-End If
-stIRDatTxt = "" & Me!cbxSelIRDataSeries.Column(1)
-stVISDatTxt = "" & Me!cbxSelVISDataSeries.Column(1)
 
-'if a plus/minus hour cutoff is entered use it, otherwise 12 hours (all day)
-If IsNumeric(Me!txbHoursPlusMinusSolarNoon) Then
- dblPlusMinusHourCutoff = Me!txbHoursPlusMinusSolarNoon
-Else
- dblPlusMinusHourCutoff = 12
-End If
 
 'if IR and VIS functions provided use them, otherwise default to raw bands
 ' maybe better test for valid functions
