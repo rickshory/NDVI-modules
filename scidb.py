@@ -1798,7 +1798,7 @@ def generateSheetRows(sheetID, formatValues = True, cr = curD):
         # are by solar time, this is the 'solar time' representation of the day's "solar midnight"
         dtNominalDay = datetime.datetime.strptime(sDt, "%Y-%m-%d")
         # create a date which is the UT clock time when solar midnight occurs at this longitude for this nominal date
-        tdSolarCorr = solarCorrection(sDt, bkDict['Longitude'])
+        tdSolarCorr = localSolarCorrectionTimedelta(sDt, bkDict['Longitude'])
         dtUTSolarMidnight = dtNominalDay + tdSolarCorr
         for iTimeSliceCt in range(bkDict['NumberOfTimeSlicesPerDay']):
             # nodes are at one half, three halves, 5 halves, ... of a time slice
