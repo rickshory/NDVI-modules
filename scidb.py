@@ -1271,7 +1271,7 @@ def localSolarCorrectionTimedelta(stDate, fLongitude):
     """
     return datetime.timedelta(minutes = localSolarCorrectionMinutes(stDate, fLongitude))
 
-def GetBeginEndTimes(dt, fLongitude, fPlusMinusCutoff):
+def GetBeginEndTimes(dt, fLongitude, fPlusMinusCutoff = 12):
     """
     Input:
      dt: a string in UNIX format (yyyy-mm-dd) or a Python date or datetime
@@ -1311,14 +1311,14 @@ def GetBeginEndTimes(dt, fLongitude, fPlusMinusCutoff):
     datetimeEnd = datetimeSolarNoon + datetime.timedelta(hours=fPlusMinusHrs)
     return (datetimeBegin, datetimeEnd)
 
-def GetBeginEndTimeStrings(dt, fLongitude, fPlusMinusCutoff):
+def GetBeginEndTimeStrings(dt, fLongitude, fPlusMinusCutoff = 12):
     be = GetBeginEndTimes(dt, fLongitude, fPlusMinusCutoff)
     stBegin = be[0].strftime('%Y-%m-%d %H:%M:%S')
     stEnd = be[1].strftime('%Y-%m-%d %H:%M:%S')
     return (stBegin, stEnd)
 
 def GetHighLowCutoffs(dtClearDay, iStationID, iSeriesID,
-        fPlusMinusHoursCutoff, fPercentOfMaxLow, fPercentOfMaxHigh):
+        fPlusMinusHoursCutoff = 12, fPercentOfMaxLow = 75, fPercentOfMaxHigh = 125):
     """
     Input:
      dtClearDay: a string in UNIX format (yyyy-mm-dd) or a Python date or datetime
@@ -1360,7 +1360,7 @@ def testLS(stSQL = """SELECT testBadStrings.LongName,
         for recName in rec.keys():
             print recName, rec[recName]
 
-def GetDaySpectralData(dateCur, fPlusMinusCutoff = None,
+def GetDaySpectralData(dateCur, fPlusMinusCutoff = 12,
                        iRefStation = 0, iIRRefSeries = 0, iVisRefSeries = 0,
                        iDataStation = 0, iIRDataSeries = 0, iVisDataSeries = 0):
     """
