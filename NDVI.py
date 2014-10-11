@@ -1312,13 +1312,17 @@ class NDVIPanel(wx.Panel):
                 iNumDatesDone += 1
                 self.tcProgress.SetValue('Doing station %d of %d , day %d of %d' % (iNumStationsDone,
                         len(lStaIDs), iNumDatesDone, len(lDates)))
-
-#                self.tcProgress.AppendText()
+                tdElapsed = datetime.datetime.now() - dtJobStarted
+                self.tcProgress.AppendText(', elapsed time: ' + repr(tdElapsed))
+                print 'elapsed time: ', repr(tdElapsed)
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
         # see InsertMetadataIntoCurrentSheet fn in Access DB
-        self.tcProgress.SetValue('Done')
+
+        # while testing leave last diagnostics visible
+        #self.tcProgress.SetValue('Done')
+        print "Job Done"
         
         validation = """
 
