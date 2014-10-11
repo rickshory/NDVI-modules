@@ -1254,6 +1254,9 @@ class NDVIPanel(wx.Panel):
         # validation complete, enter any more above
 #        print ">>>>validation complete"
 
+        # remember start time
+        dtJobStarted = datetime.datetime.now()
+        print 'dtJobStarted', dtJobStarted
         # get values used by most options:
         # get column header strings
         if self.calcDict['UseRef'] == 1:
@@ -1289,7 +1292,20 @@ class NDVIPanel(wx.Panel):
         for iStID in lStaIDs:
             stSQL = 'SELECT StationName FROM Stations WHERE ID = ?'
             stDataStation = scidb.curD.execute(stSQL, (iStID,)).fetchone()['StationName']
-            print 'stDataStation', stDataStation
+            fIRDatLowCutoff, fIRDatHighCutoff = scidb.GetHighLowCutoffs(dtClearDay = self.calcDict['ClearDay'],
+                iStationID = iStID,
+                iSeriesID = self.calcDict['IRDataSeriesID'],
+                fPlusMinusHoursCutoff = self.calcDict['PlusMinusCutoffHours'],
+                fPercentOfMaxLow = self.calcDict['ThresholdPctLow'],
+                fPercentOfMaxHigh = self.calcDict['ThresholdPctHigh'])
+            fVISDatLowCutoff, fVISDatHighCutoff = scidb.GetHighLowCutoffs(dtClearDay = self.calcDict['ClearDay'],
+                iStationID = iStID,
+                iSeriesID = self.calcDict['VisDataSeriesID'],
+                fPlusMinusHoursCutoff = self.calcDict['PlusMinusCutoffHours'],
+                fPercentOfMaxLow = self.calcDict['ThresholdPctLow'],
+                fPercentOfMaxHigh = self.calcDict['ThresholdPctHigh'])
+            print 'stDataStation', stDataStation, 'cutoffs', fIRDatLowCutoff, fIRDatHighCutoff, fVISDatLowCutoff, fVISDatHighCutoff
+            stBaseNm = stDataStation
             iNumStationsDone += 1
             iNumDatesDone = 0
             for dDt in lDates:
@@ -1299,6 +1315,9 @@ class NDVIPanel(wx.Panel):
 
 #                self.tcProgress.AppendText()
 
+        # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
+        # calcDict, including drilldown into logger and sensor information
+        # see InsertMetadataIntoCurrentSheet fn in Access DB
         self.tcProgress.SetValue('Done')
         
         validation = """
@@ -1327,30 +1346,8 @@ lngSheetCt = 1
    lngShNumSAS = 0
    lngRowSAS = 0
    
-   lngTotStationsToDo = Me!lsbDataStations.ItemsSelected.Count
-   lngTotDaysToDo = Me!lsbDates.ItemsSelected.Count
-   lngNumStationsDone = 0
-   
-   
-   For Each varItm In Me!lsbDataStations.ItemsSelected
-    lngNumStationsDone = lngNumStationsDone + 1
-    lngNumDaysDone = 0
-    Me!txbProgress = " Doing station " & lngNumStationsDone & " of " & lngTotStationsToDo & _
-         ", day " & lngNumDaysDone & " of " & lngTotDaysToDo
-    Me.Repaint
-    DoEvents
+   For Each Station
 
-   ' MsgBox "ID " & Me!lsbDataStations.ItemData(varItm)
-    lngDataStationID = Me!lsbDataStations.ItemData(varItm)
-    stDataStation = DLookup("StationName", "Stations", "ID=" & lngDataStationID)
-    If Me!Opt1ClrDayVsSetTholds = 1 Then
-     dblTmp1 = GetHighLowCutoffs_RtnMax(lngDataStationID, Me!IRDataSeries, _
-          Me!ThresholdPctLow, Me!ThresholdPctHigh, dblIRDatLowCutoff, dblIRDatHighCutoff, Me!ClearDay)
-     dblTmp1 = GetHighLowCutoffs_RtnMax(lngDataStationID, Me!VISDataSeries, _
-          Me!ThresholdPctLow, Me!ThresholdPctHigh, dblVISDatLowCutoff, dblVISDatHighCutoff, Me!ClearDay)
-'     Debug.Print "cutoffs, " & stDataStation & ", IRlow, " & dblIRDatLowCutoff & ", IRhigh, " & dblIRDatHighCutoff & _
-          ", VISlow, " & dblVISDatLowCutoff & ", VIShigh, " & dblVISDatHighCutoff
-    End If
     stBaseShtNm = stDataStation
     Set XL = SetupExcelWorkbook(lngSheetCt, XL) 'either creates new or adds sheet to existing, returns with ActiveSheet blank
     If lngSheetCt = 1 Then
