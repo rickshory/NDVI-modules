@@ -1259,7 +1259,8 @@ class NDVIPanel(wx.Panel):
         if self.calcDict['UseRef'] == 1:
             stIRRefTxt = self.cbxIRRefSeriesID.GetStringSelection()
             stVISRefTxt = self.cbxVISRefSeriesID.GetStringSelection()
-            # calculate the reference high/low cutoffs here, to use for all loggers
+            # get reference high/low cutoffs here, to use for all stations
+            # will get data cutoffs later for each station
             fIRRefLowCutoff, fIRRefHighCutoff = scidb.GetHighLowCutoffs(dtClearDay = self.calcDict['ClearDay'],
                 iStationID = self.calcDict['RefStationID'],
                 iSeriesID = self.calcDict['IRRefSeriesID'],
@@ -1285,11 +1286,19 @@ class NDVIPanel(wx.Panel):
         iShNumSAS = 0
         iRowSAS = 0
         iNumStationsDone = 0
-        
+        for iStID in lStaIDs:
+            iNumStationsDone += 1
+            iNumDatesDone = 0
+            for dDt in lDates:
+                iNumDatesDone += 1
+#                stMsg = 'Doing station %d of %d , day %d of %d' %
+#                self.tcProgress.AppendText(
+                self.tcProgress.SetValue('Doing station %d of %d , day %d of %d' % (iNumStationsDone,
+                        len(lStaIDs), iNumDatesDone, len(lDates)))
+
+        self.tcProgress.SetValue('Done')
         
         validation = """
-                
-        get high and low cutoffs based on clear day, for IR and vis
 
 'if IR and VIS functions provided use them, otherwise default to raw bands
 ' maybe better test for valid functions
@@ -1309,16 +1318,6 @@ End If
 lngSheetCt = 1
  boolHasSAS = False 'default
  Select Case Me!cbxSelTask
-   
-  Case 3, 6, 7, 8, 13, 16, 17, 18
-  '3 = NDVI details
-  '6 = NDVI summary
-  '7 = same as 6 and also output a workbook for SAS
-  '8 = same as 7, but adjusted so whole-season minimum=0, maximum=1
-  '13 = same as 3 except no reference
-  '16 = same as 6 except no reference
-  '17 = same as 7 except no reference
-  '18 = same as 8 except no reference
 
   'stSummaryShtNm
    Dim XL_SAS As Object, lngShNumSAS As Long, stSheetNameSAS As String, lngRowSAS As Long
@@ -1329,22 +1328,6 @@ lngSheetCt = 1
    lngTotDaysToDo = Me!lsbDates.ItemsSelected.Count
    lngNumStationsDone = 0
    
-   Select Case Me!Opt1ClrDayVsSetTholds
-    Case 1 'base thresholds on percent of maximum for clear day
-     'calculate the references here, to use for all loggers
-     dblTmp1 = GetHighLowCutoffs_RtnMax(Me!RefStationID, Me!IRRefSeries, _
-          Me!ThresholdPctLow, Me!ThresholdPctHigh, dblIRRefLowCutoff, dblIRRefHighCutoff, Me!ClearDay)
-     dblTmp1 = GetHighLowCutoffs_RtnMax(Me!RefStationID, Me!VISRefSeries, _
-          Me!ThresholdPctLow, Me!ThresholdPctHigh, dblVISRefLowCutoff, dblVISRefHighCutoff, Me!ClearDay)
-'     Debug.Print "Ref cutoffs, IRlow, " & dblIRRefLowCutoff & ", IRhigh, " & dblIRRefHighCutoff & _
-          ", VISlow, " & dblVISRefLowCutoff & ", VIShigh, " & dblVISRefHighCutoff
-     'calculate the data cutoffs later, for each logger
-    Case 2 ' use explicit stored values for thresholds
-     dblIRRefCutoff = Me![txbIRRefCutoff]
-     dblVISRefCutoff = Me![txbVISRefCutoff]
-     dblIRDatCutoff = Me![txbIRDatCutoff]
-     dblVISDatCutoff = Me![txbVISDatCutoff]
-   End Select
    
    For Each varItm In Me!lsbDataStations.ItemsSelected
     lngNumStationsDone = lngNumStationsDone + 1
