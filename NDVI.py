@@ -1259,6 +1259,21 @@ class NDVIPanel(wx.Panel):
         if self.calcDict['UseRef'] == 1:
             stIRRefTxt = self.cbxIRRefSeriesID.GetStringSelection()
             stVISRefTxt = self.cbxVISRefSeriesID.GetStringSelection()
+            # calculate the reference high/low cutoffs here, to use for all loggers
+            fIRRefLowCutoff, fIRRefHighCutoff =
+                scidb.GetHighLowCutoffs(dtClearDay = self.calcDict['ClearDay'],
+                iStationID = self.calcDict['RefStationID'],
+                iSeriesID = self.calcDict['IRRefSeriesID'],
+                fPlusMinusHoursCutoff = self.calcDict['PlusMinusCutoffHours'],
+                fPercentOfMaxLow = self.calcDict['ThresholdPctLow'],
+                fPercentOfMaxHigh = self.calcDict['ThresholdPctHigh'])
+            fVISRefLowCutoff, fVISRefHighCutoff = 
+                scidb.GetHighLowCutoffs(dtClearDay = self.calcDict['ClearDay'],
+                iStationID = self.calcDict['RefStationID'],
+                iSeriesID = self.calcDict['VISRefSeriesID'],
+                fPlusMinusHoursCutoff = self.calcDict['PlusMinusCutoffHours'],
+                fPercentOfMaxLow = self.calcDict['ThresholdPctLow'],
+                fPercentOfMaxHigh = self.calcDict['ThresholdPctHigh'])
         stIRDatTxt = self.cbxIRDataSeriesID.GetStringSelection()
         stVISDatTxt = self.cbxVisDataSeriesID.GetStringSelection()
         # check
@@ -1266,6 +1281,13 @@ class NDVIPanel(wx.Panel):
         print 'stVISRefTxt', stVISRefTxt
         print 'stIRDatTxt', stIRDatTxt
         print 'stVISDatTxt', stVISDatTxt
+        print 'IR cutoffs', fIRRefLowCutoff, fIRRefHighCutoff
+        print 'vis cutoffs', fVISRefLowCutoff, fVISRefHighCutoff
+        
+        iShNumSAS = 0
+        iRowSAS = 0
+        iNumStationsDone = 0
+        
         
         validation = """
                 
