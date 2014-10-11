@@ -1270,15 +1270,6 @@ class NDVIPanel(wx.Panel):
         validation = """
                 
         get high and low cutoffs based on clear day, for IR and vis
-        write fn 'GetHighLowCutoffs' that gets numbers based on the percent high and low cutoffs for
-            a station/series/clearDay. Can use with either ref or data series.
-        write fn 'GetBeginEndTimes' based on a date, a longitude, and +/- hour cutoffs
-        write fn 'GetDaySpectralData' that fills table "_tmp_SpectralData" given
-            date, beginTime, endTime,
-            refStation, refIR, refVis,
-            datStation, datIR, datVis
-'calculations used by most options:
-
 
 'if IR and VIS functions provided use them, otherwise default to raw bands
 ' maybe better test for valid functions
@@ -1298,83 +1289,6 @@ End If
 lngSheetCt = 1
  boolHasSAS = False 'default
  Select Case Me!cbxSelTask
-   
-  Case 2 ' chart daily IR reference
-   If dblPlusMinusHourCutoff < 12 Then
-    If MsgBox("The +/- hour cutoff is set to < 12. This will only chart the central " & _
-         dblPlusMinusHourCutoff * 2 & " hours of each day." & vbCr & vbCr & _
-         "(To chart complete days, set this to 12.)" & vbCr & vbCr & _
-         " Do you want to continue?", vbYesNo, "Check This") = vbNo Then Exit Sub
-   End If
-   For Each varItm In Me!lsbDates.ItemsSelected
-    dtTmp1 = GetBeginEndTimes(Me!lsbDates.ItemData(varItm), varLocLongitude, _
-         dblPlusMinusHourCutoff, dtBegin, dtEnd)
-    
-    If GetDaySpectralData(dtCur:=dtTmp1, dtBeginTime:=dtBegin, dtEndTime:=dtEnd, _
-         lngRefStationID:=lngRefStationID, _
-         lngIRRefSeries:=Me!cbxSelIRRefSeries, lngVISRefSeries:=0, _
-         lngDataStationID:=0, _
-         lngIRDataSeries:=0, lngVISDataSeries:=0) > 0 Then
-'     Set rst = CurrentDb.OpenRecordset("SELECT * FROM _tmp_SpectralData ORDER BY TimeStamp;", dbOpenSnapshot)
-    
-    
-'    If GetDayIRRefData(dtTmp1, Me!cbxSelRefStation, Me!cbxSelIRRefSeries, dtBegin, dtEnd) > 0 Then
-     stSQL = "SELECT [_tmp_SpectralData].Timestamp, [_tmp_SpectralData].IRRef " & _
-          "FROM _tmp_SpectralData ORDER BY [_tmp_SpectralData].Timestamp;"
-     Set rst = CurrentDb.OpenRecordset(stSQL, dbOpenSnapshot)
-      ' put into a spreadsheet
-      stSheetName = Format(dtTmp1, "yyyy-mm-dd")
-      Set XL = SetupExcelWorkbook(lngSheetCt, XL) 'either creates new or adds sheet to existing, returns with ActiveSheet blank
-      If lngSheetCt = 1 Then
-       InsertMetadataIntoCurrentSheet XL, lngSheetCt, _
-            lngJobEndSheetRow, lngJobEndSheetCol, _
-            lngJobElapsedSheetRow, lngJobElapsedSheetCol
-      End If
-      XL.ActiveSheet.Name = stSheetName
-      lngRw = 0
-      lngRw = lngRw + 1
-      XL.ActiveSheet.Cells(lngRw, 1).Value = "Timestamp"
-      XL.ActiveSheet.Cells(lngRw, 2).Value = stIRRefTxt
-      
-      Do Until rst.EOF
-       lngRw = lngRw + 1
-       XL.ActiveSheet.Cells(lngRw, 1).Value = rst!Timestamp
-       XL.ActiveSheet.Cells(lngRw, 2).Value = rst!IRRef
-       rst.MoveNext
-      Loop
-      rst.Close
-      Set rst = Nothing
-      XL.Columns("A:A").NumberFormat = "yyyy-mm-dd hh:mm:ss"
-     
-      XL.Charts.Add
-      XL.ActiveChart.ChartType = xlXYScatterLinesNoMarkers
-      XL.ActiveChart.SetSourceData Source:=XL.Sheets("" & stSheetName).Range("A1:A" & lngRw & ",B1:B" & lngRw & ""), _
-          PlotBy:=xlColumns
-      XL.ActiveChart.Location WHERE:=xlLocationAsObject, Name:=stSheetName
-      With XL.ActiveChart
-          .PlotArea.ClearFormats 'no background, better for sci pubs
-          .HasTitle = False
-          .Axes(xlCategory, xlPrimary).HasTitle = False
-          .Axes(xlValue, xlPrimary).HasTitle = False
-      End With
-      XL.ActiveChart.HasLegend = True
-      
-      With XL.ActiveChart.Axes(xlCategory)
-          .TickLabels.ReadingOrder = xlContext
-          .TickLabels.Orientation = xlUpward
-          .MinimumScaleIsAuto = True
-          .MaximumScaleIsAuto = True
-          .MinorUnitIsAuto = True
-          .MajorUnit = 0.25
-          .Crosses = xlAutomatic
-          .ReversePlotOrder = False
-          .ScaleType = xlLinear
-          .DisplayUnit = xlNone
-      End With
-      
-      lngSheetCt = lngSheetCt + 1
-    End If ' there were records for this date
-   Next 'date to display data for
    
   Case 3, 6, 7, 8, 13, 16, 17, 18
   '3 = NDVI details
