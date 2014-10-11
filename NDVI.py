@@ -1287,14 +1287,17 @@ class NDVIPanel(wx.Panel):
         iRowSAS = 0
         iNumStationsDone = 0
         for iStID in lStaIDs:
+            stSQL = 'SELECT StationName FROM Stations WHERE ID = ?'
+            stDataStation = scidb.curD.execute(stSQL, (iStID,)).fetchone()['StationName']
+            print 'stDataStation', stDataStation
             iNumStationsDone += 1
             iNumDatesDone = 0
             for dDt in lDates:
                 iNumDatesDone += 1
-#                stMsg = 'Doing station %d of %d , day %d of %d' %
-#                self.tcProgress.AppendText(
                 self.tcProgress.SetValue('Doing station %d of %d , day %d of %d' % (iNumStationsDone,
                         len(lStaIDs), iNumDatesDone, len(lDates)))
+
+#                self.tcProgress.AppendText()
 
         self.tcProgress.SetValue('Done')
         
