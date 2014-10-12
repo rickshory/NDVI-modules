@@ -1240,6 +1240,44 @@ def equationOfTime(stDate):
     except:
         return 0
 
+def timeIntervalAsStandardString(dtBegin, dtEnd):
+    """
+    given two datetime ojects,
+    returns the time interval between as standard days, hours, minutes, seconds
+    leaves off larger intervals that are zero
+    """
+    td = dtEnd - dtBegin
+    secs = td.seconds
+    stBuild = ''
+    if secs > (3600 * 24):
+        iDays = int(secs / (3600 * 24))
+        stBuild = stBuild + str(iDays) + ' day'
+        if iDays > 1:
+            stBuild = stBuild + 's'
+        secs = secs % (3600 * 24)
+    if secs > 3600:
+        iHours = int(secs / 3600)
+        if stBuild != '':
+            stBuild = stBuild + ', '
+        stBuild = stBuild + str(iHours) + ' hour'
+        if iHours > 1:
+            stBuild = stBuild + 's'
+        secs = secs % 3600
+    if secs > 60:
+        iMinutes = int(secs / 60)
+        if stBuild != '':
+            stBuild = stBuild + ', '
+        stBuild = stBuild + str(iMinutes) + ' minute'
+        if iMinutes > 1:
+            stBuild = stBuild + 's'
+        secs = secs % 60
+    if stBuild != '':
+        stBuild = stBuild + ', '
+    stBuild = stBuild + str(secs) + ' second'
+    if secs > 1:
+        stBuild = stBuild + 's'
+    return stBuild
+
 def localSolarCorrectionMinutes(stDate, fLongitude):
     """
     Given a date and a longitude, returns a correction from Universal Time
