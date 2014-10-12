@@ -1317,6 +1317,21 @@ class NDVIPanel(wx.Panel):
                         datetime.datetime.now()))
                 print 'elapsed time: ', scidb.timeIntervalAsStandardString(dtJobStarted,
                         datetime.datetime.now())
+                if self.calcDict['UseRef'] == 1:
+                    numItems = scidb.GetDaySpectralData(dateCur = dDt,
+                        fPlusMinusCutoff = self.calcDict['PlusMinusCutoffHours'],
+                        iRefStation = self.calcDict['RefStationID'],
+                        iIRRefSeries = self.calcDict['IRRefSeriesID'],
+                        iVisRefSeries = self.calcDict['VISRefSeriesID'],
+                        iDataStation = iStID,
+                        iIRDataSeries = self.calcDict['IRDataSeriesID'],
+                        iVisDataSeries = self.calcDict['VisDataSeriesID'])
+                else:
+                    numItems = scidb.GetDaySpectralData(dateCur = dDt,
+                        fPlusMinusCutoff = self.calcDict['PlusMinusCutoffHours'],
+                        iDataStation = iStID,
+                        iIRDataSeries = self.calcDict['IRDataSeriesID'],
+                        iVisDataSeries = self.calcDict['VisDataSeriesID'])
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
