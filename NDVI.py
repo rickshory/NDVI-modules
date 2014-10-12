@@ -1332,6 +1332,7 @@ class NDVIPanel(wx.Panel):
                         iDataStation = iStID,
                         iIRDataSeries = self.calcDict['IRDataSeriesID'],
                         iVisDataSeries = self.calcDict['VisDataSeriesID'])
+                print numItems, 'records for', dDt
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
