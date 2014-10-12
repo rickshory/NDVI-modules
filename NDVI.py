@@ -1312,9 +1312,11 @@ class NDVIPanel(wx.Panel):
                 iNumDatesDone += 1
                 self.tcProgress.SetValue('Doing station %d of %d , day %d of %d' % (iNumStationsDone,
                         len(lStaIDs), iNumDatesDone, len(lDates)))
-                tdElapsed = datetime.datetime.now() - dtJobStarted
-                self.tcProgress.AppendText(', elapsed time: ' + repr(tdElapsed))
-                print 'elapsed time: ', repr(tdElapsed)
+                self.tcProgress.AppendText(', elapsed time: ' +
+                        scidb.timeIntervalAsStandardString(dtJobStarted,
+                        datetime.datetime.now()))
+                print 'elapsed time: ', scidb.timeIntervalAsStandardString(dtJobStarted,
+                        datetime.datetime.now())
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
