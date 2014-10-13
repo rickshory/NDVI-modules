@@ -1279,12 +1279,13 @@ class NDVIPanel(wx.Panel):
         stIRDatTxt = self.cbxIRDataSeriesID.GetStringSelection()
         stVISDatTxt = self.cbxVisDataSeriesID.GetStringSelection()
         # check
-        print 'stIRRefTxt', stIRRefTxt
-        print 'stVISRefTxt', stVISRefTxt
+        if self.calcDict['UseRef'] == 1:
+            print 'stIRRefTxt', stIRRefTxt
+            print 'stVISRefTxt', stVISRefTxt
+            print 'IR cutoffs', fIRRefLowCutoff, fIRRefHighCutoff
+            print 'vis cutoffs', fVISRefLowCutoff, fVISRefHighCutoff
         print 'stIRDatTxt', stIRDatTxt
         print 'stVISDatTxt', stVISDatTxt
-        print 'IR cutoffs', fIRRefLowCutoff, fIRRefHighCutoff
-        print 'vis cutoffs', fVISRefLowCutoff, fVISRefHighCutoff
         
         iShNumSAS = 0
         iRowSAS = 0

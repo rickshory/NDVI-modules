@@ -1659,7 +1659,7 @@ def GetDaySpectralData(dateCur, fPlusMinusCutoff = 12,
                 if boolUseNormalRef == 0: # was generated as if Dat were Ref, now move fields over
                     stSQL = """UPDATE tmpSpectralData
                         SET IRData = IRRef,
-                        VISData = VISRef
+                        VISData = VISRef,
                         IRRef = NULL,
                         VISRef = NULL;"""
                     curD.execute(stSQL)
