@@ -1338,6 +1338,12 @@ class NDVIPanel(wx.Panel):
                                vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
                     scidb.curD.execute(stSQL)
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
+                    exampleSQL = """
+                    SELECT IRRef, VISRef, IRData, VISData,
+                     (IRRef - (0.21*VISRef)) AS rir, ((0.21*VISRef)) AS rvi,
+                     (IRData- (0.21*VISData)) AS dir, ((0.21*VISData)) AS dvi 
+                    FROM tmpSpectralData
+                    """
                 else: # not using reference
                     numItems = scidb.GetDaySpectralData(dateCur = dDt,
                         fPlusMinusCutoff = self.calcDict['PlusMinusCutoffHours'],
