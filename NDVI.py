@@ -1326,13 +1326,33 @@ class NDVIPanel(wx.Panel):
                         iDataStation = iStID,
                         iIRDataSeries = self.calcDict['IRDataSeriesID'],
                         iVisDataSeries = self.calcDict['VisDataSeriesID'])
-                else:
+                    print 'before any threshold deletions,', numItems, 'records for', dDt
+                    stSQL = """DELETE FROM tmpSpectralData
+                    WHERE IRRef < {irl} OR IRRef > {irh}
+                    OR VISRef < {vrl} OR VISRef > {vrh}
+                    OR IRData < {idl} OR IRData > {idh}
+                    OR VISData < {vdl} OR VISData > {vdh}
+                    """.format(irl=fIRRefLowCutoff, irh=fIRRefHighCutoff,
+                               vrl=fVISRefLowCutoff, vrh=fVISRefHighCutoff,
+                               idl=fIRDatLowCutoff, idh=fIRDatHighCutoff,
+                               vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
+                    scidb.curD.execute(stSQL)
+                    print 'after any threshold deletions,', scidb.countTableFieldItems('tmpSpectralData','ID'), 'records for', dDt
+                else: # not using reference
                     numItems = scidb.GetDaySpectralData(dateCur = dDt,
                         fPlusMinusCutoff = self.calcDict['PlusMinusCutoffHours'],
                         iDataStation = iStID,
                         iIRDataSeries = self.calcDict['IRDataSeriesID'],
                         iVisDataSeries = self.calcDict['VisDataSeriesID'])
-                print numItems, 'records for', dDt
+                    print 'before any threshold deletions,', numItems, 'records for', dDt
+                    stSQL = """DELETE FROM tmpSpectralData
+                    WHERE IRData < {idl} OR IRData > {idh}
+                    OR VISData < {vdl} OR VISData > {vdh}
+                    """.format(idl=fIRDatLowCutoff, idh=fIRDatHighCutoff,
+                               vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
+                    scidb.curD.execute(stSQL)
+                    print 'after any threshold deletions,', scidb.countTableFieldItems('tmpSpectralData','ID'), 'records for', dDt
+                    
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
