@@ -1258,6 +1258,20 @@ class NDVIPanel(wx.Panel):
         dtJobStarted = datetime.datetime.now()
         print 'dtJobStarted', dtJobStarted
         # get values used by most options:
+        # get functions
+        # for now, just translate into formulas to generate numbers
+        print "self.calcDict['IRFunction']", self.calcDict['IRFunction']
+        print "self.calcDict['VISFunction']", self.calcDict['VISFunction']
+        iFormula = self.calcDict['IRFunction'].strip('=')
+        vFormula = self.calcDict['VISFunction'].strip('=')
+        stIRRefFormula = '(' + iFormula.replace('i','IRRef').replace('v','VISRef') + ')'
+        stVISRefFormula = '(' + vFormula.replace('i','IRRef').replace('v','VISRef') + ')'
+        stIRDatFormula = '(' + iFormula.replace('i','IRData').replace('v','VISData') + ')'
+        stVISDatFormula = '(' + vFormula.replace('i','IRData').replace('v','VISData') + ')'
+        print 'stIRRefFormula', stIRRefFormula
+        print 'stVISRefFormula', stVISRefFormula
+        print 'stIRDatFormula', stIRDatFormula
+        print 'stVISDatFormula', stVISDatFormula
         # get column header strings
         if self.calcDict['UseRef'] == 1:
             stIRRefTxt = self.cbxIRRefSeriesID.GetStringSelection()
