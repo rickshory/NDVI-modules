@@ -434,6 +434,11 @@ try:
         "VISRef" FLOAT,
         "IRData" FLOAT,
         "VISData" FLOAT,
+        "rir" VARCHAR(50),
+        "rvi" VARCHAR(50),
+        "dir" VARCHAR(50),
+        "dvi" VARCHAR(50),
+        "ndvi" VARCHAR(50),
         "NearestTimestamp" timestamp
         );
 
