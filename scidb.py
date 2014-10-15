@@ -526,7 +526,7 @@ except sqlite3.Error, e:
 
 def assignDBFn(pyExpression, sqliteFnName):
     """
-    Creates a new function in Python at runtime, then assigns it to SQLite.
+    Creates a function in Python at runtime, then assigns it to SQLite.
     Needed for the arbitrary formulas users can input for calculating
     infrared and visible from the raw spectral data
     Example usage:
@@ -549,13 +549,15 @@ def assignDBFn(pyExpression, sqliteFnName):
     exec stFn
     datConn.create_function(sqliteFnName, 2, pyFn)
 
-def testDF():
-    assignDBFn('i-(0.21*v)', 'getIR')
+def testDF(pyExpression = 'i-(0.21*v)', sqliteFnName = 'getIR'):
+    assignDBFn(pyExpression, sqliteFnName)
     try:
         print 'results of pyFn for i=1, v=1', pyFn(1,1)
     except:
         print 'error occurs at "pyFn(1,1)" above, as pyFn has scope only in the "assignDBFn" namespace'
-    stSQL = 'SELECT IRRef, VISRef, getIR(IRRef, VISRef) AS refIR FROM tmpSpectralData;'
+    stSQL = """SELECT IRRef, VISRef, {fNm}(IRRef, VISRef) AS testField
+    FROM tmpSpectralData;
+    """.format(fNm=sqliteFnName)
     recs = curD.execute(stSQL).fetchall() # however this works
     
     for rec in recs:
