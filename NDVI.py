@@ -1258,20 +1258,13 @@ class NDVIPanel(wx.Panel):
         dtJobStarted = datetime.datetime.now()
         print 'dtJobStarted', dtJobStarted
         # get values used by most options:
-        # get functions
-        # for now, just translate into formulas to generate numbers
+        # assign IR and VIS formulas to DB functions, so can use them in SQLite queries
         print "self.calcDict['IRFunction']", self.calcDict['IRFunction']
         print "self.calcDict['VISFunction']", self.calcDict['VISFunction']
         iFormula = self.calcDict['IRFunction'].strip('=')
+        scidb.assignDBFn(iFormula, 'irVal')
         vFormula = self.calcDict['VISFunction'].strip('=')
-        stIRRefFormula = '(' + iFormula.replace('i','IRRef').replace('v','VISRef') + ')'
-        stVISRefFormula = '(' + vFormula.replace('i','IRRef').replace('v','VISRef') + ')'
-        stIRDatFormula = '(' + iFormula.replace('i','IRData').replace('v','VISData') + ')'
-        stVISDatFormula = '(' + vFormula.replace('i','IRData').replace('v','VISData') + ')'
-        print 'stIRRefFormula', stIRRefFormula
-        print 'stVISRefFormula', stVISRefFormula
-        print 'stIRDatFormula', stIRDatFormula
-        print 'stVISDatFormula', stVISDatFormula
+        scidb.assignDBFn(vFormula, 'visVal')
         # get column header strings
         if self.calcDict['UseRef'] == 1:
             stIRRefTxt = self.cbxIRRefSeriesID.GetStringSelection()
@@ -1352,7 +1345,8 @@ class NDVIPanel(wx.Panel):
                                vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
                     scidb.curD.execute(stSQL)
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
-                    exampleSQL = """
+                    stSQL = """
+                    
                     SELECT IRRef, VISRef, IRData, VISData,
                      (IRRef - (0.21*VISRef)) AS rir, ((0.21*VISRef)) AS rvi,
                      (IRData- (0.21*VISData)) AS dir, ((0.21*VISData)) AS dvi 
