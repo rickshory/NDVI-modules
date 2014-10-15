@@ -539,6 +539,10 @@ def creatAndAssignDBFn(pyFnName, pyArgStr, pyFnCode, sqliteFnName):
     datConn.create_function('getIR', 2, irFn)
     then the fn, under the SQLite name, can be used in queries e.g.
     'SELECT getIR(IRRef, VISRef) AS refIR FROM tmpSpectralData;'
+    
+    The created Python function goes out of scope when we leave this fn, and
+    so cannot be called independently, but it "sticks" in SQLite, and can be
+    used under the SQLite name as long as that connection persists
     """
     stFn = """def {fNm}({fAr}): return {fCd}""".format(fNm=pyFnName, fAr=pyArgStr, fCd=pyFnCode)
     exec stFn
@@ -546,6 +550,20 @@ def creatAndAssignDBFn(pyFnName, pyArgStr, pyFnCode, sqliteFnName):
     # Python function name cannot be in quotes, so cannot directly use variable
     stDBFn = """datConn.create_function('{dNm}', {dNa}, {pNm})""".format(dNm=sqliteFnName, dNa=stNumArgs, pNm=pyFnName)
     exec stDBFn
+
+def testDF():
+    creatAndAssignDBFn('irFn', 'i,v', 'i-(0.21*v)', 'getIR')
+    try:
+        print 'results of irFn for i=1, v=1', irFn(1,1)
+    except:
+        print 'error occurs at "irFn(1,1)" above, as irFn has scope only in the "creatAndAssignDBFn" namespace'
+    stSQL = 'SELECT IRRef, VISRef, getIR(IRRef, VISRef) AS refIR FROM tmpSpectralData;'
+    recs = curD.execute(stSQL).fetchall() # however this works
+    
+    for rec in recs:
+        for recName in rec.keys():
+            print recName, rec[recName]
+        
 
 def getSciDataCursor():
     """
