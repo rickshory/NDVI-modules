@@ -1347,7 +1347,9 @@ class NDVIPanel(wx.Panel):
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
                     stSQL = """
                     UPDATE tmpSpectralData
-                    SET rir = getIR(IRRef, VISRef)
+                    SET rir = getIR(IRRef, VISRef), rvi = getVis(IRRef, VISRef),
+                    dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
+                    
                     """
                     scidb.curD.execute(stSQL)
                 else: # not using reference
