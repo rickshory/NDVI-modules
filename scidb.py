@@ -524,39 +524,37 @@ except sqlite3.Error, e:
     print 'Error in "tmp.db": %s' % e.args[0]
     sys.exit(1)
 
-def creatAndAssignDBFn(pyFnName, pyArgStr, pyFnCode, sqliteFnName):
+def assignDBFn(pyExpression, sqliteFnName):
     """
     Creates a new function in Python at runtime, then assigns it to SQLite.
     Needed for the arbitrary formulas users can input for calculating
     infrared and visible from the raw spectral data
     Example usage:
-    creatAndAssignDBFn('irFn', 'i,v', 'i-(0.21*v)', 'getIR')
+    assignDBFn('i-(0.21*v)', 'getIR')
     creates a function like this:
-    def irFn(i,v):
+    def pyFunction(i,v):
         return i-(0.21*v)
     Then assigns the function to the data DB in SQLite, e.g.:
     (usage: dbConn.creat_function(SQLite_fn_name, num_args, Python_fn_name)
-    datConn.create_function('getIR', 2, irFn)
+    datConn.create_function('getIR', 2, pyFunction)
     then the fn, under the SQLite name, can be used in queries e.g.
     'SELECT getIR(IRRef, VISRef) AS refIR FROM tmpSpectralData;'
     
     The created Python function goes out of scope when we leave this fn, and
-    so cannot be called independently, but it "sticks" in SQLite, and can be
+    so could not be called independently, so use the dummy name 'pyFn';
+    however the fn "sticks" in SQLite, and can be
     used under the SQLite name as long as that connection persists
     """
-    stFn = """def {fNm}({fAr}): return {fCd}""".format(fNm=pyFnName, fAr=pyArgStr, fCd=pyFnCode)
+    stFn = """def pyFn(i,v): return {fCd}""".format(fCd=pyExpression)
     exec stFn
-    stNumArgs = str(len(pyArgStr.split(',')))
-    # Python function name cannot be in quotes, so cannot directly use variable
-    stDBFn = """datConn.create_function('{dNm}', {dNa}, {pNm})""".format(dNm=sqliteFnName, dNa=stNumArgs, pNm=pyFnName)
-    exec stDBFn
+    datConn.create_function(sqliteFnName, 2, pyFn)
 
 def testDF():
-    creatAndAssignDBFn('irFn', 'i,v', 'i-(0.21*v)', 'getIR')
+    assignDBFn('i-(0.21*v)', 'getIR')
     try:
-        print 'results of irFn for i=1, v=1', irFn(1,1)
+        print 'results of pyFn for i=1, v=1', pyFn(1,1)
     except:
-        print 'error occurs at "irFn(1,1)" above, as irFn has scope only in the "creatAndAssignDBFn" namespace'
+        print 'error occurs at "pyFn(1,1)" above, as pyFn has scope only in the "assignDBFn" namespace'
     stSQL = 'SELECT IRRef, VISRef, getIR(IRRef, VISRef) AS refIR FROM tmpSpectralData;'
     recs = curD.execute(stSQL).fetchall() # however this works
     
