@@ -1377,13 +1377,21 @@ class NDVIPanel(wx.Panel):
                                vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
                     scidb.curD.execute(stSQL)
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
+                    # fill in the other fields in the table
                     stSQL = """
                     UPDATE tmpSpectralData
                     SET rir = getIR(IRRef, VISRef), rvi = getVis(IRRef, VISRef),
                     dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
-                    
                     """
                     scidb.curD.execute(stSQL)
+                    print 'updated calculated bands'
+                    stSQL = """
+                    UPDATE tmpSpectralData
+                    SET ndvi = ((dir/rir) - (dvi/rvi))/((dir/rir) + (dvi/rvi));
+                    """
+                    scidb.curD.execute(stSQL)
+                    print 'updated ndvi'
+                    
                 else: # not using reference
                     numItems = scidb.GetDaySpectralData(dateCur = dDt,
                         fPlusMinusCutoff = self.calcDict['PlusMinusCutoffHours'],
@@ -1408,21 +1416,6 @@ class NDVIPanel(wx.Panel):
         print "Job Done"
         
         validation = """
-
-'if IR and VIS functions provided use them, otherwise default to raw bands
-' maybe better test for valid functions
-stTmp1 = Trim(Me!txbIRFunction)
-If stTmp1 <> "" Then
- stIFn = stTmp1
-Else
- stIFn = "=i"
-End If
-stTmp1 = Trim(Me!txbVISFunction)
-If stTmp1 <> "" Then
- stVFn = stTmp1
-Else
- stVFn = "=v"
-End If
 
 lngSheetCt = 1
  boolHasSAS = False 'default
