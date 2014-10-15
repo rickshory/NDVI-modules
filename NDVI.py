@@ -1305,6 +1305,13 @@ class NDVIPanel(wx.Panel):
 
             self.calcDict['OutputFolder'] = stDir
 
+        if self.calcDict['OutputBaseName'] == None:
+            wx.MessageBox('Need a "Base Name", which will be the file name for Excel output, or ' \
+                'the folder name for text output.', 'Missing',
+                        wx.OK | wx.ICON_INFORMATION)
+                self.tcBaseName.SetFocus()
+            
+
         # validation complete, enter any more above
 #        print ">>>>validation complete"
 
