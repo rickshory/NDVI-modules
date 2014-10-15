@@ -1251,43 +1251,43 @@ class NDVIPanel(wx.Panel):
 #                wx.MessageBox(' Excel output not implemented yet', 'Under Construction',
 #                    wx.OK | wx.ICON_INFORMATION)
                 return
-
-        # assign IR and VIS formulas to DB functions, so can use them in SQLite queries
-        print "self.calcDict['IRFunction']", self.calcDict['IRFunction']
-        print "self.calcDict['VISFunction']", self.calcDict['VISFunction']
-        iFormula = self.calcDict['IRFunction'].strip('=')
-        try: # assign the infrared-band formula
-            scidb.assignDBFn(iFormula, 'getIR')
-            # test the formula on the database
-            try:
-                scidb.curD.execute('SELECT getIR(1,1) AS test').fetchall()
+        if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
+            # assign IR and VIS formulas to DB functions, so can use them in SQLite queries
+            print "self.calcDict['IRFunction']", self.calcDict['IRFunction']
+            print "self.calcDict['VISFunction']", self.calcDict['VISFunction']
+            iFormula = self.calcDict['IRFunction'].strip('=')
+            try: # assign the infrared-band formula
+                scidb.assignDBFn(iFormula, 'getIR')
+                # test the formula on the database
+                try:
+                    scidb.curD.execute('SELECT getIR(1,1) AS test').fetchall()
+                except:
+                    wx.MessageBox('IR formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
+                            wx.OK | wx.ICON_INFORMATION)
+                    self.tcIRFunction.SetFocus()
+                    return
             except:
                 wx.MessageBox('IR formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
                         wx.OK | wx.ICON_INFORMATION)
                 self.tcIRFunction.SetFocus()
                 return
-        except:
-            wx.MessageBox('IR formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
-                    wx.OK | wx.ICON_INFORMATION)
-            self.tcIRFunction.SetFocus()
-            return
 
-        vFormula = self.calcDict['VISFunction'].strip('=')
-        try: # assign the visible-band formula
-            scidb.assignDBFn(vFormula, 'getVis')
-            # test the formula on the database
-            try:
-                scidb.curD.execute('SELECT getVis(1,1) AS test').fetchall()
+            vFormula = self.calcDict['VISFunction'].strip('=')
+            try: # assign the visible-band formula
+                scidb.assignDBFn(vFormula, 'getVis')
+                # test the formula on the database
+                try:
+                    scidb.curD.execute('SELECT getVis(1,1) AS test').fetchall()
+                except:
+                    wx.MessageBox('VIS formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
+                            wx.OK | wx.ICON_INFORMATION)
+                    self.tcVISFunction.SetFocus()
+                    return
             except:
                 wx.MessageBox('VIS formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
                         wx.OK | wx.ICON_INFORMATION)
                 self.tcVISFunction.SetFocus()
                 return
-        except:
-            wx.MessageBox('VIS formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
-                    wx.OK | wx.ICON_INFORMATION)
-            self.tcVISFunction.SetFocus()
-            return
 
         # validation complete, enter any more above
 #        print ">>>>validation complete"
@@ -1377,18 +1377,19 @@ class NDVIPanel(wx.Panel):
                                vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
                     scidb.curD.execute(stSQL)
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
-                    # fill in the other fields in the table
-                    stSQL = """
-                    UPDATE tmpSpectralData
-                    SET rir = getIR(IRRef, VISRef), rvi = getVis(IRRef, VISRef),
-                    dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
-                    """
-                    scidb.curD.execute(stSQL)
-                    stSQL = """
-                    UPDATE tmpSpectralData
-                    SET ndvi = ((dir/rir) - (dvi/rvi))/((dir/rir) + (dvi/rvi));
-                    """
-                    scidb.curD.execute(stSQL)
+                    if self.calcDict['OutputFormat'] in (2, 3):
+                        # fill explicit numbers into the other fields in the table
+                        stSQL = """
+                        UPDATE tmpSpectralData
+                        SET rir = getIR(IRRef, VISRef), rvi = getVis(IRRef, VISRef),
+                        dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
+                        """
+                        scidb.curD.execute(stSQL)
+                        stSQL = """
+                        UPDATE tmpSpectralData
+                        SET ndvi = ((dir/rir) - (dvi/rvi))/((dir/rir) + (dvi/rvi));
+                        """
+                        scidb.curD.execute(stSQL)
                 else: # not using reference
                     numItems = scidb.GetDaySpectralData(dateCur = dDt,
                         fPlusMinusCutoff = self.calcDict['PlusMinusCutoffHours'],
@@ -1402,17 +1403,18 @@ class NDVIPanel(wx.Panel):
                                vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
                     scidb.curD.execute(stSQL)
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
-                    # fill in the other fields in the table
-                    stSQL = """
-                    UPDATE tmpSpectralData
-                    SET dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
-                    """
-                    scidb.curD.execute(stSQL)
-                    stSQL = """
-                    UPDATE tmpSpectralData
-                    SET ndvi = (dir - dvi)/(dir + dvi);
-                    """
-                    scidb.curD.execute(stSQL)
+                    if self.calcDict['OutputFormat'] in (2, 3):
+                        # fill explicit numbers into the other fields in the table
+                        stSQL = """
+                        UPDATE tmpSpectralData
+                        SET dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
+                        """
+                        scidb.curD.execute(stSQL)
+                        stSQL = """
+                        UPDATE tmpSpectralData
+                        SET ndvi = (dir - dvi)/(dir + dvi);
+                        """
+                        scidb.curD.execute(stSQL)
                     
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
