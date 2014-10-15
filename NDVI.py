@@ -1251,6 +1251,44 @@ class NDVIPanel(wx.Panel):
 #                wx.MessageBox(' Excel output not implemented yet', 'Under Construction',
 #                    wx.OK | wx.ICON_INFORMATION)
                 return
+
+        # assign IR and VIS formulas to DB functions, so can use them in SQLite queries
+        print "self.calcDict['IRFunction']", self.calcDict['IRFunction']
+        print "self.calcDict['VISFunction']", self.calcDict['VISFunction']
+        iFormula = self.calcDict['IRFunction'].strip('=')
+        try: # assign the infrared-band formula
+            scidb.assignDBFn(iFormula, 'getIR')
+            # test the formula on the database
+            try:
+                scidb.curD.execute('SELECT getIR(1,1) AS test').fetchall()
+            except:
+                wx.MessageBox('IR formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
+                        wx.OK | wx.ICON_INFORMATION)
+                self.tcIRFunction.SetFocus()
+                return
+        except:
+            wx.MessageBox('IR formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
+                    wx.OK | wx.ICON_INFORMATION)
+            self.tcIRFunction.SetFocus()
+            return
+
+        vFormula = self.calcDict['VISFunction'].strip('=')
+        try: # assign the visible-band formula
+            scidb.assignDBFn(vFormula, 'getVis')
+            # test the formula on the database
+            try:
+                scidb.curD.execute('SELECT getVis(1,1) AS test').fetchall()
+            except:
+                wx.MessageBox('VIS formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
+                        wx.OK | wx.ICON_INFORMATION)
+                self.tcVISFunction.SetFocus()
+                return
+        except:
+            wx.MessageBox('VIS formula is not valid. For text output, make sure this has correct Python syntax.', 'Error',
+                    wx.OK | wx.ICON_INFORMATION)
+            self.tcVISFunction.SetFocus()
+            return
+
         # validation complete, enter any more above
 #        print ">>>>validation complete"
 
@@ -1258,13 +1296,7 @@ class NDVIPanel(wx.Panel):
         dtJobStarted = datetime.datetime.now()
         print 'dtJobStarted', dtJobStarted
         # get values used by most options:
-        # assign IR and VIS formulas to DB functions, so can use them in SQLite queries
-        print "self.calcDict['IRFunction']", self.calcDict['IRFunction']
-        print "self.calcDict['VISFunction']", self.calcDict['VISFunction']
-        iFormula = self.calcDict['IRFunction'].strip('=')
-        scidb.assignDBFn(iFormula, 'getIR')
-        vFormula = self.calcDict['VISFunction'].strip('=')
-        scidb.assignDBFn(vFormula, 'getVis')
+
         # get column header strings
         if self.calcDict['UseRef'] == 1:
             stIRRefTxt = self.cbxIRRefSeriesID.GetStringSelection()
