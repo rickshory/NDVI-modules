@@ -524,6 +524,29 @@ except sqlite3.Error, e:
     print 'Error in "tmp.db": %s' % e.args[0]
     sys.exit(1)
 
+def creatAndAssignDBFn(pyFnName, pyArgStr, pyFnCode, sqliteFnName):
+    """
+    Creates a new function in Python at runtime, then assigns it to SQLite.
+    Needed for the arbitrary formulas users can input for calculating
+    infrared and visible from the raw spectral data
+    Example usage:
+    creatAndAssignDBFn('irFn', 'i,v', 'i-(0.21*v)', 'getIR')
+    creates a function like this:
+    def irFn(i,v):
+        return i-(0.21*v)
+    Then assigns the function to the data DB in SQLite, e.g.:
+    (usage: dbConn.creat_function(SQLite_fn_name, num_args, Python_fn_name)
+    datConn.create_function('getIR', 2, irFn)
+    then the fn, under the SQLite name, can be used in queries e.g.
+    'SELECT getIR(IRRef, VISRef) AS refIR FROM tmpSpectralData;'
+    """
+    stFn = """def {fNm}({fAr}): return {fCd}""".format(fNm=pyFnName, fAr=pyArgStr, fCd=pyFnCode)
+    exec stFn
+    stNumArgs = str(len(pyArgStr.split(',')))
+    # Python function name cannot be in quotes, so cannot directly use variable
+    stDBFn = """datConn.create_function('{dNm}', {dNa}, {pNm})""".format(dNm=sqliteFnName, dNa=stNumArgs, pNm=pyFnName)
+    exec stDBFn
+
 def getSciDataCursor():
     """
     Utility for deliving a separate sci_data database cursor, for example when
