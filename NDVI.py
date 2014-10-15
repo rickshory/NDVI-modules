@@ -1384,14 +1384,11 @@ class NDVIPanel(wx.Panel):
                     dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
                     """
                     scidb.curD.execute(stSQL)
-                    print 'updated calculated bands'
                     stSQL = """
                     UPDATE tmpSpectralData
                     SET ndvi = ((dir/rir) - (dvi/rvi))/((dir/rir) + (dvi/rvi));
                     """
                     scidb.curD.execute(stSQL)
-                    print 'updated ndvi'
-                    
                 else: # not using reference
                     numItems = scidb.GetDaySpectralData(dateCur = dDt,
                         fPlusMinusCutoff = self.calcDict['PlusMinusCutoffHours'],
@@ -1405,6 +1402,17 @@ class NDVIPanel(wx.Panel):
                                vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
                     scidb.curD.execute(stSQL)
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
+                    # fill in the other fields in the table
+                    stSQL = """
+                    UPDATE tmpSpectralData
+                    SET dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
+                    """
+                    scidb.curD.execute(stSQL)
+                    stSQL = """
+                    UPDATE tmpSpectralData
+                    SET ndvi = (dir - dvi)/(dir + dvi);
+                    """
+                    scidb.curD.execute(stSQL)
                     
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
