@@ -1262,9 +1262,9 @@ class NDVIPanel(wx.Panel):
         print "self.calcDict['IRFunction']", self.calcDict['IRFunction']
         print "self.calcDict['VISFunction']", self.calcDict['VISFunction']
         iFormula = self.calcDict['IRFunction'].strip('=')
-        scidb.assignDBFn(iFormula, 'irVal')
+        scidb.assignDBFn(iFormula, 'getIR')
         vFormula = self.calcDict['VISFunction'].strip('=')
-        scidb.assignDBFn(vFormula, 'visVal')
+        scidb.assignDBFn(vFormula, 'getVis')
         # get column header strings
         if self.calcDict['UseRef'] == 1:
             stIRRefTxt = self.cbxIRRefSeriesID.GetStringSelection()
@@ -1346,12 +1346,10 @@ class NDVIPanel(wx.Panel):
                     scidb.curD.execute(stSQL)
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
                     stSQL = """
-                    
-                    SELECT IRRef, VISRef, IRData, VISData,
-                     (IRRef - (0.21*VISRef)) AS rir, ((0.21*VISRef)) AS rvi,
-                     (IRData- (0.21*VISData)) AS dir, ((0.21*VISData)) AS dvi 
-                    FROM tmpSpectralData
+                    UPDATE tmpSpectralData
+                    SET rir = getIR(IRRef, VISRef)
                     """
+                    scidb.curD.execute(stSQL)
                 else: # not using reference
                     numItems = scidb.GetDaySpectralData(dateCur = dDt,
                         fPlusMinusCutoff = self.calcDict['PlusMinusCutoffHours'],
