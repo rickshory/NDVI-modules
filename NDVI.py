@@ -1289,6 +1289,22 @@ class NDVIPanel(wx.Panel):
                 self.tcVISFunction.SetFocus()
                 return
 
+        # have user verify folder
+        stDir = self.calcDict['OutputFolder']
+        if (stDir == None) or (not os.path.exists(stDir)):
+            stDir = os.path.expanduser('~') # user doesn't like default? choose one
+            stMsg = ' No valid save folder is chosen. File(s) will be saved in:' \
+                    '\n\n%s\n\n If you want to use a different folder, Cancel here and choose ' \
+                    'a folder.' % (stDir,)
+            dlg = wx.MessageDialog(self, stMsg, 'Default Folder', wx.OK | wx.CANCEL | wx.ICON_INFORMATION)
+            result = dlg.ShowModal()
+            dlg.Destroy()
+            if result != wx.ID_OK:
+                self.onClick_BtnGetDir(-1)
+                return
+
+            self.calcDict['OutputFolder'] = stDir
+
         # validation complete, enter any more above
 #        print ">>>>validation complete"
 
