@@ -1413,7 +1413,28 @@ class NDVIPanel(wx.Panel):
                 fPercentOfMaxLow = self.calcDict['ThresholdPctLow'],
                 fPercentOfMaxHigh = self.calcDict['ThresholdPctHigh'])
             print 'stDataStation', stDataStation, 'cutoffs', fIRDatLowCutoff, fIRDatHighCutoff, fVISDatLowCutoff, fVISDatHighCutoff
-            stBaseNm = stDataStation
+            if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
+                if self.calcDict['OutputFormat'] == 2:
+                    stFilePath = os.path.join(stSavePath, stDataStation) + '.txt'
+                if self.calcDict['OutputFormat'] == 3:
+                    stFilePath = os.path.join(stSavePath, stDataStation) + '.csv'
+                try: # before we go any further
+                    # make sure there's nothing invalid about the filename
+                    fOut = open(stFilePath, 'wb') 
+                except:
+                    wx.MessageBox(' Can not create file:\n\n' + stFilePath, 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+                if self.calcDict['OutputFormat'] == 2:
+                    wr = csv.writer(fOut, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                if self.calcDict['OutputFormat'] == 3:
+                    wr = csv.writer(fOut, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+                self.tcProgress.SetValue('Setting up column headings')
+                lColHds = ['irref','visref','irdata','visdata'] # for testing
+                wr.writerow(lColHds)
+
+
             iNumStationsDone += 1
             iNumDatesDone = 0
             for dDt in lDates:
@@ -1483,7 +1504,10 @@ class NDVIPanel(wx.Panel):
                         SET ndvi = (dir - dvi)/(dir + dvi);
                         """
                         scidb.curD.execute(stSQL)
-                    
+
+            # done with dates for this station
+            if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
+                fOut.close()
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
