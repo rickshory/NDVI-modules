@@ -1255,7 +1255,7 @@ class NDVIPanel(wx.Panel):
             # assign IR and VIS formulas to DB functions, so can use them in SQLite queries
             print "self.calcDict['IRFunction']", self.calcDict['IRFunction']
             print "self.calcDict['VISFunction']", self.calcDict['VISFunction']
-            iFormula = self.calcDict['IRFunction'].strip('=')
+            iFormula = self.calcDict['IRFunction'].strip('=').strip()
             try: # assign the infrared-band formula
                 scidb.assignDBFn(iFormula, 'getIR')
                 # test the formula on the database
@@ -1272,7 +1272,7 @@ class NDVIPanel(wx.Panel):
                 self.tcIRFunction.SetFocus()
                 return
 
-            vFormula = self.calcDict['VISFunction'].strip('=')
+            vFormula = self.calcDict['VISFunction'].strip('=').strip()
             try: # assign the visible-band formula
                 scidb.assignDBFn(vFormula, 'getVis')
                 # test the formula on the database
@@ -1309,8 +1309,14 @@ class NDVIPanel(wx.Panel):
             wx.MessageBox('Need a "Base Name", which will be the file name for Excel output, or ' \
                 'the folder name for text output.', 'Missing',
                         wx.OK | wx.ICON_INFORMATION)
-                self.tcBaseName.SetFocus()
-            
+            self.tcBaseName.SetFocus()
+            return
+
+        stSavePath = os.path.join(stDir, self.calcDict['OutputBaseName'])
+        # if Excel output, stSavePath will be the source of filenames for whole workbooks
+        # if text output, stSavePath will be the folder name that sets of files are created in
+        print "stSavePath:", stSavePath
+
 
         # validation complete, enter any more above
 #        print ">>>>validation complete"
