@@ -1,4 +1,4 @@
-import wx, sqlite3, datetime, copy, csv
+import wx, sqlite3, datetime, copy, csv, shutil
 import os, sys, re, cPickle, datetime
 import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
@@ -1316,7 +1316,46 @@ class NDVIPanel(wx.Panel):
         # if Excel output, stSavePath will be the source of filenames for whole workbooks
         # if text output, stSavePath will be the folder name that sets of files are created in
         print "stSavePath:", stSavePath
+        if self.calcDict['OutputFormat'] == 1: # Excel format
+            stWkBookPath = stSavePath + '.xlsx'
+            if os.path.isfile(stWkBookPath):
+                stMsg = '"' + stWkBookPath + '" already exists. Overwrite?'
+                dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
+                result = dlg.ShowModal()
+                dlg.Destroy()
+    #            print "result of Yes/No dialog:", result
+                if result == wx.ID_YES:
+                    try:
+                        os.remove(stWkBookPath)
+                    except:
+                        wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
+                            wx.OK | wx.ICON_INFORMATION)
+                        return
+                else:
+                    return
 
+        if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
+            # check if the folder exists and is empty
+            try: # error if folder does not exist
+                L = os.listdir(stSavePath)
+                if L != []:
+                    stMsg = ' The folder to save files in is not empty:\n\n%s\n\n Do you want to ' \
+                        'clear it? If you do not, new files will overwrite files of the same name and ' \
+                        'it may be confusing which previously existed.\n\n Clear this folder?' % (stSavePath,)
+                    dlg = wx.MessageDialog(self, stMsg, 'Non-Empty Folder', wx.YES_NO | wx.ICON_QUESTION)
+                    result = dlg.ShowModal()
+                    dlg.Destroy()
+        #            print "result of Yes/No dialog:", result
+                    if result == wx.ID_YES:
+                        try:
+                            shutil.rmtree(stSavePath)
+                            os.mkdir(stSavePath)
+                        except:
+                            wx.MessageBox("Can't clear folder. Are files open?", 'Info',
+                                wx.OK | wx.ICON_INFORMATION)
+                            return
+            except: # folder does not exist, create it
+                os.mkdir(stSavePath)
 
         # validation complete, enter any more above
 #        print ">>>>validation complete"
