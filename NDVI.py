@@ -1383,6 +1383,9 @@ class NDVIPanel(wx.Panel):
                 fPlusMinusHoursCutoff = self.calcDict['PlusMinusCutoffHours'],
                 fPercentOfMaxLow = self.calcDict['ThresholdPctLow'],
                 fPercentOfMaxHigh = self.calcDict['ThresholdPctHigh'])
+        else:
+            stIRRefTxt = 'no_IR'
+            stVISRefTxt = 'no_Vis'
         stIRDatTxt = self.cbxIRDataSeriesID.GetStringSelection()
         stVISDatTxt = self.cbxVisDataSeriesID.GetStringSelection()
         # check
@@ -1429,11 +1432,7 @@ class NDVIPanel(wx.Panel):
                     wr = csv.writer(fOut, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 if self.calcDict['OutputFormat'] == 3:
                     wr = csv.writer(fOut, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-
-                self.tcProgress.SetValue('Setting up column headings')
-                lColHds = ['irref','visref','irdata','visdata'] # for testing
-                wr.writerow(lColHds)
-
+                isNewTextFile = 1
 
             iNumStationsDone += 1
             iNumDatesDone = 0
@@ -1504,7 +1503,24 @@ class NDVIPanel(wx.Panel):
                         SET ndvi = (dir - dvi)/(dir + dvi);
                         """
                         scidb.curD.execute(stSQL)
-
+                # got complete data for this date into tmpSpectralData
+                if self.calcDict['OutputFormat'] in (2, 3):
+                    stSQL = """SELECT Timestamp, IRRef AS "{rIR}_Ref", VISRef AS "{rVI}_Ref",
+                    IRData AS "{dIR}_Data", VISData AS "{dDA}_Data",
+                    rir AS "IR ref", rvi AS "VIS ref", dir AS "IR data", dvi AS "VIS data", ndvi AS "NDVI"
+                    FROM tmpSpectralData ORDER BY Timestamp
+                    """.format(rIR=stIRRefTxt, rVI=stVISRefTxt, dIR=stIRDatTxt ,dDA=stVISDatTxt)
+                    recs = scidb.curD.execute(stSQL).fetchall()
+                    for rec in recs:
+                        if isNewTextFile == 1: # write the column headings
+                            lColHeads = [Nm for Nm in rec.keys()]
+                            wr.writerow(lColHeads)
+                            isNewTextFile = 0
+                        lRow = []
+                        for colHd in lColHeads:
+                            lRow.append(rec[colHd])
+                        wr.writerow(lRow)
+                            
             # done with dates for this station
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 fOut.close()
