@@ -1389,13 +1389,13 @@ class NDVIPanel(wx.Panel):
         stIRDatTxt = self.cbxIRDataSeriesID.GetStringSelection()
         stVISDatTxt = self.cbxVisDataSeriesID.GetStringSelection()
         # check
-        if self.calcDict['UseRef'] == 1:
-            print 'stIRRefTxt', stIRRefTxt
-            print 'stVISRefTxt', stVISRefTxt
-            print 'IR cutoffs', fIRRefLowCutoff, fIRRefHighCutoff
-            print 'vis cutoffs', fVISRefLowCutoff, fVISRefHighCutoff
-        print 'stIRDatTxt', stIRDatTxt
-        print 'stVISDatTxt', stVISDatTxt
+#        if self.calcDict['UseRef'] == 1:
+#            print 'stIRRefTxt', stIRRefTxt
+#            print 'stVISRefTxt', stVISRefTxt
+#            print 'IR cutoffs', fIRRefLowCutoff, fIRRefHighCutoff
+#            print 'vis cutoffs', fVISRefLowCutoff, fVISRefHighCutoff
+#        print 'stIRDatTxt', stIRDatTxt
+#        print 'stVISDatTxt', stVISDatTxt
         
         iShNumSAS = 0
         iRowSAS = 0
@@ -1503,8 +1503,14 @@ class NDVIPanel(wx.Panel):
                         SET ndvi = (dir - dvi)/(dir + dvi);
                         """
                         scidb.curD.execute(stSQL)
+                
                 # got complete data for this date into tmpSpectralData
                 if self.calcDict['OutputFormat'] in (2, 3):
+                    if self.calcDict['UseOnlyValidNDVI'] == 1:
+                        stSQL = """DELETE FROM tmpSpectralData
+                        WHERE ndvi < {min} OR ndvi > {max};
+                        """.format(min=self.calcDict['NDVIvalidMin'], max=self.calcDict['NDVIvalidMax'])
+                        scidb.curD.execute(stSQL)
                     stSQL = """SELECT Timestamp, IRRef AS "{rIR}_Ref", VISRef AS "{rVI}_Ref",
                     IRData AS "{dIR}_Data", VISData AS "{dDA}_Data",
                     rir AS "IR ref", rvi AS "VIS ref", dir AS "IR data", dvi AS "VIS data", ndvi AS "NDVI"
@@ -1516,9 +1522,7 @@ class NDVIPanel(wx.Panel):
                             lColHeads = [Nm for Nm in rec.keys()]
                             wr.writerow(lColHeads)
                             isNewTextFile = 0
-                        lRow = []
-                        for colHd in lColHeads:
-                            lRow.append(rec[colHd])
+                        lRow = [rec[colHd] for colHd in lColHeads]
                         wr.writerow(lRow)
                             
             # done with dates for this station
