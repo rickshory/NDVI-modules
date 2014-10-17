@@ -1536,8 +1536,7 @@ class NDVIPanel(wx.Panel):
         # calcDict, including drilldown into logger and sensor information
         # see InsertMetadataIntoCurrentSheet fn in Access DB
 
-        # while testing leave last diagnostics visible
-        #self.tcProgress.SetValue('Done')
+        self.tcProgress.AppendText('\n Job completed')
         print "Job Done"
         
         validation = """
