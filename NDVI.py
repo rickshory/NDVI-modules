@@ -1505,6 +1505,7 @@ class NDVIPanel(wx.Panel):
                         scidb.curD.execute(stSQL)
                 
                 # got complete data for this date into tmpSpectralData
+                wx.Yield() # allow window updates to occur
                 if self.calcDict['OutputFormat'] in (2, 3):
                     if self.calcDict['UseOnlyValidNDVI'] == 1:
                         stSQL = """DELETE FROM tmpSpectralData
@@ -1524,7 +1525,9 @@ class NDVIPanel(wx.Panel):
                             isNewTextFile = 0
                         lRow = [rec[colHd] for colHd in lColHeads]
                         wr.writerow(lRow)
-                            
+                
+                # done with this date
+                wx.Yield() # allow window updates to occur
             # done with dates for this station
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 fOut.close()
