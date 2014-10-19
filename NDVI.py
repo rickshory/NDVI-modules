@@ -1561,12 +1561,11 @@ class NDVIPanel(wx.Panel):
                             if self.calcDict['OutputSAS'] == 1:
                                 isNewSummaryFile = 1 # flag for later
                                 isNewSASFile = 1
-                            print lColHeads
                         lRow = [rec[colHd] for colHd in lColHeads]
                         wr.writerow(lRow)
 
                     if self.calcDict['CreateSummaries'] == 1:
-                        stSQL = """SELECT {dT} AS "Date",
+                        stSQL = """SELECT '{dT}' AS "Date",
                         AVG(ndvi) AS "Avg",
                         StDev(ndvi) AS "StDev",
                         COUNT(ndvi) AS "Count"
