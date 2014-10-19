@@ -26,32 +26,30 @@ def stringOKForSpreadsheetName(st):
     return s[:25]
 
 class StdevFunc:
+    """
+    For use as an aggregate function in SQLite
+    """
     def __init__(self):
         self.M = 0.0
         self.S = 0.0
         self.k = 0
 
     def step(self, value):
-        val = float(value)
-        print 'step0', val, self.M, self.S, self.k
-        tM = self.M
-        print 'step1', val, self.M, self.S, self.k
-        self.k += 1
-        print 'step2', val, self.M, self.S, self.k
-        self.M += ((val - tM) / self.k)
-#        tmp1 = value - tM
-#        print 'step2.1', value, self.M, self.S, self.k, tmp1
-#        tmp2 = tmp1 / self.k
-#        print 'step2.2', value, self.M, self.S, self.k, tmp2
-#        self.M = self.M + tmp2
-        print 'step3', val, self.M, self.S, self.k
-        self.S += ((val - tM) * (val - self.M))
-        print 'step4', val, self.M, self.S, self.k
-
+        try:
+            # automatically convert text to float, like the rest of SQLite
+            val = float(value) # if fails, skips this iteration, which also ignores nulls
+            tM = self.M
+            self.k += 1
+            self.M += ((val - tM) / self.k)
+            self.S += ((val - tM) * (val - self.M))
+        except:
+            pass
 
     def finalize(self):
-        print 'final', self.M, self.S, self.k
-        return math.sqrt(self.S / (self.k-1))
+        if self.k <= 1: # avoid division by zero
+            return none
+        else:
+            return math.sqrt(self.S / (self.k-1))
 
 try:
     datConn = sqlite3.connect('sci_data.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)

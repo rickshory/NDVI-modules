@@ -1576,8 +1576,8 @@ class NDVIPanel(wx.Panel):
                         for rec in recs:
                             if isNewSummaryFile == 1: # write the column headings
                                 lColHeadsSummary = [Nm for Nm in rec.keys()]
-                                wrSummary.writerow(lColHeadsSAS)
-                                isNewSASFile = 0
+                                wrSummary.writerow(lColHeadsSummary)
+                                isNewSummaryFile = 0
                             lRow = [rec[colHd] for colHd in lColHeadsSummary]
                             wrSummary.writerow(lRow)
 
