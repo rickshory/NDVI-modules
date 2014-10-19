@@ -1566,10 +1566,12 @@ class NDVIPanel(wx.Panel):
                         wr.writerow(lRow)
 
                     if self.calcDict['CreateSummaries'] == 1:
-                        stSQL = """SELECT {} AS "Date",
+                        stSQL = """SELECT {dT} AS "Date",
                         AVG(ndvi) AS "Avg",
+                        StDev(ndvi) AS "StDev",
+                        COUNT(ndvi) AS "Count"
                         FROM tmpSpectralData
-                        GROUP BY "Date";"""
+                        GROUP BY "Date";""".format(dT=dDt)
                         recs = scidb.curD.execute(stSQL).fetchall()
                         for rec in recs:
                             if isNewSummaryFile == 1: # write the column headings
@@ -1578,9 +1580,6 @@ class NDVIPanel(wx.Panel):
                                 isNewSASFile = 0
                             lRow = [rec[colHd] for colHd in lColHeadsSummary]
                             wrSummary.writerow(lRow)
-
-
-
 
                     if self.calcDict['OutputSAS'] == 1:
                         stSQL = """SELECT strftime('%d-%m-%Y',Timestamp)AS "Date",

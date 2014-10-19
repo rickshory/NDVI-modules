@@ -32,12 +32,25 @@ class StdevFunc:
         self.k = 0
 
     def step(self, value):
+        val = float(value)
+        print 'step0', val, self.M, self.S, self.k
         tM = self.M
+        print 'step1', val, self.M, self.S, self.k
         self.k += 1
-        self.M += (value - tM) / self.k
-        self.S += (value - tM) * (value - self.M)
+        print 'step2', val, self.M, self.S, self.k
+        self.M += ((val - tM) / self.k)
+#        tmp1 = value - tM
+#        print 'step2.1', value, self.M, self.S, self.k, tmp1
+#        tmp2 = tmp1 / self.k
+#        print 'step2.2', value, self.M, self.S, self.k, tmp2
+#        self.M = self.M + tmp2
+        print 'step3', val, self.M, self.S, self.k
+        self.S += ((val - tM) * (val - self.M))
+        print 'step4', val, self.M, self.S, self.k
+
 
     def finalize(self):
+        print 'final', self.M, self.S, self.k
         return math.sqrt(self.S / (self.k-1))
 
 try:
