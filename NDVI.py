@@ -1428,10 +1428,27 @@ class NDVIPanel(wx.Panel):
                     wx.MessageBox(' Can not create file:\n\n' + stFilePath, 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
+                if self.calcDict['OutputSAS'] == 1:
+                    if self.calcDict['OutputFormat'] == 2:
+                        stFilePathSAS = os.path.join(stSavePath, stDataStation) + '_SAS.txt'
+                    if self.calcDict['OutputFormat'] == 3:
+                        stFilePathSAS = os.path.join(stSavePath, stDataStation) + '_SAS.csv'
+                    try: # before we go any further
+                        # make sure there's nothing invalid about the filename
+                        fOutSAS = open(stFilePathSAS, 'wb') 
+                    except:
+                        wx.MessageBox(' Can not create file:\n\n' + stFilePathSAS, 'Info',
+                            wx.OK | wx.ICON_INFORMATION)
+                        return
+
                 if self.calcDict['OutputFormat'] == 2:
                     wr = csv.writer(fOut, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    if self.calcDict['OutputSAS'] == 1:
+                        wr = csv.writer(fOutSAS, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 if self.calcDict['OutputFormat'] == 3:
                     wr = csv.writer(fOut, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    if self.calcDict['OutputSAS'] == 1:
+                        wr = csv.writer(fOutSAS, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 isNewTextFile = 1
 
             iNumStationsDone += 1
