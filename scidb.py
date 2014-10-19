@@ -1,5 +1,5 @@
 import wx, sqlite3, datetime, copy
-import sys, re
+import sys, re, math
 
 try:
     import win32com.client
@@ -25,6 +25,21 @@ def stringOKForSpreadsheetName(st):
         s = s.replace(bc, '_')
     return s[:25]
 
+class StdevFunc:
+    def __init__(self):
+        self.M = 0.0
+        self.S = 0.0
+        self.k = 0
+
+    def step(self, value):
+        tM = self.M
+        self.k += 1
+        self.M += (value - tM) / self.k
+        self.S += (value - tM) * (value - self.M)
+
+    def finalize(self):
+        return math.sqrt(self.S / (self.k-1))
+
 try:
     datConn = sqlite3.connect('sci_data.db', isolation_level=None, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
     # importing the 'datetime' module declares some new SQLite field types: 'date' and 'timestamp'
@@ -42,6 +57,7 @@ try:
     datConn.text_factory = str
     datConn.row_factory = sqlite3.Row
     datConn.create_function("SpreadsheetName", 1, stringOKForSpreadsheetName)
+    datConn.create_aggregate("StDev", 1, StdevFunc)
 
     curD = datConn.cursor()
     # assure the Equation of Time table exists and is filled

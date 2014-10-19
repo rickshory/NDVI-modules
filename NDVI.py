@@ -1428,6 +1428,19 @@ class NDVIPanel(wx.Panel):
                     wx.MessageBox(' Can not create file:\n\n' + stFilePath, 'Info',
                         wx.OK | wx.ICON_INFORMATION)
                     return
+                if self.calcDict['CreateSummaries'] == 1:
+                    if self.calcDict['OutputFormat'] == 2:
+                        stFilePathSummary = os.path.join(stSavePath, stDataStation) + '_Summary.txt'
+                    if self.calcDict['OutputFormat'] == 3:
+                        stFilePathSummary = os.path.join(stSavePath, stDataStation) + '_Summary.csv'
+                    try: # before we go any further
+                        # make sure there's nothing invalid about the filename
+                        fOutSummary = open(stFilePathSummary, 'wb') 
+                    except:
+                        wx.MessageBox(' Can not create file:\n\n' + stFilePathSummary, 'Info',
+                            wx.OK | wx.ICON_INFORMATION)
+                        return
+
                 if self.calcDict['OutputSAS'] == 1:
                     if self.calcDict['OutputFormat'] == 2:
                         stFilePathSAS = os.path.join(stSavePath, stDataStation) + '_SAS.txt'
@@ -1443,10 +1456,15 @@ class NDVIPanel(wx.Panel):
 
                 if self.calcDict['OutputFormat'] == 2:
                     wr = csv.writer(fOut, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    if  self.calcDict['CreateSummaries'] == 1:
+                        wrSummary = csv.writer(fOutSummary, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     if self.calcDict['OutputSAS'] == 1:
                         wrSAS = csv.writer(fOutSAS, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
                 if self.calcDict['OutputFormat'] == 3:
                     wr = csv.writer(fOut, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    if  self.calcDict['CreateSummaries'] == 1:
+                        wrSummary = csv.writer(fOutSummary, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     if self.calcDict['OutputSAS'] == 1:
                         wrSAS = csv.writer(fOutSAS, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 isNewTextFile = 1
@@ -1541,10 +1559,29 @@ class NDVIPanel(wx.Panel):
                             wr.writerow(lColHeads)
                             isNewTextFile = 0
                             if self.calcDict['OutputSAS'] == 1:
-                                isNewSASFile = 1 # flag for later
+                                isNewSummaryFile = 1 # flag for later
+                                isNewSASFile = 1
                             print lColHeads
                         lRow = [rec[colHd] for colHd in lColHeads]
                         wr.writerow(lRow)
+
+                    if self.calcDict['CreateSummaries'] == 1:
+                        stSQL = """SELECT {} AS "Date",
+                        AVG(ndvi) AS "Avg",
+                        FROM tmpSpectralData
+                        GROUP BY "Date";"""
+                        recs = scidb.curD.execute(stSQL).fetchall()
+                        for rec in recs:
+                            if isNewSummaryFile == 1: # write the column headings
+                                lColHeadsSummary = [Nm for Nm in rec.keys()]
+                                wrSummary.writerow(lColHeadsSAS)
+                                isNewSASFile = 0
+                            lRow = [rec[colHd] for colHd in lColHeadsSummary]
+                            wrSummary.writerow(lRow)
+
+
+
+
                     if self.calcDict['OutputSAS'] == 1:
                         stSQL = """SELECT strftime('%d-%m-%Y',Timestamp)AS "Date",
                         strftime('%j',Timestamp) AS RefDay,
