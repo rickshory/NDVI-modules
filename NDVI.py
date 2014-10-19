@@ -1444,11 +1444,11 @@ class NDVIPanel(wx.Panel):
                 if self.calcDict['OutputFormat'] == 2:
                     wr = csv.writer(fOut, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     if self.calcDict['OutputSAS'] == 1:
-                        wr = csv.writer(fOutSAS, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                        wrSAS = csv.writer(fOutSAS, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 if self.calcDict['OutputFormat'] == 3:
                     wr = csv.writer(fOut, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                     if self.calcDict['OutputSAS'] == 1:
-                        wr = csv.writer(fOutSAS, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                        wrSAS = csv.writer(fOutSAS, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 isNewTextFile = 1
 
             iNumStationsDone += 1
@@ -1540,14 +1540,32 @@ class NDVIPanel(wx.Panel):
                             lColHeads = [Nm for Nm in rec.keys()]
                             wr.writerow(lColHeads)
                             isNewTextFile = 0
+                            if self.calcDict['OutputSAS'] == 1:
+                                isNewSASFile = 1 # flag for later
+                            print lColHeads
                         lRow = [rec[colHd] for colHd in lColHeads]
                         wr.writerow(lRow)
-                
+                    if self.calcDict['OutputSAS'] == 1:
+                        stSQL = """SELECT strftime('%d-%m-%Y',Timestamp)AS "Date",
+                        strftime('%j',Timestamp) AS RefDay,
+                        ndvi AS VI FROM tmpSpectralData
+                        ORDER BY Timestamp;"""
+                        recs = scidb.curD.execute(stSQL).fetchall()
+                        for rec in recs:
+                            if isNewSASFile == 1: # write the column headings
+                                lColHeadsSAS = [Nm for Nm in rec.keys()]
+                                wrSAS.writerow(lColHeadsSAS)
+                                isNewSASFile = 0
+                            lRow = [rec[colHd] for colHd in lColHeadsSAS]
+                            wrSAS.writerow(lRow)
+                        
                 # done with this date
                 wx.Yield() # allow window updates to occur
             # done with dates for this station
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 fOut.close()
+                if self.calcDict['OutputSAS'] == 1:
+                    fOutSAS.close()
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
