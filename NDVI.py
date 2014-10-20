@@ -1029,23 +1029,6 @@ class NDVIPanel(wx.Panel):
         # if Excel output, stSavePath will be the source of filenames for whole workbooks
         # if text output, stSavePath will be the folder name that sets of files are created in
         print "stSavePath:", stSavePath
-        if self.calcDict['OutputFormat'] == 1: # Excel format
-            stWkBookPath = stSavePath + '.xlsx'
-            if os.path.isfile(stWkBookPath):
-                stMsg = '"' + stWkBookPath + '" already exists. Overwrite?'
-                dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
-                result = dlg.ShowModal()
-                dlg.Destroy()
-    #            print "result of Yes/No dialog:", result
-                if result == wx.ID_YES:
-                    try:
-                        os.remove(stWkBookPath)
-                    except:
-                        wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
-                            wx.OK | wx.ICON_INFORMATION)
-                        return
-                else:
-                    return
 
         if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
             # check if the folder exists and is empty
@@ -1115,7 +1098,7 @@ class NDVIPanel(wx.Panel):
         iRowSAS = 0
         iNumStationsDone = 0
         if self.calcDict['OutputFormat'] == 1: #Excel output format
-            stFilePath = stSavePath + '.xlsx'
+            stWkBookPath = stSavePath + '.xlsx'
             if hasCom == False: # we tested for this at the top of this module
                 wx.MessageBox('This operating system cannot make Excel files', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
@@ -1134,15 +1117,15 @@ class NDVIPanel(wx.Panel):
                 bXL.Sheets(1).Delete()
             # before we go any further, try saving file
 
-            if os.path.isfile(stFilePath):
-                stMsg = 'File:\n\n' + stFilePath + '\n\n already exists. Overwrite?'
+            if os.path.isfile(stWkBookPath):
+                stMsg = 'File:\n\n' + stWkBookPath + '\n\n already exists. Overwrite?'
                 dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
                 result = dlg.ShowModal()
                 dlg.Destroy()
     #            print "result of Yes/No dialog:", result
                 if result == wx.ID_YES:
                     try:
-                        os.remove(stFilePath)
+                        os.remove(stWkBookPath)
                     except:
                         wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
                             wx.OK | wx.ICON_INFORMATION)
@@ -1150,12 +1133,12 @@ class NDVIPanel(wx.Panel):
                 else:
                     return
             try:
-                bXL.SaveAs(stFilePath) # make sure there's nothing invalid about the filename
+                bXL.SaveAs(stWkBookPath) # make sure there's nothing invalid about the filename
             except:
-                wx.MessageBox('Can not save file:\n\n"' + stFilePath + '"', 'Info',
+                wx.MessageBox('Can not save file:\n\n"' + stWkBookPath + '"', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 return
-            self.tcProgress.SetValue(' Creating Excel file "' + stFilePath + '"\n')
+            self.tcProgress.SetValue(' Creating Excel file "' + stWkBookPath + '"\n')
                     
 
         for iStID in lStaIDs:
