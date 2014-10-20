@@ -1341,7 +1341,8 @@ class NDVIPanel(wx.Panel):
                 if L != []:
                     stMsg = ' The folder to save files in is not empty:\n\n%s\n\n Do you want to ' \
                         'clear it? If you do not, new files will overwrite files of the same name and ' \
-                        'it may be confusing which previously existed.\n\n Clear this folder?' % (stSavePath,)
+                        'it may be confusing which previously existed. If any files are open, output will ' \
+                        'crash.\n\n Clear this folder?' % (stSavePath,)
                     dlg = wx.MessageDialog(self, stMsg, 'Non-Empty Folder', wx.YES_NO | wx.ICON_QUESTION)
                     result = dlg.ShowModal()
                     dlg.Destroy()
@@ -1400,6 +1401,50 @@ class NDVIPanel(wx.Panel):
         iShNumSAS = 0
         iRowSAS = 0
         iNumStationsDone = 0
+        if self.calcDict['OutputFormat'] == 1: #Excel output format
+            stFilePath = stSavePath + '.xlsx'
+            if hasCom == False: # we tested for this at the top of this module
+                wx.MessageBox('This operating system cannot make Excel files', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            try:
+                oXL = win32com.client.Dispatch("Excel.Application")
+                oXL.Visible = 1
+            except:
+                wx.MessageBox('Excel is not on this computer', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            bXL = oXL.Workbooks.Add()
+            #remove any extra sheets
+            while bXL.Sheets.Count > 1:
+        #                    print "Workbook has this many sheets:", bXL.Sheets.Count
+                bXL.Sheets(1).Delete()
+            # before we go any further, try saving file
+
+            if os.path.isfile(stFilePath):
+                stMsg = 'File:\n\n' + stFilePath + '\n\n already exists. Overwrite?'
+                dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
+                result = dlg.ShowModal()
+                dlg.Destroy()
+    #            print "result of Yes/No dialog:", result
+                if result == wx.ID_YES:
+                    try:
+                        os.remove(stFilePath)
+                    except:
+                        wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
+                            wx.OK | wx.ICON_INFORMATION)
+                        return
+                else:
+                    return
+            try:
+                bXL.SaveAs(stFilePath) # make sure there's nothing invalid about the filename
+            except:
+                wx.MessageBox('Can not save file:\n\n"' + stFilePath + '"', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            self.tcProgress.SetValue(' Creating Excel file "' + stFilePath + '"\n')
+                    
+
         for iStID in lStaIDs:
             stSQL = 'SELECT StationName FROM Stations WHERE ID = ?'
             stDataStation = scidb.curD.execute(stSQL, (iStID,)).fetchone()['StationName']
@@ -1551,7 +1596,7 @@ class NDVIPanel(wx.Panel):
                     IRData AS "{dIR}_Data", VISData AS "{dDA}_Data",
                     rir AS "IR ref", rvi AS "VIS ref", dir AS "IR data", dvi AS "VIS data", ndvi AS "NDVI"
                     FROM tmpSpectralData ORDER BY Timestamp
-                    """.format(rIR=stIRRefTxt, rVI=stVISRefTxt, dIR=stIRDatTxt ,dDA=stVISDatTxt)
+                    """.format(rIR=stIRRefTxt, rVI=stVISRefTxt, dIR=stIRDatTxt, dDA=stVISDatTxt)
                     recs = scidb.curD.execute(stSQL).fetchall()
                     for rec in recs:
                         if isNewTextFile == 1: # write the column headings
