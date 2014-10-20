@@ -1127,11 +1127,17 @@ class NDVIPanel(wx.Panel):
                 wx.MessageBox('Excel is not on this computer', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 return
+            wx.Yield() # allow window updates to occur
             bXL = oXL.Workbooks.Add()
+            wx.Yield()
             #remove any extra sheets
             while bXL.Sheets.Count > 1:
         #                    print "Workbook has this many sheets:", bXL.Sheets.Count
                 bXL.Sheets(1).Delete()
+            shXL = bXL.Sheets(1)
+            # track whether a new sheet is needed, because there must always be at least 1
+            boolSheetReady = True
+            wx.Yield()
             # before we go any further, try saving file
             try:
                 bXL.SaveAs(stWkBookPath) # make sure there's nothing invalid about the filename
@@ -1139,8 +1145,9 @@ class NDVIPanel(wx.Panel):
                 wx.MessageBox('Can not save file:\n\n"' + stWkBookPath + '"', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 return
+            wx.Yield()
             self.tcProgress.SetValue(' Creating Excel file "' + stWkBookPath + '"\n')
-                    
+            wx.Yield()
 
         for iStID in lStaIDs:
             stSQL = 'SELECT StationName FROM Stations WHERE ID = ?'
