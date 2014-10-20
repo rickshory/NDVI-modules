@@ -42,12 +42,14 @@ class StdevFunc:
             self.k += 1
             self.M += ((val - tM) / self.k)
             self.S += ((val - tM) * (val - self.M))
+#            print 'in Step', self.k, self.M, self.S
         except:
             pass
 
     def finalize(self):
+#        print 'in Finalize', self.k, self.M, self.S
         if self.k <= 1: # avoid division by zero
-            return none
+            return None
         else:
             return math.sqrt(self.S / (self.k-1))
 
