@@ -1344,6 +1344,11 @@ class NDVIPanel(wx.Panel):
                         for colHd in lColHeads:
                             shXL.Cells(iSSRow,iSSCol).Value = rec[colHd]
                             iSSCol += 1
+                        if self.calcDict['UseRef'] == 1:
+                            shXL.Cells(iSSRow,6).FormulaR1C1 = "=RC[-4]"
+                            shXL.Cells(iSSRow,7).FormulaR1C1 = "=RC[-4]"
+                        shXL.Cells(iSSRow,8).FormulaR1C1 = "=RC[-4]"
+                        shXL.Cells(iSSRow,9).FormulaR1C1 = "=RC[-4]"
                         iSSRow += 1
 
                     if self.calcDict['OutputFormat'] in (2, 3):
