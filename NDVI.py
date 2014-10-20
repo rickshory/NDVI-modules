@@ -1613,6 +1613,8 @@ class NDVIPanel(wx.Panel):
             # done with dates for this station
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 fOut.close()
+                if self.calcDict['CreateSummaries'] == 1:
+                    fOutSummary.close()
                 if self.calcDict['OutputSAS'] == 1:
                     fOutSAS.close()
 
