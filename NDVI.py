@@ -1103,19 +1103,6 @@ class NDVIPanel(wx.Panel):
                 wx.MessageBox('This operating system cannot make Excel files', 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 return
-            try:
-                oXL = win32com.client.Dispatch("Excel.Application")
-                oXL.Visible = 1
-            except:
-                wx.MessageBox('Excel is not on this computer', 'Info',
-                    wx.OK | wx.ICON_INFORMATION)
-                return
-            bXL = oXL.Workbooks.Add()
-            #remove any extra sheets
-            while bXL.Sheets.Count > 1:
-        #                    print "Workbook has this many sheets:", bXL.Sheets.Count
-                bXL.Sheets(1).Delete()
-            # before we go any further, try saving file
 
             if os.path.isfile(stWkBookPath):
                 stMsg = 'File:\n\n' + stWkBookPath + '\n\n already exists. Overwrite?'
@@ -1132,6 +1119,20 @@ class NDVIPanel(wx.Panel):
                         return
                 else:
                     return
+
+            try:
+                oXL = win32com.client.Dispatch("Excel.Application")
+                oXL.Visible = 1
+            except:
+                wx.MessageBox('Excel is not on this computer', 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            bXL = oXL.Workbooks.Add()
+            #remove any extra sheets
+            while bXL.Sheets.Count > 1:
+        #                    print "Workbook has this many sheets:", bXL.Sheets.Count
+                bXL.Sheets(1).Delete()
+            # before we go any further, try saving file
             try:
                 bXL.SaveAs(stWkBookPath) # make sure there's nothing invalid about the filename
             except:
