@@ -1275,34 +1275,35 @@ class NDVIPanel(wx.Panel):
                                vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
                     scidb.curD.execute(stSQL)
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
-                    if self.calcDict['OutputFormat'] in (2, 3):
-                        # fill explicit numbers into the other fields in the table
-                        stSQL = """
-                        UPDATE tmpSpectralData
-                        SET dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
-                        """
-                        scidb.curD.execute(stSQL)
-                        stSQL = """
-                        UPDATE tmpSpectralData
-                        SET ndvi = (dir - dvi)/(dir + dvi);
-                        """
-                        scidb.curD.execute(stSQL)
+                    # fill explicit numbers into the other fields in the table
+                    stSQL = """
+                    UPDATE tmpSpectralData
+                    SET dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
+                    """
+                    scidb.curD.execute(stSQL)
+                    stSQL = """
+                    UPDATE tmpSpectralData
+                    SET ndvi = (dir - dvi)/(dir + dvi);
+                    """
+                    scidb.curD.execute(stSQL)
+                # done with useRef, we now have NDVI calculated either with a reference or without
+                if self.calcDict['UseOnlyValidNDVI'] == 1:
+                    stSQL = """DELETE FROM tmpSpectralData
+                    WHERE ndvi < {min} OR ndvi > {max};
+                    """.format(min=self.calcDict['NDVIvalidMin'], max=self.calcDict['NDVIvalidMax'])
+                    scidb.curD.execute(stSQL)
                 
                 # got complete data for this date into tmpSpectralData
                 wx.Yield() # allow window updates to occur
-                if self.calcDict['OutputFormat'] in (2, 3):
-                    if self.calcDict['UseOnlyValidNDVI'] == 1:
-                        stSQL = """DELETE FROM tmpSpectralData
-                        WHERE ndvi < {min} OR ndvi > {max};
-                        """.format(min=self.calcDict['NDVIvalidMin'], max=self.calcDict['NDVIvalidMax'])
-                        scidb.curD.execute(stSQL)
-                    stSQL = """SELECT Timestamp, IRRef AS "{rIR}_Ref", VISRef AS "{rVI}_Ref",
-                    IRData AS "{dIR}_Data", VISData AS "{dDA}_Data",
-                    rir AS "IR ref", rvi AS "VIS ref", dir AS "IR data", dvi AS "VIS data", ndvi AS "NDVI"
-                    FROM tmpSpectralData ORDER BY Timestamp
-                    """.format(rIR=stIRRefTxt, rVI=stVISRefTxt, dIR=stIRDatTxt, dDA=stVISDatTxt)
-                    recs = scidb.curD.execute(stSQL).fetchall()
-                    for rec in recs:
+                # get numbers, whether we use them directly or substitute spreadsheet formulas
+                stSQL = """SELECT Timestamp, IRRef AS "{rIR}_Ref", VISRef AS "{rVI}_Ref",
+                IRData AS "{dIR}_Data", VISData AS "{dDA}_Data",
+                rir AS "IR ref", rvi AS "VIS ref", dir AS "IR data", dvi AS "VIS data", ndvi AS "NDVI"
+                FROM tmpSpectralData ORDER BY Timestamp
+                """.format(rIR=stIRRefTxt, rVI=stVISRefTxt, dIR=stIRDatTxt, dDA=stVISDatTxt)
+                recs = scidb.curD.execute(stSQL).fetchall()
+                for rec in recs:
+                    if self.calcDict['OutputFormat'] in (2, 3):
                         if isNewTextFile == 1: # write the column headings
                             lColHeads = [Nm for Nm in rec.keys()]
                             wr.writerow(lColHeads)
@@ -1313,15 +1314,16 @@ class NDVIPanel(wx.Panel):
                         lRow = [rec[colHd] for colHd in lColHeads]
                         wr.writerow(lRow)
 
-                    if self.calcDict['CreateSummaries'] == 1:
-                        stSQL = """SELECT '{dT}' AS "Date",
-                        AVG(ndvi) AS "Avg",
-                        StDev(ndvi) AS "StDev",
-                        COUNT(ndvi) AS "Count"
-                        FROM tmpSpectralData
-                        GROUP BY "Date";""".format(dT=dDt)
-                        recs = scidb.curD.execute(stSQL).fetchall()
-                        for rec in recs:
+                if self.calcDict['CreateSummaries'] == 1:
+                    stSQL = """SELECT '{dT}' AS "Date",
+                    AVG(ndvi) AS "Avg",
+                    StDev(ndvi) AS "StDev",
+                    COUNT(ndvi) AS "Count"
+                    FROM tmpSpectralData
+                    GROUP BY "Date";""".format(dT=dDt)
+                    recs = scidb.curD.execute(stSQL).fetchall()
+                    for rec in recs:
+                        if self.calcDict['OutputFormat'] in (2, 3):
                             if isNewSummaryFile == 1: # write the column headings
                                 lColHeadsSummary = [Nm for Nm in rec.keys()]
                                 # add conditional & calculated columns
@@ -1343,19 +1345,20 @@ class NDVIPanel(wx.Panel):
                                 lRow.append(stdErrOfTheMean)
                             wrSummary.writerow(lRow)
 
-                    if self.calcDict['OutputSAS'] == 1:
-                        stSQL = """SELECT strftime('%d-%m-%Y',Timestamp)AS "Date",
-                        strftime('%j',Timestamp) AS RefDay,
-                        ndvi AS VI FROM tmpSpectralData
-                        ORDER BY Timestamp;"""
-                        recs = scidb.curD.execute(stSQL).fetchall()
-                        for rec in recs:
+                if self.calcDict['OutputSAS'] == 1:
+                    stSQL = """SELECT strftime('%d-%m-%Y',Timestamp)AS "Date",
+                    strftime('%j',Timestamp) AS RefDay,
+                    ndvi AS VI FROM tmpSpectralData
+                    ORDER BY Timestamp;"""
+                    recs = scidb.curD.execute(stSQL).fetchall()
+                    for rec in recs:
+                        if self.calcDict['OutputFormat'] in (2, 3):
                             if isNewSASFile == 1: # write the column headings
                                 lColHeadsSAS = [Nm for Nm in rec.keys()]
                                 wrSAS.writerow(lColHeadsSAS)
                                 isNewSASFile = 0
-                            lRow = [rec[colHd] for colHd in lColHeadsSAS]
-                            wrSAS.writerow(lRow)
+                        lRow = [rec[colHd] for colHd in lColHeadsSAS]
+                        wrSAS.writerow(lRow)
                         
                 # done with this date
                 wx.Yield() # allow window updates to occur
