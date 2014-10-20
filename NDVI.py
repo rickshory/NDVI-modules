@@ -1046,11 +1046,19 @@ class NDVIPanel(wx.Panel):
                     if result == wx.ID_YES:
                         try:
                             shutil.rmtree(stSavePath)
-                            os.mkdir(stSavePath)
                         except:
                             wx.MessageBox("Can't clear folder. Are files open?", 'Info',
                                 wx.OK | wx.ICON_INFORMATION)
                             return
+                        wx.Yield() # allow window updates to occur
+                        # sometimes a race condition causes the following to fail
+                        try:
+                            os.mkdir(stSavePath)
+                        except:
+                            wx.MessageBox("Can't re-create folder. Try again.", 'Info',
+                                wx.OK | wx.ICON_INFORMATION)
+                            return
+                            
             except: # folder does not exist, create it
                 os.mkdir(stSavePath)
 
