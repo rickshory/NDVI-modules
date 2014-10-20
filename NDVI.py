@@ -1,5 +1,5 @@
 import wx, sqlite3, datetime, copy, csv, shutil
-import os, sys, re, cPickle, datetime
+import os, sys, re, cPickle, datetime, math
 import scidb
 import wx.lib.scrolledpanel as scrolled, wx.grid
 import multiprocessing
@@ -1575,9 +1575,23 @@ class NDVIPanel(wx.Panel):
                         for rec in recs:
                             if isNewSummaryFile == 1: # write the column headings
                                 lColHeadsSummary = [Nm for Nm in rec.keys()]
+                                # add conditional & calculated columns
+                                lColHeadsSummary.extend(['Use?', 'NDVI', 'SEM'])
                                 wrSummary.writerow(lColHeadsSummary)
                                 isNewSummaryFile = 0
-                            lRow = [rec[colHd] for colHd in lColHeadsSummary]
+                            lRow = []
+                            for colHd in lColHeadsSummary:
+                                try: # append the recordset items normally
+                                    lRow.append(rec[colHd])
+                                except:
+                                    pass
+                            if rec['Count'] <= 1:
+                                lRow.append('NO')
+                            else:
+                                lRow.append('YES')
+                                lRow.append(rec['Avg'])
+                                stdErrOfTheMean = rec['StDev'] / (math.sqrt(rec['Count']))
+                                lRow.append(stdErrOfTheMean)
                             wrSummary.writerow(lRow)
 
                     if self.calcDict['OutputSAS'] == 1:
