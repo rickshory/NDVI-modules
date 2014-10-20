@@ -1340,6 +1340,7 @@ class NDVIPanel(wx.Panel):
                             iSSRow += 1
                             iSSCol = 1
                             boolNewlyNamedWorksheet = False
+                            boolNewBlankSheet = False
                         for colHd in lColHeads:
                             shXL.Cells(iSSRow,iSSCol).Value = rec[colHd]
                             iSSCol += 1
