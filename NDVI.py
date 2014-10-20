@@ -1176,15 +1176,16 @@ class NDVIPanel(wx.Panel):
             if self.calcDict['OutputFormat'] == 1: # Excel output format
                 if boolNewBlankSheet == False:
 #                    self.tcOutputOptInfo.SetValue(self.tcOutputOptInfo.GetValue() + 'Sheet "' + shXL.Name + '"\n')
-                    print 'existing sheet', shXL.Name
-                    sPrevShNm = shXL.Name
-                    #shXL = bXL.Sheets.Add() # this works
-                    #print shXL.Name # this works, and is the expected new sheet 1st in the book
+#                    print 'existing sheet', shXL.Name
+#                    sPrevShNm = shXL.Name
+                    shXL = bXL.Sheets.Add() # this works, and is the expected new sheet 1st in the book
+                    print 'after new sheet create', shXL.Name # this works
                     #shXL.Move(After=bXL.Sheets(sPrevShNm)) # this moves sheet to a new book, then crashes
-                    oXL.Worksheets.Add(After=oXL.Sheets(sPrevShNm)) # creats sheet, but 1st in the book
-                    #worksheets.Add(After=worksheets(worksheets.Count)) # creats sheet, but 1st in the book 
-                    shXL = oXL.ActiveSheet
-                    print 'after new sheet create', shXL.Name
+#                    oXL.Worksheets.Add(After=oXL.Sheets(sPrevShNm)) # creats sheet, but 1st in the book
+#                    #worksheets.Add(After=worksheets(worksheets.Count)) # creats sheet, but 1st in the book 
+#                    shXL = oXL.ActiveSheet
+                    shXL = bXL.ActiveSheet
+#                    print 'after new sheet create', shXL.Name
                     boolNewBlankSheet = True
                 shXL.Name = stDataStation
                 print 'after new sheet rename', shXL.Name
@@ -1300,17 +1301,18 @@ class NDVIPanel(wx.Panel):
                                vdl=fVISDatLowCutoff, vdh=fVISDatHighCutoff)
                     scidb.curD.execute(stSQL)
                     print dDt, 'before/after threshold deletions', numItems, scidb.countTableFieldItems('tmpSpectralData','ID')
-                    # fill explicit numbers into the other fields in the table
-                    stSQL = """
-                    UPDATE tmpSpectralData
-                    SET dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
-                    """
-                    scidb.curD.execute(stSQL)
-                    stSQL = """
-                    UPDATE tmpSpectralData
-                    SET ndvi = (dir - dvi)/(dir + dvi);
-                    """
-                    scidb.curD.execute(stSQL)
+                    if self.calcDict['OutputFormat'] in (2, 3):
+                        # fill explicit numbers into the other fields in the table
+                        stSQL = """
+                        UPDATE tmpSpectralData
+                        SET dir = getIR(IRData, VISData), dvi = getVis(IRData, VISData);
+                        """
+                        scidb.curD.execute(stSQL)
+                        stSQL = """
+                        UPDATE tmpSpectralData
+                        SET ndvi = (dir - dvi)/(dir + dvi);
+                        """
+                        scidb.curD.execute(stSQL)
                 # done with useRef, we now have NDVI calculated either with a reference or without
                 if self.calcDict['UseOnlyValidNDVI'] == 1:
                     stSQL = """DELETE FROM tmpSpectralData
@@ -1397,8 +1399,8 @@ class NDVIPanel(wx.Panel):
                                 lColHeadsSAS = [Nm for Nm in rec.keys()]
                                 wrSAS.writerow(lColHeadsSAS)
                                 isNewSASFile = 0
-                        lRow = [rec[colHd] for colHd in lColHeadsSAS]
-                        wrSAS.writerow(lRow)
+                            lRow = [rec[colHd] for colHd in lColHeadsSAS]
+                            wrSAS.writerow(lRow)
                         
                 # done with this date
                 wx.Yield() # allow window updates to occur
