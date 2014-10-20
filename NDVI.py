@@ -1144,7 +1144,7 @@ class NDVIPanel(wx.Panel):
                 bXL.Sheets(1).Delete()
             shXL = bXL.Sheets(1)
             # track whether a new sheet is needed, because there must always be at least 1
-            boolSheetReady = True
+            boolNewBlankSheet = True
             wx.Yield()
             # before we go any further, try saving file
             try:
@@ -1173,6 +1173,23 @@ class NDVIPanel(wx.Panel):
                 fPercentOfMaxLow = self.calcDict['ThresholdPctLow'],
                 fPercentOfMaxHigh = self.calcDict['ThresholdPctHigh'])
             print 'stDataStation', stDataStation, 'cutoffs', fIRDatLowCutoff, fIRDatHighCutoff, fVISDatLowCutoff, fVISDatHighCutoff
+            if self.calcDict['OutputFormat'] == 1: # Excel output format
+                if boolNewBlankSheet == False:
+#                    self.tcOutputOptInfo.SetValue(self.tcOutputOptInfo.GetValue() + 'Sheet "' + shXL.Name + '"\n')
+                    print 'existing sheet', shXL.Name
+                    sPrevShNm = shXL.Name
+                    #shXL = bXL.Sheets.Add() # this works
+                    #print shXL.Name # this works, and is the expected new sheet 1st in the book
+                    #shXL.Move(After=bXL.Sheets(sPrevShNm)) # this moves sheet to a new book, then crashes
+                    oXL.Worksheets.Add(After=oXL.Sheets(sPrevShNm)) # creats sheet, but 1st in the book
+                    #worksheets.Add(After=worksheets(worksheets.Count)) # creats sheet, but 1st in the book 
+                    shXL = oXL.ActiveSheet
+                    print 'after new sheet create', shXL.Name
+                    boolNewBlankSheet = True
+                shXL.Name = stDataStation
+                print 'after new sheet rename', shXL.Name
+                boolNewlyNamedWorksheet = True
+                iSSRow = 1
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 if self.calcDict['OutputFormat'] == 2:
                     stFilePath = os.path.join(stSavePath, stDataStation) + '.txt'
@@ -1311,6 +1328,21 @@ class NDVIPanel(wx.Panel):
                 """.format(rIR=stIRRefTxt, rVI=stVISRefTxt, dIR=stIRDatTxt, dDA=stVISDatTxt)
                 recs = scidb.curD.execute(stSQL).fetchall()
                 for rec in recs:
+                    if self.calcDict['OutputFormat'] == 1: # Excel output format
+                        iSSCol = 1
+                        if boolNewlyNamedWorksheet: # insert the column headings
+                            lColHeads = [Nm for Nm in rec.keys()]
+                            for colHd in lColHeads:
+                                shXL.Cells(iSSRow,iSSCol).Value = colHd
+                                iSSCol += 1
+                            iSSRow += 1
+                            iSSCol = 1
+                            boolNewlyNamedWorksheet = False
+                        for colHd in lColHeads:
+                            shXL.Cells(iSSRow,iSSCol).Value = rec[colHd]
+                            iSSCol += 1
+                        iSSRow += 1
+
                     if self.calcDict['OutputFormat'] in (2, 3):
                         if isNewTextFile == 1: # write the column headings
                             lColHeads = [Nm for Nm in rec.keys()]
