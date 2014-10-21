@@ -1412,6 +1412,10 @@ class NDVIPanel(wx.Panel):
                     if self.calcDict['OutputFormat'] == 1: # Excel output format
                         iLastRowInBlock = iSSRow
                         shXLSummary.Cells(iSSummaryRow,1).Value = dDt
+#                        shXLSummary.Cells(iSSummaryRow,2).Formula = "=AVERAGE('" + shXL.Name + "'!J" + str(iFirstRowInBlock) + ":J" + str(iLastRowInBlock) + ")"
+                        shXLSummary.Cells(iSSummaryRow,2).Formula = "=AVERAGE('%s'!J%i:J%i)" % (shXL.Name, iFirstRowInBlock, iLastRowInBlock)
+                        # .Cells(lngSummaryRw, 2).Formula = _
+#              "=AVERAGE('" & stBaseShtNm & "'!K" & lngFirstRowOfSet & ":K" & lngLastRowOfSet & ")"
 #                    shXLSummary.Cells(iSSummaryRow,1).Value = 'Date'
 #                    shXLSummary.Cells(iSSummaryRow,2).Value = 'Avg'
 #                    shXLSummary.Cells(iSSummaryRow,3).Value = 'StDev'
