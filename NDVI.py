@@ -1411,6 +1411,15 @@ class NDVIPanel(wx.Panel):
                 if self.calcDict['CreateSummaries'] == 1:
                     if self.calcDict['OutputFormat'] == 1: # Excel output format
                         iLastRowInBlock = iSSRow
+                        shXLSummary.Cells(iSSummaryRow,1).Value = dDt
+#                    shXLSummary.Cells(iSSummaryRow,1).Value = 'Date'
+#                    shXLSummary.Cells(iSSummaryRow,2).Value = 'Avg'
+#                    shXLSummary.Cells(iSSummaryRow,3).Value = 'StDev'
+#                    shXLSummary.Cells(iSSummaryRow,4).Value = 'Count'
+#                    shXLSummary.Cells(iSSummaryRow,5).Value = 'Use?'
+#                    shXLSummary.Cells(iSSummaryRow,6).Value = 'NDVI'
+#                    shXLSummary.Cells(iSSummaryRow,7).Value = 'SEM'
+                        iSSummaryRow += 1
                         
                     if self.calcDict['OutputFormat'] in (2, 3):
                         stSQL = """SELECT '{dT}' AS "Date",
@@ -1463,6 +1472,11 @@ class NDVIPanel(wx.Panel):
             # done with dates for this station
             if self.calcDict['OutputFormat'] == 1: # Excel output format
                 shXL.Columns.AutoFit()
+                if self.calcDict['CreateSummaries'] == 1:
+                    boolNewBlankSummarySheet = False # flag to create a new one for the next Station
+                    shXLSummary.Columns.AutoFit()
+                    
+                    # if iSSummaryRow > 1: insert chart
                 bXL.Save()
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 fOut.close()
