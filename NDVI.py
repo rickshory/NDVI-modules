@@ -965,6 +965,7 @@ class NDVIPanel(wx.Panel):
 #                    wx.OK | wx.ICON_INFORMATION)
                 return
             # done with verification of Excel format, set up functions
+            # (think of a way to pre-test them)
             # tidy up, assure only one equal sign in front
             iFormula = '=' +  self.calcDict['IRFunction'].strip('=').strip()
             # e.g. '=i-(0.21*v)'
@@ -1167,6 +1168,8 @@ class NDVIPanel(wx.Panel):
             shXL = bXL.Sheets(1)
             # track whether a new sheet is needed, because there must always be at least 1
             boolNewBlankSheet = True
+            if self.calcDict['CreateSummaries'] == 1:
+                boolNewBlankSummarySheet = False
             wx.Yield()
             # before we go any further, try saving file
             try:
@@ -1213,6 +1216,23 @@ class NDVIPanel(wx.Panel):
                 print 'after new sheet rename', shXL.Name
                 boolNewlyNamedWorksheet = True
                 iSSRow = 1
+                if self.calcDict['CreateSummaries'] == 1:
+                    if boolNewBlankSummarySheet == False:
+                        shXLSummary = bXL.Sheets.Add() # adds at front of workbook
+                        # shXLSummary = bXL.ActiveSheet # is this needed?
+                        boolNewBlankSummarySheet = True
+                    shXLSummary.Name = stDataStation + ' Summary'
+                    iSSummaryRow = 1
+                    # column headings are definite at this point, put them in
+                    shXLSummary.Cells(iSSummaryRow,1).Value = 'Date'
+                    shXLSummary.Cells(iSSummaryRow,2).Value = 'Avg'
+                    shXLSummary.Cells(iSSummaryRow,3).Value = 'StDev'
+                    shXLSummary.Cells(iSSummaryRow,4).Value = 'Count'
+                    shXLSummary.Cells(iSSummaryRow,5).Value = 'Use?'
+                    shXLSummary.Cells(iSSummaryRow,6).Value = 'NDVI'
+                    shXLSummary.Cells(iSSummaryRow,7).Value = 'SEM'
+                    iSSummaryRow += 1
+
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 if self.calcDict['OutputFormat'] == 2:
                     stFilePath = os.path.join(stSavePath, stDataStation) + '.txt'
@@ -1363,6 +1383,9 @@ class NDVIPanel(wx.Panel):
                             iSSCol = 1
                             boolNewlyNamedWorksheet = False
                             boolNewBlankSheet = False
+                            if self.calcDict['CreateSummaries'] == 1:
+                                iFirstRowInBlock = iSSRow
+                        # process each record
                         for colHd in lColHeads:
                             shXL.Cells(iSSRow,iSSCol).Value = rec[colHd]
                             iSSCol += 1
@@ -1386,15 +1409,18 @@ class NDVIPanel(wx.Panel):
                         wr.writerow(lRow)
 
                 if self.calcDict['CreateSummaries'] == 1:
-                    stSQL = """SELECT '{dT}' AS "Date",
-                    AVG(ndvi) AS "Avg",
-                    StDev(ndvi) AS "StDev",
-                    COUNT(ndvi) AS "Count"
-                    FROM tmpSpectralData
-                    GROUP BY "Date";""".format(dT=dDt)
-                    recs = scidb.curD.execute(stSQL).fetchall()
-                    for rec in recs:
-                        if self.calcDict['OutputFormat'] in (2, 3):
+                    if self.calcDict['OutputFormat'] == 1: # Excel output format
+                        iLastRowInBlock = iSSRow
+                        
+                    if self.calcDict['OutputFormat'] in (2, 3):
+                        stSQL = """SELECT '{dT}' AS "Date",
+                        AVG(ndvi) AS "Avg",
+                        StDev(ndvi) AS "StDev",
+                        COUNT(ndvi) AS "Count"
+                        FROM tmpSpectralData
+                        GROUP BY "Date";""".format(dT=dDt)
+                        recs = scidb.curD.execute(stSQL).fetchall()
+                        for rec in recs:
                             if isNewSummaryFile == 1: # write the column headings
                                 lColHeadsSummary = [Nm for Nm in rec.keys()]
                                 # add conditional & calculated columns
@@ -1407,6 +1433,7 @@ class NDVIPanel(wx.Panel):
                                     lRow.append(rec[colHd])
                                 except:
                                     pass
+                            # add on the extra items
                             if rec['Count'] <= 1:
                                 lRow.append('NO')
                             else:
