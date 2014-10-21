@@ -1412,14 +1412,10 @@ class NDVIPanel(wx.Panel):
                     if self.calcDict['OutputFormat'] == 1: # Excel output format
                         iLastRowInBlock = iSSRow
                         shXLSummary.Cells(iSSummaryRow,1).Value = dDt
-#                        shXLSummary.Cells(iSSummaryRow,2).Formula = "=AVERAGE('" + shXL.Name + "'!J" + str(iFirstRowInBlock) + ":J" + str(iLastRowInBlock) + ")"
-                        shXLSummary.Cells(iSSummaryRow,2).Formula = "=AVERAGE('%s'!J%i:J%i)" % (shXL.Name, iFirstRowInBlock, iLastRowInBlock)
-                        # .Cells(lngSummaryRw, 2).Formula = _
-#              "=AVERAGE('" & stBaseShtNm & "'!K" & lngFirstRowOfSet & ":K" & lngLastRowOfSet & ")"
-#                    shXLSummary.Cells(iSSummaryRow,1).Value = 'Date'
-#                    shXLSummary.Cells(iSSummaryRow,2).Value = 'Avg'
-#                    shXLSummary.Cells(iSSummaryRow,3).Value = 'StDev'
-#                    shXLSummary.Cells(iSSummaryRow,4).Value = 'Count'
+                        params = (shXL.Name, iFirstRowInBlock, iLastRowInBlock)
+                        shXLSummary.Cells(iSSummaryRow,2).Formula = "=AVERAGE('%s'!J%i:J%i)" % params
+                        shXLSummary.Cells(iSSummaryRow,3).Formula = "=STDEV.S('%s'!J%i:J%i)" % params
+                        shXLSummary.Cells(iSSummaryRow,4).Formula = "=COUNT('%s'!J%i:J%i)" % params
 #                    shXLSummary.Cells(iSSummaryRow,5).Value = 'Use?'
 #                    shXLSummary.Cells(iSSummaryRow,6).Value = 'NDVI'
 #                    shXLSummary.Cells(iSSummaryRow,7).Value = 'SEM'
