@@ -1424,6 +1424,7 @@ class NDVIPanel(wx.Panel):
 #                    shXLSummary.Cells(iSSummaryRow,6).Value = 'NDVI'
 #                    shXLSummary.Cells(iSSummaryRow,7).Value = 'SEM'
                         iSSummaryRow += 1
+                        iFirstRowInBlock = iLastRowInBlock + 1
                         
                     if self.calcDict['OutputFormat'] in (2, 3):
                         stSQL = """SELECT '{dT}' AS "Date",
