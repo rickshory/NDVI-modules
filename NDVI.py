@@ -1277,9 +1277,9 @@ class NDVIPanel(wx.Panel):
                     shXL_SAS.Name = stDataStation
                     iSASRow = 1
                     # column headings are definite at this point, put them in
-                    shXL_SAS.Cells(iSSummaryRow,1).Value = 'Date'
-                    shXL_SAS.Cells(iSSummaryRow,2).Value = 'RefDay'
-                    shXL_SAS.Cells(iSSummaryRow,3).Value = 'VI'
+                    shXL_SAS.Cells(iSASRow,1).Value = 'Date'
+                    shXL_SAS.Cells(iSASRow,2).Value = 'RefDay'
+                    shXL_SAS.Cells(iSASRow,3).Value = 'VI'
                     iSASRow += 1
                     
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
