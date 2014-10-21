@@ -1150,7 +1150,24 @@ class NDVIPanel(wx.Panel):
                         return
                 else:
                     return
-
+            if self.calcDict['OutputSAS'] == 1:
+                stSASBookPath = stSavePath + '_SAS.xlsx'
+                if os.path.isfile(stSASBookPath):
+                    stMsg = 'The SAS workbook, file:\n\n' + stSASBookPath + '\n\n already exists. Overwrite?'
+                    dlg = wx.MessageDialog(self, stMsg, 'File Exists', wx.YES_NO | wx.ICON_QUESTION)
+                    result = dlg.ShowModal()
+                    dlg.Destroy()
+        #            print "result of Yes/No dialog:", result
+                    if result == wx.ID_YES:
+                        try:
+                            os.remove(stSASBookPath)
+                        except:
+                            wx.MessageBox("Can't delete old file. Is it still open?", 'Info',
+                                wx.OK | wx.ICON_INFORMATION)
+                            return
+                    else:
+                        return
+                
             try:
                 oXL = win32com.client.Dispatch("Excel.Application")
                 oXL.Visible = 1
@@ -1181,6 +1198,25 @@ class NDVIPanel(wx.Panel):
             wx.Yield()
             self.tcProgress.SetValue(' Creating Excel file "' + stWkBookPath + '"\n')
             wx.Yield()
+            
+            if self.calcDict['OutputSAS'] == 1:
+                bXL_SAS = oXL.Workbooks.Add()
+                wx.Yield()
+                #remove any extra sheets
+                while bXL_SAS.Sheets.Count > 1:
+            #                    print "Workbook has this many sheets:", bXL.Sheets.Count
+                    bXL_SAS.Sheets(1).Delete()
+                shXL_SAS = bXL_SAS.Sheets(1)
+                # track whether a new sheet is needed, because there must always be at least 1
+                boolNewBlankSASSheet = True
+                # before we go any further, try saving file
+                try:
+                    bXL_SAS.SaveAs(stSASBookPath) # make sure there's nothing invalid about the filename
+                except:
+                    wx.MessageBox('Can not save SAS file:\n\n"' + stSASBookPath + '"', 'Info',
+                        wx.OK | wx.ICON_INFORMATION)
+                    return
+                wx.Yield()
 
         for iStID in lStaIDs:
             stSQL = 'SELECT StationName FROM Stations WHERE ID = ?'
@@ -1234,6 +1270,18 @@ class NDVIPanel(wx.Panel):
                     iSSummaryRow += 1
                     iFirstRowInBlock = iSSRow + 1 # sheet row will be 1 higher when headers added
 
+                if self.calcDict['OutputSAS'] == 1:
+                    if boolNewBlankSASSheet == False:
+                        shXL_SAS = bXL_SAS.Sheets.Add() # adds at front of workbook
+                        boolNewBlankSASSheet = True
+                    shXL_SAS.Name = stDataStation
+                    iSASRow = 1
+                    # column headings are definite at this point, put them in
+                    shXL_SAS.Cells(iSSummaryRow,1).Value = 'Date'
+                    shXL_SAS.Cells(iSSummaryRow,2).Value = 'RefDay'
+                    shXL_SAS.Cells(iSSummaryRow,3).Value = 'VI'
+                    iSASRow += 1
+                    
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 if self.calcDict['OutputFormat'] == 2:
                     stFilePath = os.path.join(stSavePath, stDataStation) + '.txt'
@@ -1482,8 +1530,12 @@ class NDVIPanel(wx.Panel):
                 if self.calcDict['CreateSummaries'] == 1:
                     boolNewBlankSummarySheet = False # flag to create a new one for the next Station
                     shXLSummary.Columns.AutoFit()
-                    
                     # if iSSummaryRow > 1: insert chart
+                if self.calcDict['OutputSAS'] == 1:
+                    boolNewBlankSASSheet = False # flag to create a new one for the next Station
+                    shXL_SAS.Columns.AutoFit()
+                    bXL_SAS.Save()
+                    
                 bXL.Save()
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 fOut.close()
