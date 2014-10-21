@@ -1416,13 +1416,13 @@ class NDVIPanel(wx.Panel):
                         shXLSummary.Cells(iSSummaryRow,2).Formula = "=AVERAGE('%s'!J%i:J%i)" % params
                         shXLSummary.Cells(iSSummaryRow,3).Formula = "=STDEV.S('%s'!J%i:J%i)" % params
                         shXLSummary.Cells(iSSummaryRow,4).Formula = "=COUNT('%s'!J%i:J%i)" % params
+                        wx.Yield() # allow window updates to occur
                         if shXLSummary.Cells(iSSummaryRow,4).Value <= 1: # can put additional constraints here
                             shXLSummary.Cells(iSSummaryRow,5).Value = 'NO'
                         else:
                             shXLSummary.Cells(iSSummaryRow,5).Value = 'YES'
-#                    shXLSummary.Cells(iSSummaryRow,5).Value = 'Use?'
-#                    shXLSummary.Cells(iSSummaryRow,6).Value = 'NDVI'
-#                    shXLSummary.Cells(iSSummaryRow,7).Value = 'SEM'
+                            shXLSummary.Cells(iSSummaryRow,6).Formula = "=B%i" % (iSSummaryRow,)
+                            shXLSummary.Cells(iSSummaryRow,7).Formula = "=C{n}/SQRT(D{n}%)".format(n=iSSummaryRow)
                         iSSummaryRow += 1
                         iFirstRowInBlock = iLastRowInBlock + 1
                         
