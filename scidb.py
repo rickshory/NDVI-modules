@@ -1293,6 +1293,10 @@ def GetStationLongitude(iStationID):
         return None # no record in the Stations table for the passed ID
 
 def ordinalDayOfYear(stDate):
+    if isinstance(stDate, (datetime.date, datetime.datetime)):
+        # already a date or datetime
+        return int(stDate.strftime('%j')) # use Python formatting
+    # otherwise, try to parse as string
     dt = wx.DateTime() # Uninitialized datetime
     DateValid = dt.ParseDate(stDate)
     if DateValid != -1: # valid date
@@ -1309,9 +1313,7 @@ def ordinalDayOfYear(stDate):
 
     try:
         dtGiven = datetime.datetime.strptime(stDateGiven, "%Y-%m-%d").date()
-        dt1stOfYr = datetime.date(dtGiven.year, 1, 1)
-        td = dtGiven - dt1stOfYr
-        return td.days + 1   
+        return int(dtGiven.strftime('%j'))
     except:
         return None
 
