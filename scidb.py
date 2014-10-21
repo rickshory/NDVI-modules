@@ -1293,8 +1293,22 @@ def GetStationLongitude(iStationID):
         return None # no record in the Stations table for the passed ID
 
 def ordinalDayOfYear(stDate):
+    dt = wx.DateTime() # Uninitialized datetime
+    DateValid = dt.ParseDate(stDate)
+    if DateValid != -1: # valid date
+        # convert to standard format
+        stDateGiven = dt.Format('%Y-%m-%d')
+    else:
+        # try once more as datetime
+        DateTimeValid = dt.ParseDateTime(objTextControl.GetValue())
+        if DateTimeValid != -1: # valid datetime
+            # convert to standard date format
+            stDateGiven = dt.Format('%Y-%m-%d')
+        else:
+            return None
+
     try:
-        dtGiven = datetime.datetime.strptime(stDate, "%Y-%m-%d").date()
+        dtGiven = datetime.datetime.strptime(stDateGiven, "%Y-%m-%d").date()
         dt1stOfYr = datetime.date(dtGiven.year, 1, 1)
         td = dtGiven - dt1stOfYr
         return td.days + 1   
