@@ -1444,6 +1444,11 @@ class NDVIPanel(wx.Panel):
                         shXL.Cells(iSSRow,8).FormulaR1C1 = xlIRFn
                         shXL.Cells(iSSRow,9).FormulaR1C1 = xlVisFn
                         shXL.Cells(iSSRow,10).FormulaR1C1 = xlNDVIFn
+                        if self.calcDict['OutputSAS'] == 1:
+                            shXL_SAS.Cells(iSASRow,1).Value = dDt
+                            shXL_SAS.Cells(iSASRow,2).Value = scidb.ordinalDayOfYear(dDt)
+                            shXL_SAS.Cells(iSASRow,3).Value = shXL.Cells(iSSRow,10).Value
+                            iSASRow += 1
                         iSSRow += 1
 
                     if self.calcDict['OutputFormat'] in (2, 3):
