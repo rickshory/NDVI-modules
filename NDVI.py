@@ -964,6 +964,28 @@ class NDVIPanel(wx.Panel):
 #                wx.MessageBox(' Excel output not implemented yet', 'Under Construction',
 #                    wx.OK | wx.ICON_INFORMATION)
                 return
+            # done with verification of Excel format, set up functions
+            # tidy up, assure only one equal sign in front
+            iFormula = '=' +  self.calcDict['IRFunction'].strip('=').strip()
+            # e.g. '=i-(0.21*v)'
+            # use relative reference in final spreadsheet,
+            # the raw IR band will be -4 columns to the left relative to the IR fn we are creating
+            # the raw Vis band will be -3 columns left of the created IR fn
+            # replace 'i' with 'RC[-4]'; replace 'v' with 'RC[-3]'
+            xlIRFn = iFormula.replace('i','RC[-4]').replace('v','RC[-3]')
+            vFormula = '=' +  self.calcDict['VISFunction'].strip('=').strip()
+            # the raw IR band will be -5 columns left of the created Vis fn
+            # the raw Vis band will be -4 columns left of the created Vis fn
+            # replace 'i' with 'RC[-5]'; replace 'v' with 'RC[-4]'
+            xlVisFn = vFormula.replace('i','RC[-5]').replace('v','RC[-4]')
+            # NDVI = (IR - VIS)/(IR + VIS)
+            if self.calcDict['UseRef'] == 1:
+                # NDVI = ((IRdata/IRref) - (VISdata/VISref))/((IRdata/IRref) + (VISdata/VISref))
+                xlNDVIFn = '=((RC[-2]/RC[-4]) - (RC[-1]/RC[-3]))/' \
+                            '((RC[-2]/RC[-4]) + (RC[-1]/RC[-3]))'
+            else: # not using reference
+                # NDVI = ((IRdata) - (VISdata))/((IRdata) + (VISdata))
+                xlNDVIFn = '=((RC[-2]) - (RC[-1]))/((RC[-2]) + (RC[-1]))'
         if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
             # assign IR and VIS formulas to DB functions, so can use them in SQLite queries
             print "self.calcDict['IRFunction']", self.calcDict['IRFunction']
@@ -1345,10 +1367,11 @@ class NDVIPanel(wx.Panel):
                             shXL.Cells(iSSRow,iSSCol).Value = rec[colHd]
                             iSSCol += 1
                         if self.calcDict['UseRef'] == 1:
-                            shXL.Cells(iSSRow,6).FormulaR1C1 = "=RC[-4]"
-                            shXL.Cells(iSSRow,7).FormulaR1C1 = "=RC[-4]"
-                        shXL.Cells(iSSRow,8).FormulaR1C1 = "=RC[-4]"
-                        shXL.Cells(iSSRow,9).FormulaR1C1 = "=RC[-4]"
+                            shXL.Cells(iSSRow,6).FormulaR1C1 = xlIRFn
+                            shXL.Cells(iSSRow,7).FormulaR1C1 = xlVisFn
+                        shXL.Cells(iSSRow,8).FormulaR1C1 = xlIRFn
+                        shXL.Cells(iSSRow,9).FormulaR1C1 = xlVisFn
+                        shXL.Cells(iSSRow,10).FormulaR1C1 = xlNDVIFn
                         iSSRow += 1
 
                     if self.calcDict['OutputFormat'] in (2, 3):
@@ -1411,6 +1434,9 @@ class NDVIPanel(wx.Panel):
                 # done with this date
                 wx.Yield() # allow window updates to occur
             # done with dates for this station
+            if self.calcDict['OutputFormat'] == 1: # Excel output format
+                shXL.Columns.AutoFit()
+                bXL.Save()
             if self.calcDict['OutputFormat'] in (2, 3): # one of the text output formats
                 fOut.close()
                 if self.calcDict['CreateSummaries'] == 1:
