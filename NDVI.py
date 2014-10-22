@@ -1562,18 +1562,38 @@ class NDVIPanel(wx.Panel):
         lMetaData = []
         lMetaData.append(['job started', dtJobStarted])
         insertFinishTimeAt = len(lMetaData) # index in lMetaData to insert final time data, after everything else is done
+        lMetaData.append(['source database file', '(fill this in)'])
         lMetaData.append(['name of this panel', self.calcDict['CalcName']])
-        stSQLSta = 'SELECT StationName as SNm FROM Stations WHERE ID = ?'
+        stSQLSta = 'SELECT StationName as TNm FROM Stations WHERE ID = ?'
+        stSQLSer = 'SELECT DataSeriesDescription as RNm FROM DataSeries WHERE ID = ?'
         if self.calcDict['UseRef'] != 1:
             lMetaData.append(['Use a reference station?', 'No'])
         else:
             lMetaData.append(['Use a reference station?', 'Yes'])
             lMetaData.append(['Reference station record ID', self.calcDict['RefStationID']])
             lMetaData.append(['Reference station name',
-                    scidb.curD.execute(stSQLSta, (self.calcDict['RefStationID'],)).fetchone()['SNm']])
+                    scidb.curD.execute(stSQLSta, (self.calcDict['RefStationID'],)).fetchone()['TNm']])
+            lMetaData.append(['Reference IR series record ID', self.calcDict['IRRefSeriesID']])
+            lMetaData.append(['Reference IR series name',
+                    scidb.curD.execute(stSQLSer, (self.calcDict['IRRefSeriesID'],)).fetchone()['RNm']])
+            lMetaData.append(['Reference Vis series record ID', self.calcDict['VISRefSeriesID']])
+            lMetaData.append(['Reference Vis series name',
+                    scidb.curD.execute(stSQLSer, (self.calcDict['VISRefSeriesID'],)).fetchone()['RNm']])
+        lMetaData.append(['For Data Stations:'])
+        lMetaData.append(['IR series record ID', self.calcDict['IRDataSeriesID']])
+        lMetaData.append(['IR series name',
+                scidb.curD.execute(stSQLSer, (self.calcDict['IRDataSeriesID'],)).fetchone()['RNm']])
+        lMetaData.append(['Vis series record ID', self.calcDict['VisDataSeriesID']])
+        lMetaData.append(['Vis series name',
+                scidb.curD.execute(stSQLSer, (self.calcDict['VisDataSeriesID'],)).fetchone()['RNm']])
+        lMetaData.append(['Formula for getting IR for NDVI based on raw IR (i) and Vis (v):'])
+        lMetaData.append(['', self.calcDict['IRFunction']])
+        lMetaData.append(['Formula for getting Vis for NDVI based on raw IR (i) and Vis (v):'])
+        lMetaData.append(['', self.calcDict['VISFunction']])
+        
         lMetaData.append(['Data for Stations:', 'ID', 'Name'])
         for iStID in lStaIDs:
-            lMetaData.append(['', iStID, '(fill in Name)'])
+            lMetaData.append(['', iStID, scidb.curD.execute(stSQLSta, (iStID,)).fetchone()['TNm']])
         lMetaData.append(['Data for Dates:'])
         for dDt in lDates:
             lMetaData.append(['', dDt]) # make correct format
