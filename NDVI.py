@@ -1552,6 +1552,58 @@ class NDVIPanel(wx.Panel):
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
         # see InsertMetadataIntoCurrentSheet fn in Access DB
+        self.tcProgress.SetValue('Creating metadata for this job')
+        self.tcProgress.AppendText(', elapsed time: ' +
+                scidb.timeIntervalAsStandardString(dtJobStarted,
+                datetime.datetime.now()))
+        # create metadata as a list-of-lists, so can be output either as a file or an Excel worksheet
+        lMetaData = []
+        lMetaData.append(['job started', '(fill this in)'])
+        lMetaData.append(['name of this panel', self.calcDict['CalcName']])
+        if self.calcDict['UseRef'] != 1:
+            lMetaData.append(['Use a reference station?', 'No'])
+        else:
+            lMetaData.append(['Use a reference station?', 'Yes'])
+            lMetaData.append(['Reference station record ID', self.calcDict['RefStationID']])
+            lMetaData.append(['Reference station name', '(fill this in)'])
+        lMetaData.append(['Data for Stations:', 'ID', 'Name'])
+        for iStID in lStaIDs:
+            lMetaData.append(['', iStID, '(fill in Name)'])
+        lMetaData.append(['Data for Dates:'])
+        for dDt in lDates:
+            lMetaData.append(['', dDt]) # make correct format
+
+        if self.calcDict['OutputFormat'] == 1: # Excel output format
+            shXLMetadata = bXL.Sheets.Add() # creates new sheet 1st in the book
+            shXLMetadata.Name = 'Metadata'
+            iSSRow = 0
+            for lRow in lMetaData:
+                iSSRow += 1
+                iSSCol = 0
+                for item in lRow:
+                    iSSCol += 1
+                    shXLMetadata.Cells(iSSRow,iSSCol).Value = item
+            bXL.Save()
+
+        if self.calcDict['OutputFormat'] in (2, 3): # one of the text formats
+            if self.calcDict['OutputFormat'] == 2:
+                stFilePath = os.path.join(stSavePath, 'metadata') + '.txt'
+            if self.calcDict['OutputFormat'] == 3:
+                stFilePath = os.path.join(stSavePath, 'metadata') + '.csv'
+            try: # before we go any further
+                # make sure there's nothing invalid about the filename
+                fOut = open(stFilePath, 'wb') 
+            except:
+                wx.MessageBox(' Can not create file:\n\n' + stFilePath, 'Info',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            for lRow in lMetaData:
+                wr.writerow(lRow)
+            fOut.close()
+
+
+                         
+                         
 
         self.tcProgress.AppendText('\n Job completed')
         print "Job Done"
