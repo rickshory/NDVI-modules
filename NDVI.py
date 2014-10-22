@@ -1564,12 +1564,40 @@ class NDVIPanel(wx.Panel):
         insertFinishTimeAt = len(lMetaData) # index in lMetaData to insert final time data, after everything else is done
         lMetaData.append(['source database file', '(fill this in)'])
         lMetaData.append(['name of this panel', self.calcDict['CalcName']])
+        stSQLSta = """SELECT Stations.StationName,  Stations.LongitudeDecDegrees AS StaLon,
+                FieldSites.SiteName, FieldSites.LongitudeDecDegrees AS SiteLon,
+                DataChannels.LoggerID, Loggers.LoggerSerialNumber,
+                InstrumentSpecs.InstrumentSpec, ChannelSegments.SegmentBegin,
+                ChannelSegments.SegmentEnd
+                FROM ((((Stations LEFT JOIN FieldSites ON Stations.SiteID = FieldSites.ID)
+                LEFT JOIN ChannelSegments ON Stations.ID = ChannelSegments.StationID)
+                LEFT JOIN DataChannels ON ChannelSegments.ChannelID = DataChannels.ID)
+                LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID)
+                LEFT JOIN InstrumentSpecs ON Loggers.InstrumentSpecID = InstrumentSpecs.ID
+                WHERE Stations.ID = 3
+                GROUP BY Stations.StationName,  Stations.LongitudeDecDegrees,
+                FieldSites.SiteName, FieldSites.LongitudeDecDegrees,
+                DataChannels.LoggerID, Loggers.LoggerSerialNumber,
+                InstrumentSpecs.InstrumentSpec,
+                ChannelSegments.SegmentBegin, ChannelSegments.SegmentEnd;"""
         stSQLSta = 'SELECT StationName as TNm FROM Stations WHERE ID = ?'
+        stSQLSer = """SELECT DataSeries.DataSeriesDescription, DataChannels.SensorID,
+                Sensors.SensorSerialNumber, DeviceSpecs.DeviceSpec,
+                DataTypes.TypeText, DataUnits.UnitsText,
+                ChannelSegments.SegmentBegin, ChannelSegments.SegmentEnd
+                FROM ((((((DataSeries LEFT JOIN ChannelSegments ON DataSeries.ID = ChannelSegments.SeriesID)
+                LEFT JOIN DataChannels ON ChannelSegments.ChannelID = DataChannels.ID)
+                LEFT JOIN Sensors ON DataChannels.SensorID = Sensors.ID)
+                LEFT JOIN DeviceSpecs ON Sensors.DeviceSpecID = DeviceSpecs.ID)
+                LEFT JOIN DataTypes ON DataChannels.DataTypeID = DataTypes.ID)
+                LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID)
+                WHERE DataSeries.ID = 1 AND ChannelSegments.StationID = 3;"""
         stSQLSer = 'SELECT DataSeriesDescription as RNm FROM DataSeries WHERE ID = ?'
         if self.calcDict['UseRef'] != 1:
             lMetaData.append(['Use a reference station?', 'No'])
         else:
             lMetaData.append(['Use a reference station?', 'Yes'])
+            lMetaData.append(['reference station instrument type', '(fill this in)'])
             lMetaData.append(['Reference station record ID', self.calcDict['RefStationID']])
             lMetaData.append(['Reference station name',
                     scidb.curD.execute(stSQLSta, (self.calcDict['RefStationID'],)).fetchone()['TNm']])
@@ -1579,6 +1607,8 @@ class NDVIPanel(wx.Panel):
             lMetaData.append(['Reference Vis series record ID', self.calcDict['VISRefSeriesID']])
             lMetaData.append(['Reference Vis series name',
                     scidb.curD.execute(stSQLSer, (self.calcDict['VISRefSeriesID'],)).fetchone()['RNm']])
+            lMetaData.append(['longitude of reference station', '(fill this in)'])
+            lMetaData.append(['longitude derived from', '(fill this in)'])
         lMetaData.append(['For Data Stations:'])
         lMetaData.append(['IR series record ID', self.calcDict['IRDataSeriesID']])
         lMetaData.append(['IR series name',
@@ -1591,9 +1621,10 @@ class NDVIPanel(wx.Panel):
         lMetaData.append(['Formula for getting Vis for NDVI based on raw IR (i) and Vis (v):'])
         lMetaData.append(['', self.calcDict['VISFunction']])
         
-        lMetaData.append(['Data for Stations:', 'ID', 'Name'])
+        lMetaData.append(['Data for Stations:', 'ID', 'Name', 'Instrument type'])
         for iStID in lStaIDs:
-            lMetaData.append(['', iStID, scidb.curD.execute(stSQLSta, (iStID,)).fetchone()['TNm']])
+            lMetaData.append(['', iStID, scidb.curD.execute(stSQLSta, (iStID,)).fetchone()['TNm'],
+            '(fill in instrument type)'])
         lMetaData.append(['Data for Dates:'])
         for dDt in lDates:
             lMetaData.append(['', dDt]) # make correct format
