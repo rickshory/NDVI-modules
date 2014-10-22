@@ -1583,6 +1583,7 @@ class NDVIPanel(wx.Panel):
                 for item in lRow:
                     iSSCol += 1
                     shXLMetadata.Cells(iSSRow,iSSCol).Value = item
+            shXLMetadata.Columns.AutoFit()
             bXL.Save()
 
         if self.calcDict['OutputFormat'] in (2, 3): # one of the text formats
@@ -1592,14 +1593,18 @@ class NDVIPanel(wx.Panel):
                 stFilePath = os.path.join(stSavePath, 'metadata') + '.csv'
             try: # before we go any further
                 # make sure there's nothing invalid about the filename
-                fOut = open(stFilePath, 'wb') 
+                fOutMetadata = open(stFilePath, 'wb') 
             except:
                 wx.MessageBox(' Can not create file:\n\n' + stFilePath, 'Info',
                     wx.OK | wx.ICON_INFORMATION)
                 return
+            if self.calcDict['OutputFormat'] == 2:
+                wr = csv.writer(fOutMetadata, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+            if self.calcDict['OutputFormat'] == 3:
+                wr = csv.writer(fOutMetadata, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             for lRow in lMetaData:
                 wr.writerow(lRow)
-            fOut.close()
+            fOutMetadata.close()
 
 
                          
