@@ -1552,26 +1552,36 @@ class NDVIPanel(wx.Panel):
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
         # see InsertMetadataIntoCurrentSheet fn in Access DB
+        wx.Yield() # allow window updates to occur
         self.tcProgress.SetValue('Creating metadata for this job')
         self.tcProgress.AppendText(', elapsed time: ' +
                 scidb.timeIntervalAsStandardString(dtJobStarted,
                 datetime.datetime.now()))
+        wx.Yield()
         # create metadata as a list-of-lists, so can be output either as a file or an Excel worksheet
         lMetaData = []
-        lMetaData.append(['job started', '(fill this in)'])
+        lMetaData.append(['job started', dtJobStarted])
+        insertFinishTimeAt = len(lMetaData) # index in lMetaData to insert final time data, after everything else is done
         lMetaData.append(['name of this panel', self.calcDict['CalcName']])
+        stSQLSta = 'SELECT StationName as SNm FROM Stations WHERE ID = ?'
         if self.calcDict['UseRef'] != 1:
             lMetaData.append(['Use a reference station?', 'No'])
         else:
             lMetaData.append(['Use a reference station?', 'Yes'])
             lMetaData.append(['Reference station record ID', self.calcDict['RefStationID']])
-            lMetaData.append(['Reference station name', '(fill this in)'])
+            lMetaData.append(['Reference station name',
+                    scidb.curD.execute(stSQLSta, (self.calcDict['RefStationID'],)).fetchone()['SNm']])
         lMetaData.append(['Data for Stations:', 'ID', 'Name'])
         for iStID in lStaIDs:
             lMetaData.append(['', iStID, '(fill in Name)'])
         lMetaData.append(['Data for Dates:'])
         for dDt in lDates:
             lMetaData.append(['', dDt]) # make correct format
+        # put these in last, to be as accurate as possible on the times
+        lMetaData.insert(insertFinishTimeAt, ['total elapsed time', scidb.timeIntervalAsStandardString(dtJobStarted,
+                        datetime.datetime.now())])
+        # insert at same position, bumps up the previous one
+        lMetaData.insert(insertFinishTimeAt, ['job completed', datetime.datetime.now()])
 
         if self.calcDict['OutputFormat'] == 1: # Excel output format
             shXLMetadata = bXL.Sheets.Add() # creates new sheet 1st in the book
