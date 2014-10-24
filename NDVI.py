@@ -1566,24 +1566,23 @@ class NDVIPanel(wx.Panel):
         lMetaData.append(['name of this panel', self.calcDict['CalcName']])
         minDay = min(lDates)
         maxDay = max(lDates)
-        print 'min & max days', minDay, maxDay
-        stSQLSta = """SELECT Stations.StationName,  Stations.LongitudeDecDegrees AS StaLon,
+        stSQLSta = """SELECT Stations.StationName, Stations.LongitudeDecDegrees AS StaLon,
                 FieldSites.SiteName, FieldSites.LongitudeDecDegrees AS SiteLon,
                 DataChannels.LoggerID, Loggers.LoggerSerialNumber,
-                InstrumentSpecs.InstrumentSpec, ChannelSegments.SegmentBegin,
-                ChannelSegments.SegmentEnd
+                InstrumentSpecs.InstrumentSpec
                 FROM ((((Stations LEFT JOIN FieldSites ON Stations.SiteID = FieldSites.ID)
                 LEFT JOIN ChannelSegments ON Stations.ID = ChannelSegments.StationID)
                 LEFT JOIN DataChannels ON ChannelSegments.ChannelID = DataChannels.ID)
                 LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID)
                 LEFT JOIN InstrumentSpecs ON Loggers.InstrumentSpecID = InstrumentSpecs.ID
-                WHERE Stations.ID = 3
+                WHERE Stations.ID = ?
+                AND ((ChannelSegments.SegmentBegin <= ?) 
+                OR (COALESCE(ChannelSegments.SegmentEnd, datetime("now")) >= ?))
                 GROUP BY Stations.StationName,  Stations.LongitudeDecDegrees,
                 FieldSites.SiteName, FieldSites.LongitudeDecDegrees,
                 DataChannels.LoggerID, Loggers.LoggerSerialNumber,
-                InstrumentSpecs.InstrumentSpec,
-                ChannelSegments.SegmentBegin, ChannelSegments.SegmentEnd;"""
-        stSQLSta = 'SELECT StationName as TNm FROM Stations WHERE ID = ?'
+                InstrumentSpecs.InstrumentSpec;"""
+#        stSQLSta = 'SELECT StationName as TNm FROM Stations WHERE ID = ?'
         stSQLSer = """SELECT DataSeries.DataSeriesDescription, DataChannels.SensorID,
                 Sensors.SensorSerialNumber, DeviceSpecs.DeviceSpec,
                 DataTypes.TypeText, DataUnits.UnitsText,
@@ -1600,10 +1599,23 @@ class NDVIPanel(wx.Panel):
             lMetaData.append(['Use a reference station?', 'No'])
         else:
             lMetaData.append(['Use a reference station?', 'Yes'])
-            lMetaData.append(['reference station instrument type', '(fill this in)'])
             lMetaData.append(['Reference station record ID', self.calcDict['RefStationID']])
-            lMetaData.append(['Reference station name',
-                    scidb.curD.execute(stSQLSta, (self.calcDict['RefStationID'],)).fetchone()['TNm']])
+            params = (self.calcDict['RefStationID'], minDay, maxDay )
+            recs = scidb.curD.execute(stSQLSta, params).fetchall()
+            iRecs = len(recs) # maybe give time ranges if more than one
+            for rec in recs: # usually just one
+                lMetaData.append(['Reference station name', rec['StationName']])
+                if rec['StaLon'] == None:
+                    lMetaData.append(['Longitude', rec['SiteLon'], 'referenced from Site', rec['SiteName']])
+                else:
+                    lMetaData.append(['Reference station longitude', rec['StaLon']])
+                lMetaData.append(['Logger record ID', rec['LoggerID']])
+                if rec['LoggerSerialNumber'] != None: 
+                    lMetaData.append(['Logger serial number', rec['LoggerSerialNumber']])
+                if rec['InstrumentSpec'] != None: 
+                    lMetaData.append(['Instrument specification', rec['InstrumentSpec']])
+                else:
+                    lMetaData.append(['Instrument specification', '(none given)'])
             lMetaData.append(['Reference IR series record ID', self.calcDict['IRRefSeriesID']])
             lMetaData.append(['Reference IR series name',
                     scidb.curD.execute(stSQLSer, (self.calcDict['IRRefSeriesID'],)).fetchone()['RNm']])
@@ -1624,10 +1636,27 @@ class NDVIPanel(wx.Panel):
         lMetaData.append(['Formula for getting Vis for NDVI based on raw IR (i) and Vis (v):'])
         lMetaData.append(['', self.calcDict['VISFunction']])
         
-        lMetaData.append(['Data for Stations:', 'ID', 'Name', 'Instrument type'])
+        lMetaData.append(['Data for Stations:', 'ID', 'Name', 'LoggerID',
+                'Serial Num', 'Instrument type'])
         for iStID in lStaIDs:
-            lMetaData.append(['', iStID, scidb.curD.execute(stSQLSta, (iStID,)).fetchone()['TNm'],
-            '(fill in instrument type)'])
+            params = (iStID, minDay, maxDay)
+            recs = scidb.curD.execute(stSQLSta, params).fetchall()
+            iNumRecs = len(recs) # maybe give time ranges if there are more than one
+            for rec in recs: # usually just one
+                lRow = []
+                lRow.append('')
+                lRow.append(iStID)
+                lRow.append(rec['StationName'])
+                lRow.append(rec['LoggerID'])
+                if rec['LoggerSerialNumber'] == None:
+                    lRow.append('(none)')
+                else:
+                    lRow.append(rec['LoggerSerialNumber'])
+                if rec['InstrumentSpec'] == None:
+                    lRow.append('(not given)')
+                else:
+                    lRow.append(rec['InstrumentSpec'])
+                lMetaData.append(lRow)
         lMetaData.append(['Data for Dates:'])
         for dDt in lDates:
             lMetaData.append(['', dDt]) # make correct format
