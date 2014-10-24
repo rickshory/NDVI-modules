@@ -1686,7 +1686,63 @@ class NDVIPanel(wx.Panel):
         lMetaData.append(['', self.calcDict['IRFunction']])
         lMetaData.append(['Formula for getting Vis for NDVI based on raw IR (i) and Vis (v):'])
         lMetaData.append(['', self.calcDict['VISFunction']])
-        
+        lMetaData.append(['Hours before/after solar noon, to include data for',
+                self.calcDict['PlusMinusCutoffHours']])
+        lMetaData.append(['Date of clear day, to use for high/low cutoffs',
+                self.calcDict['ClearDay']])
+        lMetaData.append(['Ignore data < this percent of clear day maximum',
+                self.calcDict['ThresholdPctLow']])
+        lMetaData.append(['Ignore data > this percent of clear day maximum',
+                self.calcDict['ThresholdPctHigh']])
+        if self.calcDict['UseOnlyValidNDVI'] == 0:
+            lMetaData.append(['Eliminate NDVI beyond thresholds', 'No, use all'])
+        else:
+            lMetaData.append(['Use only NDVI between:'])
+            lMetaData.append(['Minimum', self.calcDict['NDVIvalidMin']])
+            lMetaData.append(['Maximum', self.calcDict['NDVIvalidMax']])
+        lRow = ['Create NDVI summaries by date']
+        if self.calcDict['CreateSummaries'] == 1:
+            lRow.append('Yes')
+        else:
+            lRow.append('No')
+        lMetaData.append(lRow)
+        lRow = ['Create tabulated output for SAS']
+        if self.calcDict['OutputSAS'] == 1:
+            lRow.append('Yes')
+        else:
+            lRow.append('No')
+        lMetaData.append(lRow)
+        lRow = ['Normalize NDVI into range 0-to-1']
+        if self.calcDict['Normalize'] == 1:
+            lRow.append('Yes')
+        else:
+            lRow.append('No')
+        lMetaData.append(lRow)
+
+        lRow = ['Output format']
+        if self.calcDict['OutputFormat'] == 1:
+            lRow.append('Excel spreadsheets')
+        if self.calcDict['OutputFormat'] == 2:
+            lRow.append('Tab-delimited text')
+        if self.calcDict['OutputFormat'] == 3:
+            lRow.append('Comma-seperated values')
+        lMetaData.append(lRow)
+
+        lRow = ['Folder to save output into']
+        if self.calcDict['OutputFolder'] != None:
+            lRow.append(self.calcDict['OutputFolder'])
+        else:
+            lRow.append('(none given, use default)')
+        lMetaData.append(lRow)
+
+        lRow = ['Base name (filenames if Excel, folder if otherwise)']
+        if self.calcDict['OutputBaseName'] != None:
+            lRow.append(self.calcDict['OutputBaseName'])
+        else:
+            lRow.append('(none given, use default)')
+        lMetaData.append(lRow)
+
+
         lMetaData.append(['Data for Stations:', 'ID', 'Name', 'LoggerID',
                 'Serial Num', 'Instrument type'])
         for iStID in lStaIDs:
