@@ -1564,6 +1564,9 @@ class NDVIPanel(wx.Panel):
         insertFinishTimeAt = len(lMetaData) # index in lMetaData to insert final time data, after everything else is done
         lMetaData.append(['source database file', '(fill this in)'])
         lMetaData.append(['name of this panel', self.calcDict['CalcName']])
+        minDay = min(lDates)
+        maxDay = max(lDates)
+        print 'min & max days', minDay, maxDay
         stSQLSta = """SELECT Stations.StationName,  Stations.LongitudeDecDegrees AS StaLon,
                 FieldSites.SiteName, FieldSites.LongitudeDecDegrees AS SiteLon,
                 DataChannels.LoggerID, Loggers.LoggerSerialNumber,
