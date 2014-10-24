@@ -1609,11 +1609,11 @@ class NDVIPanel(wx.Panel):
                     lMetaData.append(['Longitude', rec['SiteLon'], 'referenced from Site', rec['SiteName']])
                 else:
                     lMetaData.append(['Reference station longitude', rec['StaLon']])
-                lMetaData.append(['Logger record ID', rec['LoggerID']])
+                lMetaData.append(['Reference logger record ID', rec['LoggerID']])
                 if rec['LoggerSerialNumber'] != None: 
-                    lMetaData.append(['Logger serial number', rec['LoggerSerialNumber']])
+                    lMetaData.append(['Reference logger serial number', rec['LoggerSerialNumber']])
                 if rec['InstrumentSpec'] != None: 
-                    lMetaData.append(['Instrument specification', rec['InstrumentSpec']])
+                    lMetaData.append(['Reference instrument specification', rec['InstrumentSpec']])
                 else:
                     lMetaData.append(['Instrument specification', '(none given)'])
             lMetaData.append(['Reference IR series record ID', self.calcDict['IRRefSeriesID']])
