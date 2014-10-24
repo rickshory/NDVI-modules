@@ -1583,7 +1583,7 @@ class NDVIPanel(wx.Panel):
                 DataChannels.LoggerID, Loggers.LoggerSerialNumber,
                 InstrumentSpecs.InstrumentSpec;"""
 #        stSQLSta = 'SELECT StationName as TNm FROM Stations WHERE ID = ?'
-        stSQLSer = """SELECT DataSeries.DataSeriesDescription, DataChannels.SensorID,
+        stSQLSerRef = """SELECT DataSeries.DataSeriesDescription, DataChannels.SensorID,
                 Sensors.SensorSerialNumber, DeviceSpecs.DeviceSpec,
                 DataTypes.TypeText, DataUnits.UnitsText,
                 ChannelSegments.SegmentBegin, ChannelSegments.SegmentEnd
@@ -1593,8 +1593,10 @@ class NDVIPanel(wx.Panel):
                 LEFT JOIN DeviceSpecs ON Sensors.DeviceSpecID = DeviceSpecs.ID)
                 LEFT JOIN DataTypes ON DataChannels.DataTypeID = DataTypes.ID)
                 LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID)
-                WHERE DataSeries.ID = 1 AND ChannelSegments.StationID = 3;"""
-        stSQLSer = 'SELECT DataSeriesDescription as RNm FROM DataSeries WHERE ID = ?'
+                WHERE DataSeries.ID = ? AND ChannelSegments.StationID = ?
+                AND ((ChannelSegments.SegmentBegin <= ?) 
+                OR (COALESCE(ChannelSegments.SegmentEnd, datetime("now")) >= ?));"""
+        stSQLSerDat = 'SELECT DataSeriesDescription as RNm FROM DataSeries WHERE ID = ?'
         if self.calcDict['UseRef'] != 1:
             lMetaData.append(['Use a reference station?', 'No'])
         else:
@@ -1617,20 +1619,40 @@ class NDVIPanel(wx.Panel):
                 else:
                     lMetaData.append(['Instrument specification', '(none given)'])
             lMetaData.append(['Reference IR series record ID', self.calcDict['IRRefSeriesID']])
-            lMetaData.append(['Reference IR series name',
-                    scidb.curD.execute(stSQLSer, (self.calcDict['IRRefSeriesID'],)).fetchone()['RNm']])
+            params = (self.calcDict['IRRefSeriesID'], self.calcDict['RefStationID'], minDay, maxDay)
+            recs = scidb.curD.execute(stSQLSerRef, params).fetchall()
+            iNumRecs = len(recs) # give time ranges if more than one
+            for rec in recs: # usually just one
+                lMetaData.append(['Reference IR series name', rec['DataSeriesDescription']])
+                lMetaData.append(['Reference IR series record ID', rec['SensorID']])
+                if rec['SensorSerialNumber'] != None:
+                    lMetaData.append(['Reference IR device serial number', rec['SensorSerialNumber']])
+                if rec['DeviceSpec'] != None:
+                    lMetaData.append(['Reference IR device specification', rec['DeviceSpec']])
+                else:
+                    lMetaData.append(['Reference IR device specification', '(none given)'])
+                if rec['TypeText'] != None:
+                    lMetaData.append(['Reference IR device data type', rec['TypeText']])
+                else:
+                    lMetaData.append(['Reference IR device data type', '(none given)'])
+                if rec['UnitsText'] != None:
+                    lMetaData.append(['Reference IR device data units', rec['UnitsText']])
+                else:
+                    lMetaData.append(['Reference IR device data units', '(none given)'])
+
+
             lMetaData.append(['Reference Vis series record ID', self.calcDict['VISRefSeriesID']])
             lMetaData.append(['Reference Vis series name',
-                    scidb.curD.execute(stSQLSer, (self.calcDict['VISRefSeriesID'],)).fetchone()['RNm']])
+                    scidb.curD.execute(stSQLSerDat, (self.calcDict['VISRefSeriesID'],)).fetchone()['RNm']])
             lMetaData.append(['longitude of reference station', '(fill this in)'])
             lMetaData.append(['longitude derived from', '(fill this in)'])
         lMetaData.append(['For Data Stations:'])
         lMetaData.append(['IR series record ID', self.calcDict['IRDataSeriesID']])
         lMetaData.append(['IR series name',
-                scidb.curD.execute(stSQLSer, (self.calcDict['IRDataSeriesID'],)).fetchone()['RNm']])
+                scidb.curD.execute(stSQLSerDat, (self.calcDict['IRDataSeriesID'],)).fetchone()['RNm']])
         lMetaData.append(['Vis series record ID', self.calcDict['VisDataSeriesID']])
         lMetaData.append(['Vis series name',
-                scidb.curD.execute(stSQLSer, (self.calcDict['VisDataSeriesID'],)).fetchone()['RNm']])
+                scidb.curD.execute(stSQLSerDat, (self.calcDict['VisDataSeriesID'],)).fetchone()['RNm']])
         lMetaData.append(['Formula for getting IR for NDVI based on raw IR (i) and Vis (v):'])
         lMetaData.append(['', self.calcDict['IRFunction']])
         lMetaData.append(['Formula for getting Vis for NDVI based on raw IR (i) and Vis (v):'])
