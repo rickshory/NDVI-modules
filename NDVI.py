@@ -1649,8 +1649,32 @@ class NDVIPanel(wx.Panel):
                 lMetaData.append(lRow)
 
             lMetaData.append(['Reference Vis series record ID', self.calcDict['VISRefSeriesID']])
-            lMetaData.append(['Reference Vis series name',
-                    scidb.curD.execute(stSQLSerDat, (self.calcDict['VISRefSeriesID'],)).fetchone()['RNm']])
+            params = (self.calcDict['VISRefSeriesID'], self.calcDict['RefStationID'], minDay, maxDay)
+            recs = scidb.curD.execute(stSQLSerRef, params).fetchall()
+            iNumRecs = len(recs) # give time ranges if more than one
+            for rec in recs: # usually just one
+                lMetaData.append(['Reference Vis series name', rec['DataSeriesDescription']])
+                lMetaData.append(['Reference Vis series device record ID', rec['SensorID']])
+                if rec['SensorSerialNumber'] != None:
+                    lMetaData.append(['Reference Vis device serial number', rec['SensorSerialNumber']])
+                lRow = ['Reference Vis device specification']
+                if rec['DeviceSpec'] != None:
+                    lRow.append(rec['DeviceSpec'])
+                else:
+                    lRow.append('(none given)')
+                lMetaData.append(lRow)
+                lRow = ['Reference Vis device data type']
+                if rec['TypeText'] != None:
+                    lRow.append(rec['TypeText'])
+                else:
+                    lRow.append('(none given)')
+                lMetaData.append(lRow)
+                lRow = ['Reference Vis device data units']
+                if rec['UnitsText'] != None:
+                    lRow.append(rec['UnitsText'])
+                else:
+                    lRow.append('(none given)')
+                lMetaData.append(lRow)
         lMetaData.append(['For Data Stations:'])
         lMetaData.append(['IR series record ID', self.calcDict['IRDataSeriesID']])
         lMetaData.append(['IR series name',
