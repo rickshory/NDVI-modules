@@ -1614,38 +1614,43 @@ class NDVIPanel(wx.Panel):
                 lMetaData.append(['Reference logger record ID', rec['LoggerID']])
                 if rec['LoggerSerialNumber'] != None: 
                     lMetaData.append(['Reference logger serial number', rec['LoggerSerialNumber']])
-                if rec['InstrumentSpec'] != None: 
-                    lMetaData.append(['Reference instrument specification', rec['InstrumentSpec']])
+                lRow = ['Reference instrument specification']
+                if rec['InstrumentSpec'] != None:
+                    lRow.append(rec['InstrumentSpec'])
                 else:
-                    lMetaData.append(['Instrument specification', '(none given)'])
+                    lRow.append('(none given)')
+                lMetaData.append(lRow)
             lMetaData.append(['Reference IR series record ID', self.calcDict['IRRefSeriesID']])
             params = (self.calcDict['IRRefSeriesID'], self.calcDict['RefStationID'], minDay, maxDay)
             recs = scidb.curD.execute(stSQLSerRef, params).fetchall()
             iNumRecs = len(recs) # give time ranges if more than one
             for rec in recs: # usually just one
                 lMetaData.append(['Reference IR series name', rec['DataSeriesDescription']])
-                lMetaData.append(['Reference IR series record ID', rec['SensorID']])
+                lMetaData.append(['Reference IR series device record ID', rec['SensorID']])
                 if rec['SensorSerialNumber'] != None:
                     lMetaData.append(['Reference IR device serial number', rec['SensorSerialNumber']])
+                lRow = ['Reference IR device specification']
                 if rec['DeviceSpec'] != None:
-                    lMetaData.append(['Reference IR device specification', rec['DeviceSpec']])
+                    lRow.append(rec['DeviceSpec'])
                 else:
-                    lMetaData.append(['Reference IR device specification', '(none given)'])
+                    lRow.append('(none given)')
+                lMetaData.append(lRow)
+                lRow = ['Reference IR device data type']
                 if rec['TypeText'] != None:
-                    lMetaData.append(['Reference IR device data type', rec['TypeText']])
+                    lRow.append(rec['TypeText'])
                 else:
-                    lMetaData.append(['Reference IR device data type', '(none given)'])
+                    lRow.append('(none given)')
+                lMetaData.append(lRow)
+                lRow = ['Reference IR device data units']
                 if rec['UnitsText'] != None:
-                    lMetaData.append(['Reference IR device data units', rec['UnitsText']])
+                    lRow.append(rec['UnitsText'])
                 else:
-                    lMetaData.append(['Reference IR device data units', '(none given)'])
-
+                    lRow.append('(none given)')
+                lMetaData.append(lRow)
 
             lMetaData.append(['Reference Vis series record ID', self.calcDict['VISRefSeriesID']])
             lMetaData.append(['Reference Vis series name',
                     scidb.curD.execute(stSQLSerDat, (self.calcDict['VISRefSeriesID'],)).fetchone()['RNm']])
-            lMetaData.append(['longitude of reference station', '(fill this in)'])
-            lMetaData.append(['longitude derived from', '(fill this in)'])
         lMetaData.append(['For Data Stations:'])
         lMetaData.append(['IR series record ID', self.calcDict['IRDataSeriesID']])
         lMetaData.append(['IR series name',
