@@ -1267,14 +1267,6 @@ class NDVIPanel(wx.Panel):
                     shXLSummary.Cells(iSSummaryRow,5).Value = 'Use?'
                     shXLSummary.Cells(iSSummaryRow,6).Value = 'NDVI'
                     shXLSummary.Cells(iSSummaryRow,7).Value = 'SEM'
-                    if self.calcDict['Normalize'] == 1:
-                        # place these headers
-                        shXLSummary.Cells(iSSummaryRow,8).Value = 'minNDVI'
-                        shXLSummary.Cells(iSSummaryRow,9).Value = ''
-                        shXLSummary.Cells(iSSummaryRow,10).Value = 'maxNDVI'
-                        shXLSummary.Cells(iSSummaryRow,11).Value = ''
-                        shXLSummary.Cells(iSSummaryRow,12).Value = 'relative NDVI'
-
                     iSSummaryRow += 1
                     iFirstRowInBlock = iSSRow + 1 # sheet row will be 1 higher when headers added
 
@@ -1486,18 +1478,6 @@ class NDVIPanel(wx.Panel):
                                 shXLSummary.Cells(iSSummaryRow,5).Value = 'YES'
                                 shXLSummary.Cells(iSSummaryRow,6).Formula = "=B%i" % (iSSummaryRow,)
                                 shXLSummary.Cells(iSSummaryRow,7).Formula = "=C{n}/SQRT(D{n}%)".format(n=iSSummaryRow)
-                                wx.Yield()
-                                if self.calcDict['Normalize'] == 1: # normalize
-                                    # maintain min and max NDVI
-                                    if iSSummaryRow == 2: # set initial values
-                                        shXLSummary.Cells(1,9).Value = shXLSummary.Cells(iSSummaryRow,6).Value
-                                        shXLSummary.Cells(1,11).Value = shXLSummary.Cells(iSSummaryRow,6).Value
-                                    else:
-                                        if shXLSummary.Cells(iSSummaryRow,6).Value < shXLSummary.Cells(1,9).Value:
-                                            shXLSummary.Cells(1,9).Value = shXLSummary.Cells(iSSummaryRow,6).Value
-                                        if shXLSummary.Cells(iSSummaryRow,6).Value > shXLSummary.Cells(1,11).Value:
-                                            shXLSummary.Cells(1,11).Value = shXLSummary.Cells(iSSummaryRow,6).Value
-                                    shXLSummary.Cells(iSSummaryRow,12).Formula = '=(F%i-I1)/(K1-I1)' % (iSSummaryRow,)
                             iSSummaryRow += 1
                             iFirstRowInBlock = iLastRowInBlock + 1
                         
@@ -1554,6 +1534,15 @@ class NDVIPanel(wx.Panel):
                 shXL.Columns.AutoFit()
                 if self.calcDict['CreateSummaries'] == 1:
                     boolNewBlankSummarySheet = False # flag to create a new one for the next Station
+                    if self.calcDict['Normalize'] == 1:
+                        # place these headers
+                        shXLSummary.Cells(1,8).Value = 'minNDVI'
+                        shXLSummary.Cells(1,9).Formula = '=MIN(F2:F%i)' % (iSSummaryRow-1,)
+                        shXLSummary.Cells(1,10).Value = 'maxNDVI'
+                        shXLSummary.Cells(1,11).Formula = '=MAX(F2:F%i)' % (iSSummaryRow-1,)
+                        shXLSummary.Cells(1,12).Value = 'relative NDVI'
+                        for nR in range(2, iSSummaryRow): # enter the normalization formulas
+                            shXLSummary.Cells(nR,12).Formula = '=(F%i-I1)/(K1-I1)' % (nR,)           
                     shXLSummary.Columns.AutoFit()
                     # if iSSummaryRow > 1: insert chart
                 if self.calcDict['OutputSAS'] == 1:
