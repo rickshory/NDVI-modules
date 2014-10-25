@@ -1548,11 +1548,19 @@ class NDVIPanel(wx.Panel):
                     # if iSSummaryRow > 1: insert chart
                 if self.calcDict['OutputSAS'] == 1:
                     boolNewBlankSASSheet = False # flag to create a new one for the next Station
-                    if self.calcDict['Normalize'] == 1:
+                    if self.calcDict['Normalize'] == 1 and iSASRow > 3:
                         # adjust SAS values to relative NDVI
-                        time.sleep(1) # allow time for Excel to calculate values
-                        fMinNDVI = shXLSummary.Cells(1,9).Value
-                        fMaxNDVI = shXLSummary.Cells(1,11).Value
+                        if self.calcDict['CreateSummaries'] == 1:
+                            # normalize based on averages in Summary
+                            time.sleep(1) # allow time for Excel to calculate values
+                            fMinNDVI = shXLSummary.Cells(1,9).Value
+                            fMaxNDVI = shXLSummary.Cells(1,11).Value
+                        else: # normalize SAS values directly
+                            lVI = []
+                            for iV in range (2, iSASRow-1):
+                                lVI.append(float(shXL_SAS.Cells(iV,3).Value))
+                            fMinNDVI = min(lVI)
+                            fMaxNDVI = max(lVI)
                         fRangeNDVI = fMaxNDVI - fMinNDVI
                         # if range is 0 then Max=Min, or all zero, or some other error; adjustment has no meaning
                         #  formula would give divide-by-zero error anyway
