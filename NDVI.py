@@ -1267,6 +1267,14 @@ class NDVIPanel(wx.Panel):
                     shXLSummary.Cells(iSSummaryRow,5).Value = 'Use?'
                     shXLSummary.Cells(iSSummaryRow,6).Value = 'NDVI'
                     shXLSummary.Cells(iSSummaryRow,7).Value = 'SEM'
+                    if self.calcDict['Normalize'] == 1:
+                        # place these headers
+                        shXLSummary.Cells(iSSummaryRow,8).Value = 'minNDVI'
+                        shXLSummary.Cells(iSSummaryRow,9).Value = ''
+                        shXLSummary.Cells(iSSummaryRow,10).Value = 'maxNDVI'
+                        shXLSummary.Cells(iSSummaryRow,11).Value = ''
+                        shXLSummary.Cells(iSSummaryRow,12).Value = 'relative NDVI'
+
                     iSSummaryRow += 1
                     iFirstRowInBlock = iSSRow + 1 # sheet row will be 1 higher when headers added
 
