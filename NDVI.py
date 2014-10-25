@@ -1486,20 +1486,18 @@ class NDVIPanel(wx.Panel):
                                 shXLSummary.Cells(iSSummaryRow,5).Value = 'YES'
                                 shXLSummary.Cells(iSSummaryRow,6).Formula = "=B%i" % (iSSummaryRow,)
                                 shXLSummary.Cells(iSSummaryRow,7).Formula = "=C{n}/SQRT(D{n}%)".format(n=iSSummaryRow)
+                                wx.Yield()
                                 if self.calcDict['Normalize'] == 1: # normalize
-                                    # maintain min NDVI
-                                    if shXLSummary.Cells(1,9).Value == '': # set initial value
+                                    # maintain min and max NDVI
+                                    if iSSummaryRow == 2: # set initial values
                                         shXLSummary.Cells(1,9).Value = shXLSummary.Cells(iSSummaryRow,6).Value
+                                        shXLSummary.Cells(1,11).Value = shXLSummary.Cells(iSSummaryRow,6).Value
                                     else:
                                         if shXLSummary.Cells(iSSummaryRow,6).Value < shXLSummary.Cells(1,9).Value:
                                             shXLSummary.Cells(1,9).Value = shXLSummary.Cells(iSSummaryRow,6).Value
-                                    # maintain max NDVI
-                                    if shXLSummary.Cells(1,11).Value == '': # set initial value
-                                        shXLSummary.Cells(1,11).Value = shXLSummary.Cells(iSSummaryRow,6).Value
-                                    else:
                                         if shXLSummary.Cells(iSSummaryRow,6).Value > shXLSummary.Cells(1,11).Value:
                                             shXLSummary.Cells(1,11).Value = shXLSummary.Cells(iSSummaryRow,6).Value
-                                        
+                                    shXLSummary.Cells(iSSummaryRow,12).Formula = '=(F%i-I1)/(K1-I1)' % (iSSummaryRow,)
                             iSSummaryRow += 1
                             iFirstRowInBlock = iLastRowInBlock + 1
                         
