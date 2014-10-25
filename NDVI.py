@@ -1585,7 +1585,12 @@ class NDVIPanel(wx.Panel):
         lMetaData = []
         lMetaData.append(['job started', dtJobStarted])
         insertFinishTimeAt = len(lMetaData) # index in lMetaData to insert final time data, after everything else is done
-        lMetaData.append(['source database file', '(fill this in)'])
+        sDBPath = '(not known)'
+        recs = scidb.curD.execute("PRAGMA database_list").fetchall()
+        for rec in recs:
+            if rec['name'] == 'main':
+                sDBPath = rec['file']
+        lMetaData.append(['source database file', sDBPath])
         lMetaData.append(['name of this panel', self.calcDict['CalcName']])
         minDay = min(lDates)
         maxDay = max(lDates)
