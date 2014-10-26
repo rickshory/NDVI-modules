@@ -1471,13 +1471,9 @@ class NDVIPanel(wx.Panel):
                             shXLSummary.Cells(iSSummaryRow,2).Formula = "=AVERAGE('%s'!J%i:J%i)" % params
                             shXLSummary.Cells(iSSummaryRow,3).Formula = "=STDEV.S('%s'!J%i:J%i)" % params
                             shXLSummary.Cells(iSSummaryRow,4).Formula = "=COUNT('%s'!J%i:J%i)" % params
-                            wx.Yield() # allow window updates to occur
-                            if shXLSummary.Cells(iSSummaryRow,4).Value <= 1: # can put additional constraints here
-                                shXLSummary.Cells(iSSummaryRow,5).Value = 'NO'
-                            else:
-                                shXLSummary.Cells(iSSummaryRow,5).Value = 'YES'
-                                shXLSummary.Cells(iSSummaryRow,6).Formula = "=B%i" % (iSSummaryRow,)
-                                shXLSummary.Cells(iSSummaryRow,7).Formula = "=C{n}/SQRT(D{n}%)".format(n=iSSummaryRow)
+                            shXLSummary.Cells(iSSummaryRow,5).Formula = '=IF(D%i<=1,"N0","YES")' % (iSSummaryRow,)
+                            shXLSummary.Cells(iSSummaryRow,6).Formula = '=IF(D{n}<=1,"",B{n})'.format(n=iSSummaryRow)
+                            shXLSummary.Cells(iSSummaryRow,7).Formula = '=IF(D{n}<=1,"",C{n}/SQRT(D{n}%))'.format(n=iSSummaryRow)
                             iSSummaryRow += 1
                             iFirstRowInBlock = iLastRowInBlock + 1
                         
@@ -1542,8 +1538,7 @@ class NDVIPanel(wx.Panel):
                         shXLSummary.Cells(1,11).Formula = '=MAX(F2:F%i)' % (iSSummaryRow-1,)
                         shXLSummary.Cells(1,12).Value = 'relative NDVI'
                         for nR in range(2, iSSummaryRow): # enter the normalization formulas
-                            if shXLSummary.Cells(nR,5).Value == 'YES':
-                                shXLSummary.Cells(nR,12).Formula = '=(F%i-I1)/(K1-I1)' % (nR,)
+                            shXLSummary.Cells(nR,12).Formula = '=if(D{n}<=1,"",(F{n}-I1)/(K1-I1))'.format(n=nR)
                     shXLSummary.Columns.AutoFit()
                     wx.Yield()
                     # if iSSummaryRow > 1: insert chart
