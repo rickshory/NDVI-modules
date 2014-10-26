@@ -736,6 +736,8 @@ class NDVIPanel(wx.Panel):
         
     def onCbxRetrievePanel(self, event):
         k = scidb.getComboboxIndex(self.cbxGetPanel)
+        if self.calcDict['ID'] != None:
+            self.SavePanel() # attempt to save panel, will catch errors
 #        print 'self.cbxGetPanel selected, key:', k
         self.calcDict = scidb.dictFromTableID('NDVIcalc', k)
         self.retrievePanelFromDict()
