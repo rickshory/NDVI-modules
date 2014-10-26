@@ -1321,18 +1321,15 @@ class NDVIPanel(wx.Panel):
                         return
 
                 if self.calcDict['OutputFormat'] == 2:
-                    wr = csv.writer(fOut, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    if  self.calcDict['CreateSummaries'] == 1:
-                        wrSummary = csv.writer(fOutSummary, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    if self.calcDict['OutputSAS'] == 1:
-                        wrSAS = csv.writer(fOutSAS, delimiter='\t', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-
+                    cDl='\t' # tab delimited
                 if self.calcDict['OutputFormat'] == 3:
-                    wr = csv.writer(fOut, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    if  self.calcDict['CreateSummaries'] == 1:
-                        wrSummary = csv.writer(fOutSummary, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-                    if self.calcDict['OutputSAS'] == 1:
-                        wrSAS = csv.writer(fOutSAS, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                    cDl=',' # comma-separated
+                wr = csv.writer(fOut, delimiter=cDl, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                if  self.calcDict['CreateSummaries'] == 1:
+                    wrSummary = csv.writer(fOutSummary, delimiter=cDl, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                if self.calcDict['OutputSAS'] == 1:
+                    wrSAS = csv.writer(fOutSAS, delimiter=cDl, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                
                 isNewTextFile = 1
 
             iNumStationsDone += 1
@@ -1448,6 +1445,7 @@ class NDVIPanel(wx.Panel):
                             shXL_SAS.Cells(iSASRow,1).Value = dDt
                             shXL_SAS.Cells(iSASRow,2).Value = dDt.strftime('%j')
                             wx.Yield()
+                            # use Excel copy/paste to assure we get the correct values
                             shXL.Cells(iSSRow,10).Copy()
                             shXL_SAS.Cells(iSASRow,3).PasteSpecial(Paste=-4163)
                             iSASRow += 1
