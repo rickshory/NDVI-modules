@@ -18,10 +18,8 @@ except ImportError: # if it's not there locally, try the wxPython lib.
     from wx.lib.floatcanvas import NavCanvas, FloatCanvas, Resources
 import wx.lib.colourdb
 
-ID_DATES_LIST = wx.NewId()
-ID_STATIONS_LIST = wx.NewId()
-
 sFmt = '%Y-%m-%d %H:%M:%S'
+boolMakingDataset = False
 
 class ndviDatesList(wx.ListCtrl, ListCtrlAutoWidthMixin):
     def __init__(self, *arg, **kw):
@@ -548,7 +546,7 @@ class NDVIPanel(wx.Panel):
 #        dtSiz.Add(datesLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
 #        gRow += 1
-        self.datesList = ndviDatesList(pnl, id = ID_DATES_LIST, style = wx.LC_REPORT)
+        self.datesList = ndviDatesList(pnl, -1, style = wx.LC_REPORT)
         dtSiz.Add(self.datesList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         dtSiz.AddGrowableRow(gRow)
         pnl.SetSizer(dtSiz)
@@ -565,7 +563,7 @@ class NDVIPanel(wx.Panel):
 #        stSiz.Add(stationsLabel, pos=(gRow, 0), span=(1, 1), flag=wx.TOP|wx.LEFT|wx.BOTTOM|wx.EXPAND, border=5)
         
 #        gRow += 1
-        self.stationsList = ndviStationsList(pnl, id = ID_STATIONS_LIST, style = wx.LC_REPORT)
+        self.stationsList = ndviStationsList(pnl, -1, style = wx.LC_REPORT)
         stSiz.Add(self.stationsList, pos=(gRow, 0), span=(1, 1), flag=wx.EXPAND, border=0)
         stSiz.AddGrowableRow(gRow)
         pnl.SetSizer(stSiz)
@@ -776,9 +774,13 @@ class NDVIPanel(wx.Panel):
 #        print 'self.cbxTasks selected, choice: "', self.cbxTasks.GetValue(), '"'
         iCmd = self.cbxTasks.GetSelection()
         if iCmd == 0: # make this dataset
+            boolMakingDataset = True
             self.createDataSet()
+            boolMakingDataset = False
         if iCmd == 1: # duplicate the current panel
+            boolMakingDataset = True
             self.replicateCurrentPanel()
+            boolMakingDataset = False
 
 
     def replicateCurrentPanel(self):
@@ -2316,6 +2318,8 @@ class NDVIFrame(wx.Frame):
         self.cbxIRRefSeriesID = framePanel.cbxIRRefSeriesID
 
     def onMouseMotion( self, event ):
+        if boolMakingDataset:
+            return
         index, flags = self.DtList.HitTest(event.GetPosition())
         if index == wx.NOT_FOUND:
             self.pvLabel.SetLabel('Select Ref station, IR series, then float over dates to preview')
