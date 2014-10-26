@@ -1464,7 +1464,7 @@ class NDVIPanel(wx.Panel):
 
                 if self.calcDict['CreateSummaries'] == 1:
                     if self.calcDict['OutputFormat'] == 1: # Excel output format
-                        if iSSRow > iFirstRowInBlock:
+                        if iSSRow >= iFirstRowInBlock:
                             iLastRowInBlock = iSSRow
                             shXLSummary.Cells(iSSummaryRow,1).Value = dDt
                             params = (shXL.Name, iFirstRowInBlock, iLastRowInBlock)
