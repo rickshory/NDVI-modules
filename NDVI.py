@@ -9,6 +9,10 @@ from wx.lib.wordwrap import wordwrap
 try:
     import win32com.client
     hasCom = True
+    from win32com.client import constants as XLconst # does not seem to work
+    #explicit:
+    xlXYScatter = -4169
+    
 except ImportError:
     hasCom = False
 
@@ -1548,7 +1552,15 @@ class NDVIPanel(wx.Panel):
                 if iSSummaryRow >= 1: #insert chart
 #                    shXLSummary.Activate()
 #                    chart = oXL.Charts.Add() # adds as a separate chart sheet
+#                    chart = shXLSummary.Shapes.AddChart() # works, but cannot use object 'chart'
                     chart = shXLSummary.Shapes.AddChart().Select()
+                    #print 'XLconst.xlXYScatter', XLconst.xlXYScatter # does not work
+                    print 'xlXYScatter', xlXYScatter
+#                    chart.ChartType = xlXYScatter # does not work
+                    oXL.ActiveChart.ChartType = xlXYScatter # no lines makes it easier to see what's going on with error bars
+                    stRange = 'A1:A{nR},F1:F{nR}'.format(nR=iSSummaryRow-1)
+                    oXL.ActiveChart.SetSourceData(Source=shXLSummary.Range(stRange))
+                    # .Range("A1:A" & lngSummaryRw & ",F1:F" & lngSummaryRw & ""), PlotBy:=xlColumns
 
                     
                 if self.calcDict['OutputSAS'] == 1:
