@@ -13,7 +13,20 @@ try:
     #explicit:
     # Excel constants, used in generating and formatting charts
     xlXYScatter = -4169
+    xlXYScatterLinesNoMarkers = 75
     xlColumns = 2
+    xlCategory = 1
+    xlPrimary = 1
+    xlValue = 2
+    xlAutomatic = -4105
+    xlLocationAsNewSheet = 1
+    xlLocationAsObject = 2
+    xlLinear = -4132
+    xlNone = -4142
+    xlCustom = -4114
+    xlContext = -5002
+    xlDownward = -4170
+    xlUpward = -4171
     # constants for error bars for Excel charts
     xlX = -4168
     xlY = 1
@@ -1570,13 +1583,7 @@ class NDVIPanel(wx.Panel):
                     stRange = 'A1:A{nR},F1:F{nR}'.format(nR=iSSummaryRow-1)
                     oXL.ActiveChart.SetSourceData(Source=shXLSummary.Range(stRange), PlotBy=xlColumns)
                     stErrBarAmt = "='{nM}'!R2C7:R{nR}C7".format(nM=shXLSummary.Name, nR=iSSummaryRow-1)
-                    eB = oXL.ActiveChart.SeriesCollection(1).ErrorBar
-                    print dir(eB)
-                    eB.Direction=xlY
-                    eB.Include=xlBoth
-                    eB.Type=xlCustom
-                    eB.Amount = stErrBarAmt
-                    eB.MinusValues = stErrBarAmt
+                    oXL.ActiveChart.SeriesCollection(1).ErrorBar(Direction=xlY, Include=xlBoth, Type=xlCustom, Amount=stErrBarAmt, MinusValues=stErrBarAmt)
                     #        :="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7"
                     #      XL.ActiveChart.SeriesCollection(1).ErrorBar Direction:=xlY, Include:=xlBoth, _
                     #        Type:=xlCustom, Amount:="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7", MinusValues _
