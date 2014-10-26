@@ -299,7 +299,7 @@ class NDVIPanel(wx.Panel):
 
         gRow += 1
         self.ckNormalize = wx.CheckBox(pnl,
-            label="Normalize NDVI into range 0-to-1, i.e. view only relative changes")
+            label="Normalize NDVI into range 0-to-1, i.e. to view relative change")
         stpSiz.Add(self.ckNormalize, pos=(gRow, 0), span=(1, 4),
             flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
         self.ckNormalize.SetValue(False)
@@ -1575,6 +1575,38 @@ class NDVIPanel(wx.Panel):
                     fOutSummary.close()
                 if self.calcDict['OutputSAS'] == 1:
                     fOutSAS.close()
+                if self.calcDict['Normalize'] == 1: # re-open files to add/edit
+                    if self.calcDict['CreateSummaries'] == 1:
+                        lSummary = [] # list-of-lists to edit and write back
+                        lNDVI = [] # list of the NDVI values, to extract min/max
+                        with open(stFilePathSummary, 'rb') as fInSummary:
+                            rrSummary = csv.reader(fInSummary, delimiter=cDl, quotechar='"')
+                            for lRow in rrSummary:
+                                if len(lSummary) == 0: # the header row
+                                    lRow.extend(['minNDVI','','maxNDVI','','relative NDVI'])
+                                else:
+                                    try: # if no data for this date, there is no item 5
+                                        lNDVI.append(float(lRow[5]))
+                                    except:
+                                        pass
+                                lSummary.append(lRow)
+                        fNDVImin = min(lNDVI)
+                        fNDVImax = max(lNDVI)
+                        fNDVIRange = fNDVImax - fNDVImin
+                        if fNDVIRange != 0:
+                            with open(stFilePathSummary, 'wb') as fOutSummary:
+                                wrSummary = csv.writer(fOutSummary, delimiter=cDl, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                                for lRow in lSummary:
+                                    if lRow[0] == 'Date': # the header row
+                                        lRow[8] = fNDVImin
+                                        lRow[10] = fNDVImax
+                                    else:
+                                        try: # if no data for this date, there is no item 5
+                                            fNDVIrel = (float(lRow[5])-fNDVImin)/fNDVIRange
+                                            lRow.extend(['','','','',fNDVIrel])
+                                        except:
+                                            pass
+                                    wrSummary.writerow(lRow)
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
