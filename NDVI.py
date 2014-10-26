@@ -1545,7 +1545,12 @@ class NDVIPanel(wx.Panel):
                             shXLSummary.Cells(nR,12).Formula = '=if(D{n}<=1,"",(F{n}-I1)/(K1-I1))'.format(n=nR)
                     shXLSummary.Columns.AutoFit()
                     wx.Yield()
-                    # if iSSummaryRow > 1: insert chart
+                if iSSummaryRow >= 1: #insert chart
+#                    shXLSummary.Activate()
+#                    chart = oXL.Charts.Add() # adds as a separate chart sheet
+                    chart = shXLSummary.Shapes.AddChart().Select()
+
+                    
                 if self.calcDict['OutputSAS'] == 1:
                     boolNewBlankSASSheet = False # flag to create a new one for the next Station
                     if self.calcDict['Normalize'] == 1 and iSASRow > 3:
