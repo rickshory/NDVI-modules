@@ -1607,6 +1607,33 @@ class NDVIPanel(wx.Panel):
                                         except:
                                             pass
                                     wrSummary.writerow(lRow)
+                # still normalizing
+                if self.calcDict['OutputSAS'] == 1:
+                    lSAS = [] # list-of-lists to edit and write back
+                    lNDVI = [] # list of the NDVI values, to extract min/max
+                    with open(stFilePathSAS, 'rb') as fInSAS:
+                        rrSAS = csv.reader(fInSAS, delimiter=cDl, quotechar='"')
+                        for lRow in rrSAS:
+                            if len(lSAS) > 0: # beyond the header row
+                                if self.calcDict['CreateSummaries'] != 1:
+                                    # if no summary, collect these values
+                                    lNDVI.append(float(lRow[2]))
+                            lSAS.append(lRow)
+                    if self.calcDict['CreateSummaries'] != 1:
+                        # if summary, use the values we already had, otherwise calculate from SAS
+                        fNDVImin = min(lNDVI)
+                        fNDVImax = max(lNDVI)
+                        fNDVIRange = fNDVImax - fNDVImin
+                    if fNDVIRange != 0:
+                        with open(stFilePathSAS, 'wb') as fOutSAS:
+                            wrSAS = csv.writer(fOutSAS, delimiter=cDl, quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                            for lRow in lSAS:
+                                if lRow[0] == 'Date': # the header row
+                                    pass
+                                else: # adjust the value
+                                    fNDVIrel = (float(lRow[2])-fNDVImin)/fNDVIRange
+                                    lRow[2] = fNDVIrel
+                                wrSAS.writerow(lRow)
 
         # insert metadata: 'Metadata for this job', starting timestamp, elapsed time, source DB
         # calcDict, including drilldown into logger and sensor information
