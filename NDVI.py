@@ -11,7 +11,16 @@ try:
     hasCom = True
     from win32com.client import constants as XLconst # does not seem to work
     #explicit:
+    # Excel constants, used in generating and formatting charts
     xlXYScatter = -4169
+    xlColumns = 2
+    # constants for error bars for Excel charts
+    xlX = -4168
+    xlY = 1
+    xlBoth = 1
+    xlPlusValues = 2
+    xlMinusValues = 3
+    xlErrorBarIncludeBoth = 1
     
 except ImportError:
     hasCom = False
@@ -1555,12 +1564,23 @@ class NDVIPanel(wx.Panel):
 #                    chart = shXLSummary.Shapes.AddChart() # works, but cannot use object 'chart'
                     chart = shXLSummary.Shapes.AddChart().Select()
                     #print 'XLconst.xlXYScatter', XLconst.xlXYScatter # does not work
-                    print 'xlXYScatter', xlXYScatter
+#                    print 'xlXYScatter', xlXYScatter
 #                    chart.ChartType = xlXYScatter # does not work
                     oXL.ActiveChart.ChartType = xlXYScatter # no lines makes it easier to see what's going on with error bars
                     stRange = 'A1:A{nR},F1:F{nR}'.format(nR=iSSummaryRow-1)
-                    oXL.ActiveChart.SetSourceData(Source=shXLSummary.Range(stRange))
-                    # .Range("A1:A" & lngSummaryRw & ",F1:F" & lngSummaryRw & ""), PlotBy:=xlColumns
+                    oXL.ActiveChart.SetSourceData(Source=shXLSummary.Range(stRange), PlotBy=xlColumns)
+                    stErrBarAmt = "='{nM}'!R2C7:R{nR}C7".format(nM=shXLSummary.Name, nR=iSSummaryRow-1)
+                    eB = oXL.ActiveChart.SeriesCollection(1).ErrorBar
+                    print dir(eB)
+                    eB.Direction=xlY
+                    eB.Include=xlBoth
+                    eB.Type=xlCustom
+                    eB.Amount = stErrBarAmt
+                    eB.MinusValues = stErrBarAmt
+                    #        :="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7"
+                    #      XL.ActiveChart.SeriesCollection(1).ErrorBar Direction:=xlY, Include:=xlBoth, _
+                    #        Type:=xlCustom, Amount:="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7", MinusValues _
+                    #        :="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7"
 
                     
                 if self.calcDict['OutputSAS'] == 1:
