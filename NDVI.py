@@ -1447,7 +1447,9 @@ class NDVIPanel(wx.Panel):
                         if self.calcDict['OutputSAS'] == 1:
                             shXL_SAS.Cells(iSASRow,1).Value = dDt
                             shXL_SAS.Cells(iSASRow,2).Value = dDt.strftime('%j')
-                            shXL_SAS.Cells(iSASRow,3).Value = shXL.Cells(iSSRow,10).Value
+                            wx.Yield()
+                            shXL.Cells(iSSRow,10).Copy()
+                            shXL_SAS.Cells(iSASRow,3).PasteSpecial(Paste=-4163)
                             iSASRow += 1
                         iSSRow += 1
 
