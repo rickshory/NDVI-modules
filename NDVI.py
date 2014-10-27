@@ -1573,19 +1573,25 @@ class NDVIPanel(wx.Panel):
                             shXLSummary.Cells(nR,12).Formula = '=if(D{n}<=1,"",(F{n}-I1)/(K1-I1))'.format(n=nR)
                     shXLSummary.Columns.AutoFit()
                     wx.Yield()
-                if iSSummaryRow >= 1: #insert chart
-#                    shXLSummary.Activate()
-#                    chart = oXL.Charts.Add() # adds as a separate chart sheet
-#                    chart = shXLSummary.Shapes.AddChart() # works, but cannot use object 'chart'
-                    chart = shXLSummary.Shapes.AddChart().Select()
-                    #print 'XLconst.xlXYScatter', XLconst.xlXYScatter # does not work
-#                    print 'xlXYScatter', xlXYScatter
-#                    chart.ChartType = xlXYScatter # does not work
-                    oXL.ActiveChart.ChartType = xlXYScatter # no lines makes it easier to see what's going on with error bars
-                    stRange = 'A1:A{nR},F1:F{nR}'.format(nR=iSSummaryRow-1)
-                    oXL.ActiveChart.SetSourceData(Source=shXLSummary.Range(stRange), PlotBy=xlColumns)
-                    stErrBarAmt = "='{nM}'!R2C7:R{nR}C7".format(nM=shXLSummary.Name, nR=iSSummaryRow-1)
-                    oXL.ActiveChart.SeriesCollection(1).ErrorBar(Direction=xlY, Include=xlBoth, Type=xlCustom, Amount=stErrBarAmt, MinusValues=stErrBarAmt)
+                    if (iSSummaryRow-1) > 1: #insert chart in Summary sheet
+    #                    shXLSummary.Activate()
+    #                    chart = oXL.Charts.Add() # adds as a separate chart sheet
+    #                    chart = shXLSummary.Shapes.AddChart() # works, but cannot use object 'chart'
+                        chart = shXLSummary.Shapes.AddChart().Select()
+                        #print 'XLconst.xlXYScatter', XLconst.xlXYScatter # does not work
+    #                    print 'xlXYScatter', xlXYScatter
+    #                    chart.ChartType = xlXYScatter # does not work
+                        oXL.ActiveChart.ChartType = xlXYScatter # no lines makes it easier to see what's going on with error bars
+                        stRange = 'A1:A{nR},F1:F{nR}'.format(nR=iSSummaryRow-1)
+                        oXL.ActiveChart.SetSourceData(Source=shXLSummary.Range(stRange), PlotBy=xlColumns)
+                        stErrBarAmt = "='{nM}'!R2C7:R{nR}C7".format(nM=shXLSummary.Name, nR=iSSummaryRow-1)
+                        oXL.ActiveChart.SeriesCollection(1).ErrorBar(Direction=xlY, Include=xlBoth, Type=xlCustom, Amount=stErrBarAmt, MinusValues=stErrBarAmt)
+                else: # insert chart in main sheet
+                    if (iSSRow-1) > 2:
+                        chart = shXL.Shapes.AddChart().Select()
+                        oXL.ActiveChart.ChartType = xlXYScatter
+                        stRange = 'A1:A{nR},J1:J{nR}'.format(nR=iSSRow-1)
+                        oXL.ActiveChart.SetSourceData(Source=shXL.Range(stRange), PlotBy=xlColumns)
                     
                 if self.calcDict['OutputSAS'] == 1:
                     boolNewBlankSASSheet = False # flag to create a new one for the next Station
