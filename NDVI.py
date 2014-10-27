@@ -1496,7 +1496,7 @@ class NDVIPanel(wx.Panel):
                 # finished this date's discreet records
                 if self.calcDict['CreateSummaries'] == 1:
                     if self.calcDict['OutputFormat'] == 1: # Excel output format
-                        if (iSSRow - 1) > iFirstRowInBlock: # if not, no records for this date
+                        if (iSSRow - 1) >= iFirstRowInBlock: # if not, no records for this date
                             iLastRowInBlock = iSSRow - 1
                             shXLSummary.Cells(iSSummaryRow,1).Value = dDt
                             params = (shXL.Name, iFirstRowInBlock, iLastRowInBlock)
