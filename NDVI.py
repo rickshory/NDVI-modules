@@ -1486,23 +1486,25 @@ class NDVIPanel(wx.Panel):
                             lColHeads = [Nm for Nm in rec.keys()]
                             wr.writerow(lColHeads)
                             isNewTextFile = 0
-                            if self.calcDict['OutputSAS'] == 1:
+                            if self.calcDict['CreateSummaries'] == 1:
                                 isNewSummaryFile = 1 # flag for later
+                            if self.calcDict['OutputSAS'] == 1:
                                 isNewSASFile = 1
                         lRow = [rec[colHd] for colHd in lColHeads]
                         wr.writerow(lRow)
 
+                # finished this date's discreet records
                 if self.calcDict['CreateSummaries'] == 1:
                     if self.calcDict['OutputFormat'] == 1: # Excel output format
-                        if iSSRow >= iFirstRowInBlock:
-                            iLastRowInBlock = iSSRow
+                        if (iSSRow - 1) > iFirstRowInBlock: # if not, no records for this date
+                            iLastRowInBlock = iSSRow - 1
                             shXLSummary.Cells(iSSummaryRow,1).Value = dDt
                             params = (shXL.Name, iFirstRowInBlock, iLastRowInBlock)
                             shXLSummary.Cells(iSSummaryRow,2).Formula = "=AVERAGE('%s'!J%i:J%i)" % params
                             shXLSummary.Cells(iSSummaryRow,3).Formula = "=STDEV.S('%s'!J%i:J%i)" % params
                             shXLSummary.Cells(iSSummaryRow,4).Formula = "=COUNT('%s'!J%i:J%i)" % params
                             shXLSummary.Cells(iSSummaryRow,5).Formula = '=IF(D%i<=1,"N0","YES")' % (iSSummaryRow,)
-                            shXLSummary.Cells(iSSummaryRow,6).Formula = '=IF(D{n}<=1,"",B{n})'.format(n=iSSummaryRow)
+                            shXLSummary.Cells(iSSummaryRow,6).Formula = '=IF(D{n}<=1,#N/A,B{n})'.format(n=iSSummaryRow)
                             shXLSummary.Cells(iSSummaryRow,7).Formula = '=IF(D{n}<=1,"",C{n}/SQRT(D{n}%))'.format(n=iSSummaryRow)
                             iSSummaryRow += 1
                             iFirstRowInBlock = iLastRowInBlock + 1
@@ -1584,11 +1586,6 @@ class NDVIPanel(wx.Panel):
                     oXL.ActiveChart.SetSourceData(Source=shXLSummary.Range(stRange), PlotBy=xlColumns)
                     stErrBarAmt = "='{nM}'!R2C7:R{nR}C7".format(nM=shXLSummary.Name, nR=iSSummaryRow-1)
                     oXL.ActiveChart.SeriesCollection(1).ErrorBar(Direction=xlY, Include=xlBoth, Type=xlCustom, Amount=stErrBarAmt, MinusValues=stErrBarAmt)
-                    #        :="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7"
-                    #      XL.ActiveChart.SeriesCollection(1).ErrorBar Direction:=xlY, Include:=xlBoth, _
-                    #        Type:=xlCustom, Amount:="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7", MinusValues _
-                    #        :="='" & stSummaryShtNm & "'!R2C7:R" & lngSummaryRw & "C7"
-
                     
                 if self.calcDict['OutputSAS'] == 1:
                     boolNewBlankSASSheet = False # flag to create a new one for the next Station
