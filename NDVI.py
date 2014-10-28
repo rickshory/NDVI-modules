@@ -1576,7 +1576,8 @@ class NDVIPanel(wx.Panel):
                         shXLSummary.Cells(1,11).Formula = '=MAX(F2:F%i)' % (iSSummaryRow-1,)
                         shXLSummary.Cells(1,12).Value = 'relative NDVI'
                         for nR in range(2, iSSummaryRow): # enter the normalization formulas
-                            shXLSummary.Cells(nR,12).Formula = '=if(D{n}<=1,"",(F{n}-I1)/(K1-I1))'.format(n=nR)
+                            if scidb.is_number(shXLSummary.Cells(nR,6).Value):
+                                shXLSummary.Cells(nR,12).Formula = '=(F{n}-I1)/(K1-I1)'.format(n=nR)
                     shXLSummary.Columns.AutoFit()
                     wx.Yield()
                     if (iSSummaryRow-1) > 1: #insert chart in Summary sheet
