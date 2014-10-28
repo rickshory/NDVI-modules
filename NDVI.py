@@ -1597,6 +1597,18 @@ class NDVIPanel(wx.Panel):
                         # use SEM as error bars for both; not rigorous for normalized, but gives a visual idea how "good" the value is
                         stErrBarAmt = "='{nM}'!R2C7:R{nR}C7".format(nM=shXLSummary.Name, nR=iSSummaryRow-1)
                         oXL.ActiveChart.SeriesCollection(1).ErrorBar(Direction=xlY, Include=xlBoth, Type=xlCustom, Amount=stErrBarAmt, MinusValues=stErrBarAmt)
+                        oXL.ActiveChart.PlotArea.ClearFormats() # no background, better for sci pubs
+                        oXL.ActiveChart.HasTitle = True
+                        oXL.ActiveChart.ChartTitle.Font.Size = 10
+                        oXL.ActiveChart.Axes(xlValue).TickLabels.Font.Size = 10
+                        oXL.ActiveChart.Axes(xlCategory).TickLabels.Font.Size = 10
+                        oXL.ActiveChart.Axes(xlCategory, xlPrimary).HasTitle = False
+                        oXL.ActiveChart.Axes(xlValue, xlPrimary).HasTitle = False
+                        oXL.ActiveChart.Axes(xlCategory).TickLabels.ReadingOrder = xlContext
+                        oXL.ActiveChart.Axes(xlCategory).TickLabels.Orientation = xlDownward
+                        oXL.ActiveChart.Legend.Font.Size = 10 # in case you want the legend
+                        oXL.ActiveChart.HasLegend = False
+
                 else: # insert chart in main sheet
                     if (iSSRow-1) > 2:
                         chart = shXL.Shapes.AddChart().Select()
