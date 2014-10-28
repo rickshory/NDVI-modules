@@ -1494,11 +1494,17 @@ class NDVIPanel(wx.Panel):
                         lRow = [rec[colHd] for colHd in lColHeads]
                         wr.writerow(lRow)
 
+                if len(recs) > 0: # if there were any records for this date
+                    if self.calcDict['OutputFormat'] == 1: # Excel output format
+                        iSSRow += 1 # blank row, so charts will break the line between dates
+                    if self.calcDict['OutputFormat'] in (2, 3):
+                        wr.writerow([]) # blank row between dates
+
                 # finished this date's discreet records
                 if self.calcDict['CreateSummaries'] == 1:
                     if self.calcDict['OutputFormat'] == 1: # Excel output format
-                        if (iSSRow - 1) >= iFirstRowInBlock: # if not, no records for this date
-                            iLastRowInBlock = iSSRow - 1
+                        if len(recs) > 0: # any records for this date?
+                            iLastRowInBlock = iSSRow - 2 # skip back over blank row
                             shXLSummary.Cells(iSSummaryRow,1).Value = dDt
                             params = (shXL.Name, iFirstRowInBlock, iLastRowInBlock)
                             shXLSummary.Cells(iSSummaryRow,2).Formula = "=AVERAGE('%s'!J%i:J%i)" % params
@@ -1513,7 +1519,7 @@ class NDVIPanel(wx.Panel):
                             if shXLSummary.Cells(iSSummaryRow,6).Value == "":
                                 shXLSummary.Cells(iSSummaryRow,6).ClearContents()
                             iSSummaryRow += 1
-                            iFirstRowInBlock = iLastRowInBlock + 1
+                            iFirstRowInBlock = iLastRowInBlock + 2 # skip up over blank row
                         
                     if self.calcDict['OutputFormat'] in (2, 3):
                         stSQL = """SELECT '{dT}' AS "Date",
