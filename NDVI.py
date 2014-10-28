@@ -11,6 +11,7 @@ try:
     hasCom = True
     from win32com.client import constants as XLconst # does not seem to work
     #explicit:
+    xlPasteValues = -4163
     # Excel constants, used in generating and formatting charts
     xlXYScatter = -4169
     xlXYScatterLinesNoMarkers = 75
@@ -1477,7 +1478,7 @@ class NDVIPanel(wx.Panel):
                             wx.Yield()
                             # use Excel copy/paste to assure we get the correct values
                             shXL.Cells(iSSRow,10).Copy()
-                            shXL_SAS.Cells(iSASRow,3).PasteSpecial(Paste=-4163)
+                            shXL_SAS.Cells(iSASRow,3).PasteSpecial(Paste=xlPasteValues)
                             iSASRow += 1
                         iSSRow += 1
 
@@ -1504,8 +1505,13 @@ class NDVIPanel(wx.Panel):
                             shXLSummary.Cells(iSSummaryRow,3).Formula = "=STDEV.S('%s'!J%i:J%i)" % params
                             shXLSummary.Cells(iSSummaryRow,4).Formula = "=COUNT('%s'!J%i:J%i)" % params
                             shXLSummary.Cells(iSSummaryRow,5).Formula = '=IF(D%i<=1,"N0","YES")' % (iSSummaryRow,)
-                            shXLSummary.Cells(iSSummaryRow,6).Formula = '=IF(D{n}<=1,#N/A,B{n})'.format(n=iSSummaryRow)
+                            shXLSummary.Cells(iSSummaryRow,6).Formula = '=IF(D{n}<=1,"",B{n})'.format(n=iSSummaryRow)
                             shXLSummary.Cells(iSSummaryRow,7).Formula = '=IF(D{n}<=1,"",C{n}/SQRT(D{n}%))'.format(n=iSSummaryRow)
+                            # workaround to get rid of "", which is interpreted as zero, in blank cell
+                            shXLSummary.Cells(iSSummaryRow,6).Copy()
+                            shXLSummary.Cells(iSSummaryRow,6).PasteSpecial(Paste = xlPasteValues)
+                            if shXLSummary.Cells(iSSummaryRow,6).Value == "":
+                                shXLSummary.Cells(iSSummaryRow,6).ClearContents()
                             iSSummaryRow += 1
                             iFirstRowInBlock = iLastRowInBlock + 1
                         
