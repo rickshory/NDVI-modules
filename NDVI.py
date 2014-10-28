@@ -1586,7 +1586,10 @@ class NDVIPanel(wx.Panel):
                                 shXLSummary.Cells(nR,12).Formula = '=(F{n}-I1)/(K1-I1)'.format(n=nR)
                     shXLSummary.Columns.AutoFit()
                     wx.Yield()
-                    if (iSSummaryRow-1) > 1: #insert chart in Summary sheet
+                    if (iSSummaryRow-1) <= 1:
+                        boolHasChart = False
+                    else: #insert chart in Summary sheet
+                        boolHasChart = True
                         chart = shXLSummary.Shapes.AddChart().Select()
                         oXL.ActiveChart.ChartType = xlXYScatter # no lines makes it easier to see what's going on with error bars
                         if self.calcDict['Normalize'] == 1: # use the normalized NDVI column
@@ -1597,25 +1600,36 @@ class NDVIPanel(wx.Panel):
                         # use SEM as error bars for both; not rigorous for normalized, but gives a visual idea how "good" the value is
                         stErrBarAmt = "='{nM}'!R2C7:R{nR}C7".format(nM=shXLSummary.Name, nR=iSSummaryRow-1)
                         oXL.ActiveChart.SeriesCollection(1).ErrorBar(Direction=xlY, Include=xlBoth, Type=xlCustom, Amount=stErrBarAmt, MinusValues=stErrBarAmt)
-                        oXL.ActiveChart.PlotArea.ClearFormats() # no background, better for sci pubs
-                        oXL.ActiveChart.HasTitle = True
-                        oXL.ActiveChart.ChartTitle.Font.Size = 10
-                        oXL.ActiveChart.Axes(xlValue).TickLabels.Font.Size = 10
-                        oXL.ActiveChart.Axes(xlCategory).TickLabels.Font.Size = 10
-                        oXL.ActiveChart.Axes(xlCategory, xlPrimary).HasTitle = False
-                        oXL.ActiveChart.Axes(xlValue, xlPrimary).HasTitle = False
-                        oXL.ActiveChart.Axes(xlCategory).TickLabels.ReadingOrder = xlContext
-                        oXL.ActiveChart.Axes(xlCategory).TickLabels.Orientation = xlDownward
-                        oXL.ActiveChart.Legend.Font.Size = 10 # in case you want the legend
-                        oXL.ActiveChart.HasLegend = False
 
                 else: # insert chart in main sheet
-                    if (iSSRow-1) > 2:
-                        chart = shXL.Shapes.AddChart().Select()
-                        oXL.ActiveChart.ChartType = xlXYScatterLinesNoMarkers
-                        stRange = 'A1:A{nR},J1:J{nR}'.format(nR=iSSRow-1)
-                        oXL.ActiveChart.SetSourceData(Source=shXL.Range(stRange), PlotBy=xlColumns)
-                    
+                    if (iSSRow-1) <= 2:
+                        boolHasChart = False
+                    else:
+                        if self.calcDict['OutputSAS'] == 1: # chart does not work correctly
+                            #figure out how change focus to main window, to reference chart from there
+    #                        if self.calcDict['OutputSAS'] == 1: # we are in the wrong window and chart formatting will fail
+    #                            oXL.Windows(shXL.Name).Activate() # does not work
+                            boolHasChart = False
+                        else:
+                            boolHasChart = True
+                            chart = shXL.Shapes.AddChart().Select()
+                            oXL.ActiveChart.ChartType = xlXYScatterLinesNoMarkers
+                            stRange = 'A1:A{nR},J1:J{nR}'.format(nR=iSSRow-1)
+                            oXL.ActiveChart.SetSourceData(Source=shXL.Range(stRange), PlotBy=xlColumns)
+
+                if boolHasChart: # format the chart
+                    oXL.ActiveChart.PlotArea.ClearFormats() # no background, better for sci pubs
+                    oXL.ActiveChart.HasTitle = True
+                    oXL.ActiveChart.ChartTitle.Font.Size = 10
+                    oXL.ActiveChart.Axes(xlValue).TickLabels.Font.Size = 10
+                    oXL.ActiveChart.Axes(xlCategory).TickLabels.Font.Size = 10
+                    oXL.ActiveChart.Axes(xlCategory, xlPrimary).HasTitle = False
+                    oXL.ActiveChart.Axes(xlValue, xlPrimary).HasTitle = False
+                    oXL.ActiveChart.Axes(xlCategory).TickLabels.ReadingOrder = xlContext
+                    oXL.ActiveChart.Axes(xlCategory).TickLabels.Orientation = xlDownward
+                    oXL.ActiveChart.Legend.Font.Size = 10 # in case you want the legend
+                    oXL.ActiveChart.HasLegend = False
+
                 if self.calcDict['OutputSAS'] == 1:
                     boolNewBlankSASSheet = False # flag to create a new one for the next Station
                     if self.calcDict['Normalize'] == 1 and iSASRow > 3:
