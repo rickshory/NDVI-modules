@@ -1515,6 +1515,7 @@ class NDVIPanel(wx.Panel):
                             shXLSummary.Cells(iSSummaryRow,7).Formula = '=IF(D{n}<=1,"",C{n}/SQRT(D{n}%))'.format(n=iSSummaryRow)
                             # workaround to get rid of "", which is interpreted as zero, in blank cell
                             shXLSummary.Cells(iSSummaryRow,6).Copy()
+                            # use Excel copy/paste to assure we get the correct value
                             shXLSummary.Cells(iSSummaryRow,6).PasteSpecial(Paste = xlPasteValues)
                             if shXLSummary.Cells(iSSummaryRow,6).Value == "":
                                 shXLSummary.Cells(iSSummaryRow,6).ClearContents()
@@ -1590,7 +1591,10 @@ class NDVIPanel(wx.Panel):
                         boolHasChart = False
                     else: #insert chart in Summary sheet
                         boolHasChart = True
-                        chart = shXLSummary.Shapes.AddChart().Select()
+                        # make sure we are in the correct window or the chart could be attached to e.g. the SAS workbook
+                        oXL.Windows(bXL.Name).Activate()
+                        oXL.Charts.Add()
+                        oXL.ActiveChart.Location(Where=xlLocationAsObject, Name=shXLSummary.Name)
                         oXL.ActiveChart.ChartType = xlXYScatter # no lines makes it easier to see what's going on with error bars
                         if self.calcDict['Normalize'] == 1: # use the normalized NDVI column
                             stRange = 'A1:A{nR},L1:L{nR}'.format(nR=iSSummaryRow-1)
@@ -1605,17 +1609,14 @@ class NDVIPanel(wx.Panel):
                     if (iSSRow-1) <= 2:
                         boolHasChart = False
                     else:
-                        if self.calcDict['OutputSAS'] == 1: # chart does not work correctly
-                            #figure out how change focus to main window, to reference chart from there
-    #                        if self.calcDict['OutputSAS'] == 1: # we are in the wrong window and chart formatting will fail
-    #                            oXL.Windows(shXL.Name).Activate() # does not work
-                            boolHasChart = False
-                        else:
-                            boolHasChart = True
-                            chart = shXL.Shapes.AddChart().Select()
-                            oXL.ActiveChart.ChartType = xlXYScatterLinesNoMarkers
-                            stRange = 'A1:A{nR},J1:J{nR}'.format(nR=iSSRow-1)
-                            oXL.ActiveChart.SetSourceData(Source=shXL.Range(stRange), PlotBy=xlColumns)
+                        boolHasChart = True
+                        # make sure we are in the correct window or the chart could be attached to e.g. the SAS workbook
+                        oXL.Windows(bXL.Name).Activate()
+                        oXL.Charts.Add()
+                        oXL.ActiveChart.Location(Where=xlLocationAsObject, Name=shXL.Name)
+                        oXL.ActiveChart.ChartType = xlXYScatterLinesNoMarkers
+                        stRange = 'A1:A{nR},J1:J{nR}'.format(nR=iSSRow-1)
+                        oXL.ActiveChart.SetSourceData(Source=shXL.Range(stRange), PlotBy=xlColumns)
 
                 if boolHasChart: # format the chart
                     oXL.ActiveChart.PlotArea.ClearFormats() # no background, better for sci pubs
