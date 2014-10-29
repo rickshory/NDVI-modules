@@ -6,6 +6,9 @@ import wx.lib.scrolledpanel as scrolled, wx.grid
 from wx.lib.wordwrap import wordwrap
 
 ID_CBX_SEL_SITE = wx.NewId()
+ID_ADD_END_TIMESTAMP = wx.NewId()
+
+popMenuItems = {ID_ADD_END_TIMESTAMP:'Add ending timestamp'}
 
 class Dialog_StationDetails(wx.Dialog):
     def __init__(self, parent, id, title = "Station", actionCode = None):
