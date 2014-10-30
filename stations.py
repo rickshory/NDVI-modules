@@ -6,9 +6,13 @@ import wx.lib.scrolledpanel as scrolled, wx.grid
 from wx.lib.wordwrap import wordwrap
 
 ID_CBX_SEL_SITE = wx.NewId()
-ID_ADD_END_TIMESTAMP = wx.NewId()
+#ID_ADD_END_TIMESTAMP = wx.NewId()
+#listPopMenuItems_byID = {ID_ADD_END_TIMESTAMP:'Add ending timestamp'}
 
-popMenuItems = {ID_ADD_END_TIMESTAMP:'Add ending timestamp'}
+listPopMenuItems = ['Add ending timestamp']
+listPopMenuItems_byID = {}
+for sItm in listPopMenuItems:
+    listPopMenuItems_byID[ wx.NewId() ] = sItm
 
 class Dialog_StationDetails(wx.Dialog):
     def __init__(self, parent, id, title = "Station", actionCode = None):
@@ -696,6 +700,9 @@ class SetupStationsPanel(wx.Panel):
 
         self.fillChannelSegmentsList()
 
+        # 1. Register source's EVT_s to invoke pop-up menu launcher
+        wx.EVT_LIST_ITEM_RIGHT_CLICK(self.lstChanSegs, -1, self.lstChanSegsRightClick)
+
         sizerChanSegs.Add(self.lstChanSegs, pos=(1, 0), span=(1, 2), flag=wx.EXPAND)
         sizerChanSegs.AddGrowableRow(1)
         sizerChanSegs.AddGrowableCol(1)
@@ -792,6 +799,30 @@ class SetupStationsPanel(wx.Panel):
 #    def onClick_BtnNotWorkingYet(self, event, strLabel):
 #        wx.MessageBox('"Hello" is not implemented yet', 'Info', 
 #            wx.OK | wx.ICON_INFORMATION)
+
+    def lstChanSegsRightClick(self, event):
+        # record what was clicked
+        self.list_item_clicked = right_click_context = event.GetText()
+
+        ### 2. Launcher creates wxMenu. ###
+        menu = wx.Menu()
+        for (id,title) in listPopMenuItems_byID.items():
+            ### 3. Launcher packs menu with Append. ###
+            menu.Append( id, title )
+            ### 4. Launcher registers menu handlers with EVT_MENU, on the menu. ###
+            wx.EVT_MENU( menu, id, self.MenuSelectionCb )
+
+        ### 5. Launcher displays menu with call to PopupMenu, invoked on the
+            #source component, passing event's GetPoint. ###
+        self.PopupMenu( menu, event.GetPoint() )
+        menu.Destroy() # destroy to avoid mem leak
+
+    def MenuSelectionCb( self, event ):
+        # do something according to what's picked in the popup
+        opID = event.GetId()
+        operation = listPopMenuItems_byID[opID]
+        print "operation:", operation
+
 
 class SetupStationsFrame(wx.Frame):
     def __init__(self, parent, id, title):
