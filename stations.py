@@ -18,7 +18,7 @@ class Dialog_EndTimestamp(wx.Dialog):
     def __init__(self, parent, id, title = "End Timestamp", actionCode = None):
         wx.Dialog.__init__(self, parent, id)
         self.InitUI(actionCode)
-        self.SetSize((350, 300))
+        self.SetSize((300, 200))
         if actionCode[0] == 'New':
             self.SetTitle("Add End Timestamp")
         if actionCode[0] == 'Edit':
@@ -863,7 +863,8 @@ class SetupStationsPanel(wx.Panel):
         LEFT JOIN Loggers ON DataChannels.LoggerID = Loggers.ID)
         LEFT JOIN Sensors ON DataChannels.SensorID = Sensors.ID)
         LEFT JOIN DataTypes ON DataChannels.DataTypeID = DataTypes.ID)
-        LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID;
+        LEFT JOIN DataUnits ON DataChannels.DataUnitsID = DataUnits.ID
+        ORDER BY Loggers.LoggerSerialNumber, DataChannels.Column, ChannelSegments.SegmentBegin;
         """
         scidb.curD.execute(stSQL)
         recs = scidb.curD.fetchall()
@@ -967,6 +968,8 @@ class SetupStationsPanel(wx.Panel):
             dia.Destroy()
             if result == 1: # new record successfully created
                 pass
+            self.fillChannelSegmentsList()
+
 
 class SetupStationsFrame(wx.Frame):
     def __init__(self, parent, id, title):
