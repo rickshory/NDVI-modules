@@ -14,6 +14,129 @@ listPopMenuItems_byID = {}
 for sItm in listPopMenuItems:
     listPopMenuItems_byID[ wx.NewId() ] = sItm
 
+class Dialog_EndTimestamp(wx.Dialog):
+    def __init__(self, parent, id, title = "End Timestamp", actionCode = None):
+        wx.Dialog.__init__(self, parent, id)
+        self.InitUI(actionCode)
+        self.SetSize((350, 300))
+        if actionCode[0] == 'New':
+            self.SetTitle("Add End Timestamp")
+        if actionCode[0] == 'Edit':
+            self.SetTitle("Edit End Timestamp")
+        if actionCode[0] == None:
+            self.SetTitle("Add or Edit End Timestamp") # overrides title passed above
+
+    def InitUI(self, actionCode):
+#        pnl = InfoPanel_EndTimestamp(self, wx.ID_ANY)
+        self.pnl = InfoPanel_EndTimestamp(self, actionCode)
+   
+    def OnClose(self, event):
+        self.Destroy()
+
+class InfoPanel_EndTimestamp(scrolled.ScrolledPanel):
+    def __init__(self, parent, actionCode):
+        scrolled.ScrolledPanel.__init__(self, parent, -1)
+#    def __init__(self, parent, id):
+#        wx.Panel.__init__(self, parent, id)
+        self.InitUI(actionCode)
+        
+    def InitUI(self, actionCode):
+        
+        print "Initializing EndTimestamp frame"
+        if actionCode[0] == 'Edit': # editing an existing record, only option so far
+            self.CSDict = scidb.dictFromTableID('ChannelSegments', actionCode[1])
+            print 'self.CSDict loaded from table:', self.CSDict
+            self.stEndTSLabel = 'Ending timestamp'
+
+        print "Initializing Panel_EndTimestamp ->>>>"
+
+        print "actionCode:", actionCode
+        self.LayoutPanel()
+        self.FillPanelFromDict()
+        
+
+    def LayoutPanel(self):
+        wordWrapWidth = 350
+        self.SetBackgroundColour(wx.WHITE) # this overrides color of enclosing panel
+        ETPnlSiz = wx.GridBagSizer(1, 1)
+
+        gRow = 0
+        ETPnlSiz.Add(wx.StaticText(self, -1, self.stEndTSLabel),
+            pos=(gRow, 0), span=(1, 3), flag=wx.ALIGN_LEFT|wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+ 
+#        gRow += 1
+#        ETPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), flag=wx.EXPAND)
+        
+        gRow += 1
+        self.tcEndTimestamp = wx.TextCtrl(self)
+        ETPnlSiz.Add(self.tcEndTimestamp, pos=(gRow, 0), span=(1, 3), 
+            flag=wx.EXPAND|wx.LEFT|wx.RIGHT, border=5)
+
+        gRow += 1
+
+        stAboutET = 'Enter or Edit the ending timestamp for this Channel Segment. ' \
+                'The system will automtatically ' \
+                'create a new Channel Segment beginning when this one ends.'
+        stWr = wordwrap(stAboutET, wordWrapWidth, wx.ClientDC(self))
+        ETPnlSiz.Add(wx.StaticText(self, -1, stWr),
+                     pos=(gRow, 0), span=(1, 3), flag=wx.TOP|wx.LEFT|wx.BOTTOM, border=5)
+
+        gRow += 1
+        ETPnlSiz.Add(wx.StaticLine(self), pos=(gRow, 0), span=(1, 3), 
+            flag=wx.EXPAND|wx.BOTTOM, border=1)
+
+
+        gRow += 1
+        self.btnSave = wx.Button(self, label="Save", size=(90, 28))
+        self.btnSave.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnSave(evt))
+        ETPnlSiz.Add(self.btnSave, pos=(gRow, 0), flag=wx.LEFT|wx.BOTTOM, border=5)
+        self.btnCancel = wx.Button(self, label="Cancel", size=(90, 28))
+        self.btnCancel.Bind(wx.EVT_BUTTON, lambda evt: self.onClick_BtnCancel(evt))
+        ETPnlSiz.Add(self.btnCancel, pos=(gRow, 1), flag=wx.LEFT|wx.BOTTOM, border=5)
+
+        self.SetSizer(ETPnlSiz)
+        self.SetAutoLayout(1)
+        self.SetupScrolling()
+
+
+    def FillPanelFromDict(self):
+        if self.CSDict['SegmentEnd'] != None:
+            self.tcEndTimestamp.SetValue(self.CSDict['SegmentEnd'])
+        
+    def FillDictFromPanel(self):
+        self.CSDict['SegmentEnd'] = scidb.getDateTimeFromTC(self.tcEndTimestamp)
+
+    def onClick_BtnSave(self, event):
+        """
+        If actionCode[0] = 'Edit', attempt to save any changes to the existing DB record
+        Only option so far
+        """
+        self.FillDictFromPanel() # get all values before testing
+        # verify
+        # ending timestamp is null in not valid, any more verification needed?
+        recID = scidb.dictIntoTable_InsertOrReplace('ChannelSegments', self.CSDict)
+        # if appropriate, create the new segment starting when this one ends
+        if self.CSDict['SegmentEnd'] != None:
+            self.CSDict['ID'] = None # force new record
+            #self.CSDict['ChannelID'] leave the same
+            self.CSDict['SegmentBegin'] = self.CSDict['SegmentEnd']
+            self.CSDict['SegmentEnd'] = None # null means 'up till now'
+            self.CSDict['StationID'] = None # don't assume the same, have user assign
+            self.CSDict['SeriesID'] = None
+        recID = scidb.dictIntoTable_InsertOrReplace('ChannelSegments', self.CSDict)
+            
+        parObject = self.GetParent()
+        if parObject.GetClassName() == "wxDialog":
+            parObject.EndModal(0)
+
+    def onClick_BtnCancel(self, event):
+        """
+        This frame is shown in a Dialog, which is its parent object.
+        """
+        parObject = self.GetParent()
+        if parObject.GetClassName() == "wxDialog":
+            parObject.EndModal(0)
+
 class Dialog_StationDetails(wx.Dialog):
     def __init__(self, parent, id, title = "Station", actionCode = None):
         wx.Dialog.__init__(self, parent, id)
@@ -822,7 +945,28 @@ class SetupStationsPanel(wx.Panel):
         opID = event.GetId()
         operation = listPopMenuItems_byID[opID]
         print "operation:", operation
+        if operation == 'Add ending timestamp': # only one so far
+            print 'list_item_clicked', self.list_item_clicked
+            csItem = self.lstChanSegs.GetFocusedItem()
+            if csItem == -1:
+                wx.MessageBox('Right-click failed to get an item', 'No Selection',
+                    wx.OK | wx.ICON_INFORMATION)
+                return
+            recNum = self.lstChanSegs.GetItemData(csItem)
+            print 'recNum', recNum
+            dia = Dialog_EndTimestamp(self, wx.ID_ANY, actionCode = ['Edit', recNum])
 
+            result = dia.ShowModal()
+            # dialog is exited using EndModal, and comes back here
+            print "Modal dialog result:", result
+#            # test of pulling things out of the modal dialog
+#            self.newBookName = dia.pnl.tcBookName.GetValue()
+#            print "Name of new book, from the Modal:", self.newBookName
+#            self.newRecID = dia.pnl.newRecID
+#            print "record ID from the Modal:", self.newRecID
+            dia.Destroy()
+            if result == 1: # new record successfully created
+                pass
 
 class SetupStationsFrame(wx.Frame):
     def __init__(self, parent, id, title):
