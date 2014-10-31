@@ -398,19 +398,19 @@ class NDVIPanel(wx.Panel):
         gRow += 1
         stpSiz.Add(wx.StaticLine(pnl), pos=(gRow, 0), span=(1, 5), flag=wx.EXPAND)
 
-        gRow += 1
+#        gRow += 1
 
-        self.ckPreview = wx.CheckBox(pnl, label="Preview, Rows:")
-        stpSiz.Add(self.ckPreview, pos=(gRow, 0), span=(1, 1),
-            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
-        self.ckPreview.SetValue(True)
-        self.ckPreview.Bind(wx.EVT_CHECKBOX, self.onCkPreview)
+#        self.ckPreview = wx.CheckBox(pnl, label="Preview, Rows:")
+#        stpSiz.Add(self.ckPreview, pos=(gRow, 0), span=(1, 1),
+#            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+#        self.ckPreview.SetValue(True)
+#        self.ckPreview.Bind(wx.EVT_CHECKBOX, self.onCkPreview)
 
-        self.spinPvwRows = wx.SpinCtrl(pnl, -1, '', size=(50,-1))
-        self.spinPvwRows.SetRange(1,100)
-        self.spinPvwRows.SetValue(10)
-        stpSiz.Add(self.spinPvwRows, pos=(gRow, 1), span=(1, 1),
-            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
+#        self.spinPvwRows = wx.SpinCtrl(pnl, -1, '', size=(50,-1))
+#        self.spinPvwRows.SetRange(1,100)
+#        self.spinPvwRows.SetValue(10)
+#        stpSiz.Add(self.spinPvwRows, pos=(gRow, 1), span=(1, 1),
+#            flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
 
 #        stpSiz.Add(wx.StaticText(self, -1, ' Rows'),
 #                     pos=(gRow, 2), flag=wx.ALIGN_LEFT|wx.LEFT|wx.BOTTOM, border=5)
