@@ -1156,7 +1156,10 @@ def getComboboxIndex(objComboBox):
     Given a combobox with it's list filled by the 'fillComboboxFromSQL' function
     returns the key value of the selected item, if any
     """
-    return objComboBox.GetClientData(objComboBox.GetSelection())
+    try:
+        return objComboBox.GetClientData(objComboBox.GetSelection())
+    except:
+        return None
 
 ##
 def fillListctrlFromSQL(objListctrl, stSQL, keyCol=0, visibleCol=1):
