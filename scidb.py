@@ -1917,8 +1917,10 @@ def generateSheetRows(sheetID, formatValues = True, cr = curD):
             dtUTTimeNode = dtUTSolarMidnight + (((2*iTimeSliceCt)+1) * tdHalfTimeSlice)
             dtUTTimeBegin = dtUTTimeNode - tdHalfTimeSlice
             dtUTTimeEnd = dtUTTimeNode + tdHalfTimeSlice
-            print "dtSolarTimeNode:", dtSolarTimeNode.strftime(sFmtFullDateTime)
-            print "   dtUTTimeNode:", dtUTTimeNode.strftime(sFmtFullDateTime)
+            dtLocalClockTime = dtUTTimeNode + tdHrOffset
+            print " dtSolarTimeNode:", dtSolarTimeNode.strftime(sFmtFullDateTime)
+            print "    dtUTTimeNode:", dtUTTimeNode.strftime(sFmtFullDateTime)
+            print "dtLocalClockTime:", dtLocalClockTime.strftime(sFmtFullDateTime)
             
             # make a standard list of this many empty strings; some may remain empty
             lData = ['' for i in range(iRowLen)]
@@ -1934,16 +1936,20 @@ def generateSheetRows(sheetID, formatValues = True, cr = curD):
                 stFmtPy = rec['Format_Python']
                 stFmtXl = rec['Format_Excel']
                 if rec['ColType'] == "Timestamp":
+                    if rec['TimeSystem'] == 'Solar Time':
+                        dtUse = dtSolarTimeNode
+                    else:
+                        dtUse = dtLocalClockTime
                     if formatValues == True:
                         if stFmtPy == None:
-                            lData[iVisColIndex] = dtUTTimeNode.strftime(sFmtFullDateTime) #default
+                            lData[iVisColIndex] = dtUse.strftime(sFmtFullDateTime) #default
                         else:
                             try:
-                                lData[iVisColIndex] = dtUTTimeNode.strftime(stFmtPy)
+                                lData[iVisColIndex] = dtUse.strftime(stFmtPy)
                             except:
                                 lData[iVisColIndex] = 'format error'
                     else: # use default format that preserves all date/time information
-                        lData[iVisColIndex] = dtUTTimeNode.strftime(sFmtFullDateTime)
+                        lData[iVisColIndex] = dtUse.strftime(sFmtFullDateTime)
                     # dress this up for other formats later
                 if rec['ColType'] == "Constant":
                     lData[iVisColIndex] = rec['Constant']
